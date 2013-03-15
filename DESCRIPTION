@@ -1,14 +1,14 @@
-Package: atif
+Package: Rdbn
 Version: 0.0.1
 Date: 2013-02-05
-Title: Active TF Interaction Finder. Identifies transcription factors, and interactions which form TF modules.
+Title: Fast code to learn deep belief networks in R.
 Author: Charles G. Danko <dankoc@gmail.com>
 Maintainer: Charles G. Danko <dankoc@gmail.com>
-Depends: R (>= 2.6), rphast, rtfbsPost, multicore
+Depends: R (>= 2.6), parallel
 LinkingTo:
 Suggests:
 Description: This package is an analysis pipeline for the analysis of GRO-seq data.
 License: GPL version 3 or newer
-Collate: compute_priors.R estimate_tf_binding.R find_sites_rtfbs.R pseudoEM.R update_mean.R roc_plot.R em_single_tf.R compute_y.R compute_rev_z.R fit_distributions.R penalty_z.R zzz.R
+Collate: OtherFiles.R zzz.R
 biocViews: Sequencing, Analysis
 LazyLoad: yes
