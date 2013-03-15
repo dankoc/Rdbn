@@ -1,0 +1,4 @@
+useDynLib(atif)
+import(MASS)
+export(pseudoEM, compute_priors, update_mean, estimate_tf_binding, find_sites_rtfbs, compute_rev_z,
+       roc_calc, roc_calc_genome_overlap, combine_roc, roc_plot, em_single_tf, compute_binding, RnbinomMLE, penalty_z)
