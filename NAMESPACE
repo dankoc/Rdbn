@@ -1,2 +1,4 @@
 useDynLib(Rdbn)
 export(List, RFunctions, Here)
+exportClasses("rbm")
+exportMethods(train)
