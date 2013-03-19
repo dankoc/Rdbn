@@ -9,6 +9,6 @@ LinkingTo:
 Suggests:
 Description: This package is an analysis pipeline for the analysis of GRO-seq data.
 License: GPL version 3 or newer
-Collate: OtherFiles.R zzz.R
+Collate: boltzmann_machine.R zzz.R
 biocViews: Sequencing, Analysis
 LazyLoad: yes
