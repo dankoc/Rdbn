@@ -21,10 +21,11 @@ setClass("rbm",#"restricted_boltzman_machine",
 # constructor.
 # e.g.:
 # rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
+# Initial weights set using S8.1 in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
 rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
     ## Initialize weights.
     if(is.null(io_weights)) {
-	  io_weights <- matrix(rnorm(n_inputs*n_outputs, mean=0, sd=0.1), ncol=n_outputs)
+	  io_weights <- matrix(rnorm(n_inputs*n_outputs, mean=0, sd=0.01), ncol=n_outputs)
 	}
 	else { ## If specified ... check dimenstions.
 	  stopifnot(NROW(io_weights) == n_inputs & NCOL(io_weights) == n_outputs)
@@ -32,7 +33,7 @@ rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_in
 
 	## Initialize bias vectors for inputs.
 	if(is.null(bias_inputs)) {
-	  bias_inputs <- rnorm(n_inputs, mean=0, sd=0.1)
+	  bias_inputs <- rep(0, n_inputs)#rnorm(n_inputs, mean=0, sd=0.01)
 	}
 	else {
 	  stopifnot(n_inputs == NROW(bias_inputs))
@@ -40,7 +41,7 @@ rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_in
 
 	## Initialize bias vectors for outputs.	
 	if(is.null(bias_outputs)) {
-	  bias_outputs <- rnorm(n_outputs, mean=0, sd=0.1)
+	  bias_outputs <- rep(0, n_outputs)#rnorm(n_outputs, mean=0, sd=0.01)
 	}
 	else {
 	  stopifnot(n_outputs == NROW(bias_outputs))
