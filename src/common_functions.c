@@ -127,7 +127,12 @@ int get_bin_number(int center, int window_size, int half_n_windows) {
 int *get_genomic_data(int center, int n_sizes, int* window_sizes, int* half_n_windows, int* chrom_counts_plus, int* chrom_counts_minus) {
   int *c_list = calloc( ... ); // Because I'm going to destroy it ...
   
-  // Init. each element of r_list.  
+  // Init. get offset for each n_sizes in c_list.  
+  int *n_prev_bins = (int)R_alloc(n_sizes, sizeof(int*));
+  n_prev_bins[0]= 0;
+  for(int i=1;i<n_sizes;i++) {
+    n_prev_bins[i] = n_prev_bins[i-1]+2*half_n_windows[i-1]; 
+  }
   
   // Get the max boundary of our window.
   int max_bounds = max_dist_from_center(n_sizes, window_sizes, half_n_windows);
@@ -138,7 +143,10 @@ int *get_genomic_data(int center, int n_sizes, int* window_sizes, int* half_n_wi
   for(int bp= left_edge;bp<= right_edge;bp++) {
     for(int i=0;i<n_sizes;i++) {
 	  int which_bin= get_bin_number(center, window_sizes[i], half_n_windows[i]);
-      if(which_bin>0) c_list[i...which_bin+n_prev_bins[i]]+= chrom_counts_plus[bp];
+      if(which_bin>0) {
+	    c_list.plus[n_prev_bins[i]+which_bin]+= chrom_counts_plus[bp];
+		c_list.minus[(n_prev_bins[n_sizes-1]+)+n_prev_bins[i]+which_bin]+= chrom_counts_minus[bp]; // This is entire plus strand, plus current position.
+	  }
     }
   }
   
