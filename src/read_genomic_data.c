@@ -9,88 +9,61 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
 #include <assert.h>
+#include "read_genomic_data.h"
 
 /*
- * Returns log(p^X)= X*log(p)
+ * set_zoom_params --> Creates a new zoom_params_t data type.
  */
-double l_power(double p, int X) {
-  return(log(p)*(double)X);
-}
-
-
-
-/*
- * expSum -- Robustly calculates log(exp(log(x))+exp(log(y))).
- */
-double expSum(double logx, double logy) {
-  assert(!isnan(logx) && !isnan(logy));
-  // expSum w/ just two values.  Inelegant, yet saves having to copy two doubles to a new double*.
-  double scalefactor= logx>logy?logx:logy;
-  double robustExpSum= log(exp(logx-scalefactor)+exp(logy-scalefactor))+scalefactor;
-  return(robustExpSum);
+zoom_params_t set_zoom_params(int n_sizes, int* window_sizes, int* half_n_windows) {
+  zoom_params_t zoom;
+  zoom.window_sizes = window_sizes;
+  zoom.half_n_windows = half_n_windows;
+  return(zoom);
 }
 
 /*
- * expSum -- Robustly calculates log(exp(log(x))+exp(log(y))+exp(log(z))).
+ * init_genomic_data_point --> Initializes genomic_data_point_t to 0.
  */
-double expSum_3(double logx, double logy, double logz) {
-  double scalefactor= logx>logy?logx:logy;
-  scalefactor= scalefactor>logz?scalefactor:logz;
-  double robustExpSum= log(exp(logx-scalefactor)+exp(logy-scalefactor)+exp(logz-scalefactor))+scalefactor;
-  return(robustExpSum);
-}
-
-
-/*
- * expDif -- Robustly returns log(abs(exp(pGr)-exp(pLs))).
- */
-double expDif(double pLs, double pGr) {
-  assert(!isnan(pLs) && !isnan(pGr));
-  if(pGr == pLs) 
-    return(log(0));
-  else if(pGr > pLs)
-	return(log(1-exp(pLs-pGr))+pGr);
-  else
-    return(log(1-exp(pGr-pLs))+pLs);
-}
-
-/* 
- * Does the necessary averaging inside of a window. 
- *
- * Arguments:
- *  left_edge     --> Left edge to evaluate.
- *  n_windows  --> Number of independent windows in the model =(2*half_n+1).
- *  windowSize --> Full window size =(2*half_size+1).
- *  data       --> Bigwig file object.
- *
- * Definitions and reasoning in notebook entry from 2/8/13
- */
-int *get_windowSums_i(int left_edge, int n_windows, int windowSize, int* data) {
-  // Get number of counts in each window (allowing overlap)
-  int *windowSums = (int*) calloc(n_windows, sizeof(int));
-  for(int i=0;i<n_windows;i++) {
-    windowSums[i] = 0;
-	for(int b=0;b<windowSize;b++) {
-	  windowSums[i] += data[left_edge+b+i*windowSize];
+void init_genomic_data_point(genomic_data_point_t dp, zoom_params_t zoom) {
+  for(int i=0;i<zoom.n_sizes;i++) {
+    for(int j=0;j<(2*zoom.half_n_windows);j++) {
+      dp.forward[i][j]= 0;
+      dp.reverse[i][j]= 0;
 	}
   }
-  return(windowSums);
 }
 
 /*
- *  Turns around a (short) vector.
- *  Leaves the origional untouched.
+ * alloc_genomic_data_point --> Allocates a new genomic_data_point_t.
  */
-int *reverse_vector(int *vector, int n_elements) {
-  int *rev_vector= (int*) calloc(n_elements, sizeof(int));
-  for(int i=0;i<n_elements;i++) {
-    rev_vector[i] = vector[n_elements-i-1];
+genomic_data_point_t alloc_genomic_data_point(zoom_params_t zoom) {
+  genomic_data_point_t dp;
+  dp.forward = (double**)calloc(zoom.n_sizes,sizeof(double*));
+  dp.reverse = (double**)calloc(zoom.n_sizes,sizeof(double*));
+  
+  for(int i=0;i<zoom.n_sizes;i++) {
+    dp.forward[i] = (double*)calloc((2*zoom.half_n_windows[i]),sizeof(double));
+    dp.reverse[i] = (double*)calloc((2*zoom.half_n_windows[i]),sizeof(double));
   }
-  return(rev_vector);
+  
+  return(dp);
 }
 
 /*
- * Returns maximum bounds around a center position.
+ * alloc_genomic_data_point --> creates a new genomic_data_point_t.
+ */
+void free_genomic_data_point(genomic_data_point_t dp, zoom_params_t zoom) {
+  for(int i=0;i<zoom.n_sizes;i++) {
+    free(dp.forward[i]);
+    free(dp.reverse[i]);
+  }
+
+  free(dp.forward);
+  free(dp.reverse);
+}
+
+/*
+ * max_dist_from_center --> Returns maximum bounds around a center position.
  */
 int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
   int max_bounds=0;
@@ -102,22 +75,21 @@ int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
 }
 
 /*
- * Returns the bin that a particular posotion falls into,
- * or -1 for 'outside' ...
+ * get_bin_number --> Returns the bin that a particular posotion falls into.
  *
+ * Note than since the center base is not included, it needs to be subtracted
+ * from the position of interest, if that position falls past the center.
  */
 int get_bin_number(int center, int position, int window_size, int half_n_windows) {
-  bin_number=-1;
   // How to get the bin number with these variables?!
-  
-  
+  int max_size= window_size*half_n_windows;
+  if(position < (center-max_size) || position > (center+max_size) || position == center) return(-1);
+  int dist_from_start= (position<center)?(position-center):(position-center-1); // Because center position isn't included ... have to subtract 1 for windows right of center.
+  return((int)floor(((double)dist_from_start)/((double)window_size)));
 }
 
 /*
  * Returns vector of counts for each windows in genomic data.
- *
- * IDEA: Perhaps have a variant of this function that just returns the linear vector?!  
- * This would be useful for training all inside C.
  *
  * To do this efficently, loop through the region once.  
  *   Assume ... (1) user dosen't pass in something beyond the bounds of chrom_counts.
@@ -126,35 +98,27 @@ int get_bin_number(int center, int position, int window_size, int half_n_windows
  *  center  --> Center position 
  *  n_sizes --> Number of 
  */
-int *get_genomic_data(int center, int n_sizes, int* window_sizes, int* half_n_windows, int* chrom_counts_plus, int* chrom_counts_minus) {
-  // Init. get offset for each n_sizes in c_list.  
-  // Might make sense to do this once with a model and pass it with a struct ...
-  int *n_prev_bins = (int*)R_alloc(n_sizes+1, sizeof(int));
-  n_prev_bins[0]= 0;
-  for(int i=1;i<n_sizes;i++) {
-    n_prev_bins[i] = n_prev_bins[i-1]+2*half_n_windows[i-1]; 
-  }
-  n_prev_bins[n_sizes] = n_prev_bins[n_sizes-1]+2*half_n_windows[n_sizes-1];
+void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp) {
+  init_genomic_data_point(dp);
 
-  // Allocate a c_list variable w/ plus and minus strands.
-  int *c_list = (int*)calloc((2*n_prev_bins[n_sizes]), sizeof(int)); // Because I'm going to destroy it ...
-    
   // Get the max boundary of our window.
-  int max_bounds = max_dist_from_center(n_sizes, window_sizes, half_n_windows);
-  int left_edge= center - max_bounds; // Should there be a +/- 1 on any of these?
-  int right_edge= center + max_bounds;
+  int max_bounds = max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
+  int left_edge= center - max_bounds;
+  int right_edge= center + max_bounds + 1;
   
   // Loop through incrementing each vector.
   for(int bp= left_edge;bp<= right_edge;bp++) {
     for(int i=0;i<n_sizes;i++) {
-	  int which_bin= get_bin_number(center, bp, window_sizes[i], half_n_windows[i]);
+	  int which_bin= get_bin_number(center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
       if(which_bin>0) {
-	    c_list[n_prev_bins[i]+which_bin]+= chrom_counts_plus[bp];
-		c_list[n_prev_bins[n_sizes]+n_prev_bins[i]+which_bin]+= chrom_counts_minus[bp];
+	    dp.forward_data[i][which_bin]+= chrom_counts.forward[bp];
+		dp.forward_data[i][which_bin]+= chrom_counts.reverse[bp];
 	  }
     }
   }
-  
-  return(c_list);
+
 }
 
+int *genomic_data_point_to_vector() {
+
+}
