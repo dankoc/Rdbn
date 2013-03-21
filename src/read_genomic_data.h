@@ -6,6 +6,8 @@ typedef struct {
   int n_sizes;
   int* window_sizes;
   int* half_n_windows;
+  
+  int* n_prev_bins;
 } zoom_params_t;
 
 typedef struct {

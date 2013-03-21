@@ -18,6 +18,15 @@ zoom_params_t set_zoom_params(int n_sizes, int* window_sizes, int* half_n_window
   zoom_params_t zoom;
   zoom.window_sizes = window_sizes;
   zoom.half_n_windows = half_n_windows;
+  
+  // This is JUST for translating understandable object into a nice vector.
+  zoom.n_prev_bins = (int*)R_alloc(n_sizes+1, sizeof(int));
+  zoom.n_prev_bins[0]= 0;
+  for(int i=1;i<n_sizes;i++) {
+    zoom.n_prev_bins[i] = zoom.n_prev_bins[i-1]+2*half_n_windows[i-1]; 
+  }
+  zoom.n_prev_bins[n_sizes] = zoom.n_prev_bins[n_sizes-1]+2*half_n_windows[n_sizes-1];
+  
   return(zoom);
 }
 
@@ -119,6 +128,11 @@ void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, g
 
 }
 
+/*
+ * We need a simple vector to pass into the more general (??) functions.
+ */
 int *genomic_data_point_to_vector() {
+
+  int *c_list = (int*)calloc((2*zoom.n_prev_bins[zoom.n_sizes]), sizeof(int)); // Because I'm going to destroy it ...
 
 }
