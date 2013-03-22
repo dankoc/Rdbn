@@ -129,10 +129,36 @@ void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, g
 }
 
 /*
+ * Scales genomic data ... following a logistic function with the specified parameters...
+ *  Pass this information in zoom_params_t(?!).  Or store it in genomic_data_point_t?  Or separate struct?!
+ */
+//void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {}
+
+/*
+ * R entry point ... for getting a particular center (or vector of centers).
+ */
+SEXP get_genomic_data_R(SEXP centers, SEXP plus_counts, SEXP minus_counts) {
+  int n_centers = Rf_nrows(centers);
+  int *centers = INTEGER(centers);
+  
+  raw_data_t rd;
+  rd.forward= INTEGER(plus_counts);
+  rd.reverse= INTEGER(minus_counts);
+  
+  SEXP processed_data;
+  
+  for(int i=0;i<n_centers;i++) {
+    if()...
+  }
+  
+  return();
+}
+
+/*
  * We need a simple vector to pass into the more general (??) functions.
  */
 int *genomic_data_point_to_vector() {
-
+  
   int *c_list = (int*)calloc((2*zoom.n_prev_bins[zoom.n_sizes]), sizeof(int)); // Because I'm going to destroy it ...
 
 }
