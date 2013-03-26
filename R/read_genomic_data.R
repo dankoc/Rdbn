@@ -14,8 +14,8 @@ read_genomic_data <- function(center, plus, minus, as_matrix= TRUE,
 		zoom= list(window_sizes= c(50, 500, 5000), half_n_windows= c(20, 20, 20))) {
   
   dat <- .Call("get_genomic_data_R", as.integer(center), as.integer(plus), as.integer(minus), zoom, PACKAGE= "Rdbn")
-  if(!as_matrx) return(dat)
+  if(!as_matrix) return(dat)
 
-  dat_l <- lapply(c(1:NROW(dat)), functin(x) {unlist(dat[[x]])})
+  dat_l <- lapply(c(1:NROW(dat)), function(x) {unlist(dat[[x]])})
   return(dat_l)
 }

@@ -1,6 +1,5 @@
 #ifndef read_genomic_data_H 
 #define read_genomic_data_H
-#include "bigwiglib.h"
 
 typedef struct {
   int n_sizes;
@@ -11,8 +10,8 @@ typedef struct {
 } zoom_params_t;
 
 typedef struct {
-  double **forward_data;
-  double **reverse_data;
+  double **forward;
+  double **reverse;
 } genomic_data_point_t;
 
 typedef struct {
