@@ -10,7 +10,7 @@
 #include <R_ext/Rdynload.h>
 
 
-SEXP compute_priors(SEXP all_posteriors);
+SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r, SEXP model_r);
 
 /**************************************************************
  *
@@ -19,7 +19,7 @@ SEXP compute_priors(SEXP all_posteriors);
  **************************************************************/
 void R_init_GROseq(DllInfo *info) {
      R_CallMethodDef callMethods[]  = {
-       {"compute_priors", (DL_FUNC)&compute_priors, 1},
+       {"get_genomic_data_R", (DL_FUNC)&compute_priors, 4},
        {NULL, NULL, 0}
      };
 

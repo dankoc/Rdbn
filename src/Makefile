@@ -9,7 +9,7 @@
 CC=gcc
 LIBS:=-lm -lz -pthread ${shell pkg-config openssl --libs}
 CFLAGS:=-c -g -Wall ${LIBS}
-SOURCES= common_functions.c compute_priors.c 
+SOURCES= read_genomic_data.c RegisterRRoutines.c 
 OBJECTS=$(SOURCES:.c=.o)
 
 #.c.o:

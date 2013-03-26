@@ -129,41 +129,121 @@ void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, g
 }
 
 /*
+ * Returns the max value in data1 and data2.
+ */
+double get_max(int n, double* data1, double* data2) {
+  double max=-1;
+  for (int i=0;i<n;i++) {
+    if(data1[i] > max) max= data1[i];
+	if(data2[i] > max) max= data2[i];
+  }
+  return(max);
+}
+
+/*
  * Scales genomic data ... following a logistic function with the specified parameters...
  *  Pass this information in zoom_params_t(?!).  Or store it in genomic_data_point_t?  Or separate struct?!
+ *
+ * Scales using logistic function --> F(t)= 1/(1+e^(-\alpha(t-\beta)))
+ *      Right now, \beta= MAX/2 (defines position of 0.5).
+ *                 \alpha= 2*log(1/0.01 - 1)/MAX  (Signal at 0 reads set to 0.01). 
  */
-//void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {}
+void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
+  double val_at_min=0.01;
+  for(int i=0;i<zoom.n_sizes;i++) {
+    // Get parameters.  Require value of 0.99 at MAX and 0.01 at 0.
+    double max_val= get_max(2*zoom.half_n_windows[i], dp.forward_data[i], dp.reverse_data[i]);
+	double alpha= 2*log(1/val_at_min - 1) / max_val;
+
+	// Scale values with the logistic function.
+    for(int j=0;j<2*half_n_windows[i]; j++) {
+       dp.forward[i] = 1/ (1+ exp(-1*alpha*(dp.forward[i]-(max_val/2))));
+	   dp.reverse[i] = 1/ (1+ exp(-1*alpha*(dp.reverse[i]-(max_val/2))));
+	}
+  }
+}
+
+/*
+ * Moves C genomic_data_point_t type to a SEXP for return to R.
+ */
+SEXP data_point_to_list(zoom_params_t zoom, genomic_data_point_t dp) {
+  SEXP data_point;
+  protect(data_point = allocVector(VECSXP, 2*zoom.n_sizes));
+  
+  for(int i=0;i<zoom.n_sizes;i++) {
+    // Creat R object.
+    SEXP size_t_for, size_t_rev;
+    protect(size_t_for = allocVector(REALSXP, zoom.half_n_windows[i]*2));
+    protect(size_t_rev = allocVector(REALSXP, zoom.half_n_windows[i]*2));
+    SET_VECTOR_ELT(data_point, 2*i, size_t_for);
+    SET_VECTOR_ELT(data_point, 2*i+1, size_t_rev);
+
+    // Copy data from dp to R object.
+    double *size_t_for_c = REAL(size_t_for);
+    double *size_t_rev_c = REAL(size_t_rev);
+	for(int j=0;j<2*half_n_windows[i];j++) {
+      size_t_for_c[j] = dp.forward[i][j];
+      size_t_rev_c[j] = dp.reverse[i][j];
+    }
+	UNPROTECT(2);
+  }
+  UNPROTECT(1);
+  return(data_point);
+}
 
 /*
  * R entry point ... for getting a particular center (or vector of centers).
+ *
+ * Switch to R vector using:
+ * t(matrix(unlist(list(c(1:10), c(11:20), c(0:9))), ncol=3))
  */
-SEXP get_genomic_data_R(SEXP centers, SEXP plus_counts, SEXP minus_counts, SEXP model) {
-  int n_centers = Rf_nrows(centers);
-  int *centers = INTEGER(centers);
+SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r, SEXP model_r) {
+  int n_centers = Rf_nrows(centers_r);
+  int *centers = INTEGER(centers_r);
   
   // Set up model variable.
+  zoom_params_t zoom;
+  zoom.n_sizes= Rf_nrows(VECTOR_ELT(model_r, 0));
+  zoom.window_sizes= INTEGER(VECTOR_ELT(model_r, 0));
+  zoom.half_n_windows= INTEGER(VECTOR_ELT(model_r, 1));
   
   // Set up raw data to work with C.
+  int n_positions= Rf_nrows(plus_counts_r);
   raw_data_t rd;
-  rd.forward= INTEGER(plus_counts);
-  rd.reverse= INTEGER(minus_counts);
+  rd.forward= INTEGER(plus_counts_r);
+  rd.reverse= INTEGER(minus_counts_r);
   
   // Set up return variable.
+  genomic_data_point_t dp= alloc_genomic_data_point(zoom);
   SEXP processed_data;
+  PROTECT(processed_data = allocVector(VECSXP, n_centers));
+
   
   for(int i=0;i<n_centers;i++) {
-    max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
-    if() ;
+    int max_dist= max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
+    if(0 < (centers[i]-max_dist) && (centers[i]-max_dist) < n_positions) {
+      get_genomic_data(centers[i], zoom, rd, dp); // Get data...
+	  scale_genomic_data(zoom, dp); // Scale data?!
+      
+      // Record ...
+	  SEXP data_point= data_point_to_list(zoom, dp);
+      SET_VECTOR_ELT(processed_data, i, data_point);
+	}
+	else {
+	  Rprintf("WARNING: outside bounds!!");
+	}
   }
+  free_genomic_data_point(dp);
+  UNPROTECT(1);//+n_centers);
   
-  return();
+  return(processed_data);
 }
 
 /*
  * We need a simple vector to pass into the more general (??) functions.
  */
-int *genomic_data_point_to_vector() {
+/*int *genomic_data_point_to_vector() {
   
   int *c_list = (int*)calloc((2*zoom.n_prev_bins[zoom.n_sizes]), sizeof(int)); // Because I'm going to destroy it ...
 
-}
+}*/
