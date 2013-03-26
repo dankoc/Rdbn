@@ -121,7 +121,7 @@ void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, g
 	  int which_bin= get_bin_number(center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
       if(which_bin>0) {
 	    dp.forward_data[i][which_bin]+= chrom_counts.forward[bp];
-		dp.forward_data[i][which_bin]+= chrom_counts.reverse[bp];
+		dp.reverse_data[i][which_bin]+= chrom_counts.reverse[bp];
 	  }
     }
   }
@@ -137,18 +137,23 @@ void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, g
 /*
  * R entry point ... for getting a particular center (or vector of centers).
  */
-SEXP get_genomic_data_R(SEXP centers, SEXP plus_counts, SEXP minus_counts) {
+SEXP get_genomic_data_R(SEXP centers, SEXP plus_counts, SEXP minus_counts, SEXP model) {
   int n_centers = Rf_nrows(centers);
   int *centers = INTEGER(centers);
   
+  // Set up model variable.
+  
+  // Set up raw data to work with C.
   raw_data_t rd;
   rd.forward= INTEGER(plus_counts);
   rd.reverse= INTEGER(minus_counts);
   
+  // Set up return variable.
   SEXP processed_data;
   
   for(int i=0;i<n_centers;i++) {
-    if()...
+    max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
+    if() ;
   }
   
   return();
