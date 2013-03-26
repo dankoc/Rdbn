@@ -1,5 +1,5 @@
 useDynLib(Rdbn)
-export(List, RFunctions, Here)
+export(read_genomic_data)
 exportClasses("rbm")
 exportMethods(train, clamp_input, clamp_output)
-exportMethods(sample_states, logistic_function)
+

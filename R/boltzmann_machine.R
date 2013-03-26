@@ -10,11 +10,11 @@
 setClass("rbm",#"restricted_boltzman_machine", 
   representation(
     n_inputs="integer",      ## Number of nodes in the input layer.
-	n_outputs="integer",     ## Number of nodes in the output layer.
-	learning_rate="numeric", ## How quickly the netowrk 'learns'.
-	io_weights="matrix"      ## The actual weights matrix, connecting each input to output.
-	bias_inputs="numeric"    ## Bias vector, inputs.
-	bias_outputs="numeric"   ## Bias vector, outputs.
+    n_outputs="integer",     ## Number of nodes in the output layer.
+    learning_rate="numeric", ## How quickly the netowrk 'learns'.
+    io_weights="matrix",      ## The actual weights matrix, connecting each input to output.
+    bias_inputs="numeric",    ## Bias vector, inputs.
+    bias_outputs="numeric"   ## Bias vector, outputs.
   )
 )
 
@@ -56,7 +56,7 @@ rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_in
 #` @param data A data matrix wherein each row represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("train", 
-  def=function(rbm, data) {
+  def=function(rbm, data, ...) {
 	stopifnot(class(rbm) == "rbm")
 	standardGeneric("train")
   })
@@ -86,7 +86,7 @@ setMethod("train", c(rbm="rbm"),
   
 #` 'Clamps' the input vector and runs the boltzmann machine to get the output node (i.e. get output conditional on specified input).
 setGeneric("clamp_input", 
-  def=function(rbm, set_input) {
+  def=function(rbm, set_input, ...) {
 	stopifnot(class(rbm) == "rbm")
 	standardGeneric("clamp_input")
   })
@@ -104,7 +104,7 @@ setMethod("clamp_input", c(rbm="rbm"),
     
 #` 'Clamps' the output vector and runs the boltzmann machine to get the output node (i.e. get expected input conditional on the specified output).
 setGeneric("clamp_output", 
-  def=function(rbm, set_output) { 
+  def=function(rbm, set_output, ...) { 
 	stopifnot(class(rbm) == "rbm")
 	standardGeneric("clamp_output")
   })

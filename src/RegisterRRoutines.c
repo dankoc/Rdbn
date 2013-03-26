@@ -19,7 +19,7 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
  **************************************************************/
 void R_init_GROseq(DllInfo *info) {
      R_CallMethodDef callMethods[]  = {
-       {"get_genomic_data_R", (DL_FUNC)&compute_priors, 4},
+       {"get_genomic_data_R", (DL_FUNC)&get_genomic_data_R, 4},
        {NULL, NULL, 0}
      };
 

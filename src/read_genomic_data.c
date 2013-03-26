@@ -35,10 +35,10 @@ zoom_params_t set_zoom_params(int n_sizes, int* window_sizes, int* half_n_window
  */
 void init_genomic_data_point(genomic_data_point_t dp, zoom_params_t zoom) {
   for(int i=0;i<zoom.n_sizes;i++) {
-    for(int j=0;j<(2*zoom.half_n_windows);j++) {
-      dp.forward[i][j]= 0;
-      dp.reverse[i][j]= 0;
-	}
+    for(int j=0;j<(2*zoom.half_n_windows[i]);j++) {
+      dp.forward[i][j]= 0.0f;
+      dp.reverse[i][j]= 0.0f;
+    }
   }
 }
 
@@ -76,7 +76,7 @@ void free_genomic_data_point(genomic_data_point_t dp, zoom_params_t zoom) {
  */
 int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
   int max_bounds=0;
-  for(int i=0;<n_sizes;i++) {
+  for(int i=0;i<n_sizes;i++) {
     int curr_bounds= window_sizes[i]*half_n_windows[i];
 	if(max_bounds < curr_bounds) max_bounds= curr_bounds;
   }
@@ -108,7 +108,7 @@ int get_bin_number(int center, int position, int window_size, int half_n_windows
  *  n_sizes --> Number of 
  */
 void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp) {
-  init_genomic_data_point(dp);
+  init_genomic_data_point(dp, zoom);
 
   // Get the max boundary of our window.
   int max_bounds = max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
@@ -117,12 +117,12 @@ void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, g
   
   // Loop through incrementing each vector.
   for(int bp= left_edge;bp<= right_edge;bp++) {
-    for(int i=0;i<n_sizes;i++) {
-	  int which_bin= get_bin_number(center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
+    for(int i=0;i<zoom.n_sizes;i++) {
+      int which_bin= get_bin_number(center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
       if(which_bin>0) {
-	    dp.forward_data[i][which_bin]+= chrom_counts.forward[bp];
-		dp.reverse_data[i][which_bin]+= chrom_counts.reverse[bp];
-	  }
+	  dp.forward[i][which_bin]+= chrom_counts.forward[bp];
+          dp.reverse[i][which_bin]+= chrom_counts.reverse[bp];
+      }
     }
   }
 
@@ -152,14 +152,14 @@ void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
   double val_at_min=0.01;
   for(int i=0;i<zoom.n_sizes;i++) {
     // Get parameters.  Require value of 0.99 at MAX and 0.01 at 0.
-    double max_val= get_max(2*zoom.half_n_windows[i], dp.forward_data[i], dp.reverse_data[i]);
-	double alpha= 2*log(1/val_at_min - 1) / max_val;
+    double max_val= get_max(2*zoom.half_n_windows[i], dp.forward[i], dp.reverse[i]);
+    double alpha= 2*log(1/val_at_min - 1) / max_val;
 
 	// Scale values with the logistic function.
-    for(int j=0;j<2*half_n_windows[i]; j++) {
-       dp.forward[i] = 1/ (1+ exp(-1*alpha*(dp.forward[i]-(max_val/2))));
-	   dp.reverse[i] = 1/ (1+ exp(-1*alpha*(dp.reverse[i]-(max_val/2))));
-	}
+    for(int j=0;j<2*zoom.half_n_windows[i]; j++) {
+      dp.forward[i][j] = 1/ (1+ exp(-1*alpha*(dp.forward[i][j]-(max_val/2))));
+      dp.reverse[i][j] = 1/ (1+ exp(-1*alpha*(dp.reverse[i][j]-(max_val/2))));
+    }
   }
 }
 
@@ -181,7 +181,7 @@ SEXP data_point_to_list(zoom_params_t zoom, genomic_data_point_t dp) {
     // Copy data from dp to R object.
     double *size_t_for_c = REAL(size_t_for);
     double *size_t_rev_c = REAL(size_t_rev);
-	for(int j=0;j<2*half_n_windows[i];j++) {
+    for(int j=0;j<2*zoom.half_n_windows[i];j++) {
       size_t_for_c[j] = dp.forward[i][j];
       size_t_rev_c[j] = dp.reverse[i][j];
     }
@@ -222,8 +222,8 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
   for(int i=0;i<n_centers;i++) {
     int max_dist= max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
     if(0 < (centers[i]-max_dist) && (centers[i]-max_dist) < n_positions) {
-      get_genomic_data(centers[i], zoom, rd, dp); // Get data...
-	  scale_genomic_data(zoom, dp); // Scale data?!
+      get_genomic_data(centers[i], zoom, rd, dp); // Get data..
+      //scale_genomic_data(zoom, dp); // Scale data?!
       
       // Record ...
 	  SEXP data_point= data_point_to_list(zoom, dp);
@@ -233,7 +233,7 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
 	  Rprintf("WARNING: outside bounds!!");
 	}
   }
-  free_genomic_data_point(dp);
+  free_genomic_data_point(dp, zoom);
   UNPROTECT(1);//+n_centers);
   
   return(processed_data);
