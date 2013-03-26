@@ -120,8 +120,8 @@ void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, g
     for(int i=0;i<zoom.n_sizes;i++) {
       int which_bin= get_bin_number(center, bp, zoom.window_sizes[i], zoom.half_n_windows[i]);
       if(which_bin>0) {
-	  dp.forward[i][which_bin]+= chrom_counts.forward[bp];
-          dp.reverse[i][which_bin]+= chrom_counts.reverse[bp];
+        dp.forward[i][which_bin]+= (double)chrom_counts.forward[bp];
+        dp.reverse[i][which_bin]+= (double)chrom_counts.reverse[bp];
       }
     }
   }
@@ -182,6 +182,7 @@ SEXP data_point_to_list(zoom_params_t zoom, genomic_data_point_t dp) {
     double *size_t_for_c = REAL(size_t_for);
     double *size_t_rev_c = REAL(size_t_rev);
     for(int j=0;j<2*zoom.half_n_windows[i];j++) {
+	  Rprintf("%f\n", dp.forward[i][j]);
       size_t_for_c[j] = dp.forward[i][j];
       size_t_rev_c[j] = dp.reverse[i][j];
     }
