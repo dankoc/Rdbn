@@ -91,9 +91,10 @@ int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
  */
 int get_bin_number(int center, int position, int window_size, int half_n_windows) {
   // How to get the bin number with these variables?!
-  int max_size= window_size*half_n_windows;
-  if(position < (center-max_size) || position > (center+max_size) || position == center) return(-1);
-  int dist_from_start= (position<center)?(position-center):(position-center-1); // Because center position isn't included ... have to subtract 1 for windows right of center.
+  int left= center-window_size*half_n_windows;
+  int right= center+window_size*half_n_windows;
+  if(position < left || position > right || position == center) return(-1);
+  int dist_from_start= (position<center)?(position-left):(position-left-1); // Because center position isn't included ... have to subtract 1 for windows right of center.
   return((int)floor(((double)dist_from_start)/((double)window_size)));
 }
 
