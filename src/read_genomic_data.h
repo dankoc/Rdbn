@@ -15,6 +15,8 @@ typedef struct {
 } genomic_data_point_t;
 
 typedef struct {
+  int size;
+
   int *forward;
   int *reverse;
 } raw_data_t;

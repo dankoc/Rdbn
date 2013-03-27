@@ -3,9 +3,10 @@
 
 #' Reads genomic data from the specified position...
 #'
+#' @param chrom Vector of chromosomes.
 #' @param center Vector of positions on which to collect data.
-#' @param plus Vector of counts on plus strand (1 bp bins).
-#' @param minus Vector of counts on minus strand (1 bp bins).
+#' @param big_wig_plus Bigwig file representing GRO-seq/ PRO-seq reads on the plus strand.
+#' @param big_wig_minus Bigwig file representing GRO-seq/ PRO-seq reads on the minus strand.
 #' @param as_matrix If true, returns a matrix object.
 #' @param zoom List object describing the zoom.
 #' @return Returns a list() object, where each element in the list is the zoom data
@@ -29,6 +30,7 @@ read_genomic_data <- function(chrom, center, big_wig_plus, big_wig_minus, as_mat
   })
 
   if(as_matrix) 
-    dat <- t(matrix(unlist(lapply(c(1:NROW(dat)), function(x) {unlist(dat[[x]])})), ncol=NROW(center)))
+    dat <- t(matrix(unlist(dat), ncol=NROW(center)))
+    #dat <- t(matrix(unlist(lapply(c(1:NROW(dat)), function(x) {unlist(dat[[x]])})), ncol=NROW(center)))
   return(dat)
 }
