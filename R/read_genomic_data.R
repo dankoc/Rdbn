@@ -19,11 +19,12 @@ read_genomic_data <- function(chrom, center, big_wig_plus, big_wig_minus, as_mat
    indx <- which(chrom == x)
    center_c <- center[indx]
 
-   start_pos <- min(center_c)-max_size
-   end_pos <- max(center_c)+max_size
+   start_pos <- min(center_c)-max_size-1
+   end_pos <- max(center_c)+max_size+2
    
    plus <- collect.counts(big_wig_plus,  chrom=x, start= start_pos, end= end_pos, step=1)
    minus<- collect.counts(big_wig_minus, chrom=x, start= start_pos, end= end_pos, step=1)
+
    .Call("get_genomic_data_R", as.integer(center_c-start_pos), as.integer(plus), as.integer(minus), zoom, PACKAGE= "Rdbn")
   })
 
