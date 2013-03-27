@@ -209,7 +209,7 @@ SEXP data_point_to_vect(zoom_params_t zoom, genomic_data_point_t dp) {
     n_windows+= zoom.half_n_windows[i]*2;
   
   protect(data_point = allocVector(REALSXP, 2*n_windows));
-  double *data_point_c = REAL(size_t_for);
+  double *data_point_c = REAL(data_point);
   
   int k=0;
   for(int i=0;i<zoom.n_sizes;i++) {
