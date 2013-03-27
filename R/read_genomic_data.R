@@ -10,12 +10,24 @@
 #' @param zoom List object describing the zoom.
 #' @return Returns a list() object, where each element in the list is the zoom data
 #' centered on a 
-read_genomic_data <- function(center, plus, minus, as_matrix= TRUE, 
-		zoom= list(window_sizes= c(50, 500, 5000), half_n_windows= c(20, 20, 20))) {
-  
-  dat <- .Call("get_genomic_data_R", as.integer(center), as.integer(plus), as.integer(minus), zoom, PACKAGE= "Rdbn")
-  if(!as_matrix) return(dat)
+read_genomic_data <- function(chrom, center, big_wig_plus, big_wig_minus, as_matrix= TRUE, 
+		zoom= list(window_sizes= as.integer(c(50, 500, 5000)), half_n_windows= as.integer(c(20, 20, 20)))) {
 
-  dat_l <- lapply(c(1:NROW(dat)), function(x) {unlist(dat[[x]])})
-  return(dat_l)
+  max_size <- max(window_sizes*half_n_windows)
+		
+  dat <- lapply(unique(as.character(chrom)), function(x) {
+   indx <- which(chrom == x)
+   center_c <- center[indx]
+
+   start_pos <- min(center_c)-max_size
+   end_pos <- max(center_c)+max_size
+   
+   plus <- collect.counts(big_wig_plus,  chrom=x, start= start_pos, end= end_pos, step=1)
+   minus<- collect.counts(big_wig_minus, chrom=x, start= start_pos, end= end_pos, step=1)
+   .Call("get_genomic_data_R", as.integer(center_c-start_pos), as.integer(plus), as.integer(minus), zoom, PACKAGE= "Rdbn")
+  })
+
+  if(as_matrix) 
+    dat <- t(matrix(unlist(lapply(c(1:NROW(dat)), function(x) {unlist(dat[[x]])})), ncol=NROW(center)))
+  return(dat)
 }
