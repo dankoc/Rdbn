@@ -48,12 +48,15 @@ opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_p
  bw_data_plus <- load.bigWig(gs_plus)
  bw_data_minus <- load.bigWig(gs_minus)
  
+ print("Collecting training data.")
  center_t <- x_train_bed[,2]+(x_train_bed[,3]-x_train_bed[,2])/2
  x_train <- read_genomic_data(chrom= x_train_bed[,1], center= center_t, bw_data_plus, bw_data_minus)
  
+ print("Collecting predicted data.")
  center_p <- x_predict_bed[,2]+(x_predict_bed[,3]-x_predict_bed[,2])/2
  x_predict <- read_genomic_data(chrom= x_predict_bed[,1], center= center_p, bw_data_plus, bw_data_minus)
 
+ print("Training a model")
 # Fit a feed-forard neural networks w/ each hidden node size.
  mod <- NULL
  acc <- -1
@@ -70,8 +73,8 @@ opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_p
  ## Plot a ROC plot.
  roc_values <- logreg.roc.calc(y_predict, predict(mod, x_predict))
  roc.plot(roc_values, ...)
- #plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
- #plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
+ plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
+ plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
 
 # Return the best performing neural network.
  return(mod)
