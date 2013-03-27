@@ -13,7 +13,7 @@
 read_genomic_data <- function(chrom, center, big_wig_plus, big_wig_minus, as_matrix= TRUE, 
 		zoom= list(window_sizes= as.integer(c(50, 500, 5000)), half_n_windows= as.integer(c(20, 20, 20)))) {
 
-  max_size <- max(window_sizes*half_n_windows)
+  max_size <- max(zoom$window_sizes*zoom$half_n_windows)
 		
   dat <- lapply(unique(as.character(chrom)), function(x) {
    indx <- which(chrom == x)
