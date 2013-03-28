@@ -56,6 +56,12 @@ opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_p
  center_p <- x_predict_bed[,2]+(x_predict_bed[,3]-x_predict_bed[,2])/2
  x_predict <- read_genomic_data(chrom= x_predict_bed[,1], center= center_p, bw_data_plus, bw_data_minus)
 
+pdf("RawDataTraces.pdf")
+ plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
+ plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
+dev.off()
+
+ 
  print("Training a model")
 # Fit a feed-forard neural networks w/ each hidden node size.
  mod <- NULL
