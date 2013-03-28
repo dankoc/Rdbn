@@ -218,7 +218,7 @@ SEXP data_point_to_vect(zoom_params_t zoom, genomic_data_point_t dp) {
       data_point_c[n_windows+k++] = dp.reverse[i][j];
     }
   }
-  UNPROTECT(1);
+//  UNPROTECT(1);
   return(data_point);
 }
 
@@ -260,7 +260,7 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
     SET_VECTOR_ELT(processed_data, i, data_point);
   }
   free_genomic_data_point(dp, zoom);
-  UNPROTECT(1);//+n_centers);
+  UNPROTECT(1+n_centers);
   
   return(processed_data);
 }
