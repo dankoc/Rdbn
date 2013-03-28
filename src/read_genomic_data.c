@@ -158,6 +158,7 @@ void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
   for(int i=0;i<zoom.n_sizes;i++) {
     // Get parameters.  Require value of 0.99 at MAX and 0.01 at 0.
     double max_val= get_max(2*zoom.half_n_windows[i], dp.forward[i], dp.reverse[i]);
+	if(max_val == 0) max_val=1;
     double alpha= 2*log(1/val_at_min - 1) / max_val;
 
 	// Scale values with the logistic function.
