@@ -255,7 +255,7 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
   for(int i=0;i<n_centers;i++) {
     int max_dist= max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
     get_genomic_data(centers[i], zoom, rd, dp); // Get data..
-    //scale_genomic_data(zoom, dp); // Scale data?!
+    scale_genomic_data(zoom, dp); // Scale data?!
     
     // Record ...
     SEXP data_point= data_point_to_vect(zoom, dp);//data_point_to_list(zoom, dp);

@@ -12,7 +12,7 @@ source("roc.calc.R")
 
 ###################################
 ## Vars. 
-n.examp <- 10000
+n.examp <- 1000
 step.size   <- 20
 
 ###################################
@@ -79,12 +79,42 @@ dev.off()
  ## Plot a ROC plot.
  roc_values <- logreg.roc.calc(y_predict, predict(mod, x_predict))
  roc.plot(roc_values, ...)
- plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
- plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
+ # plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
+ # plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
 
 # Return the best performing neural network.
  return(mod)
 }
+
+require(e1071)
+opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, ...) {
+
+# Get the data.
+ bw_data_plus <- load.bigWig(gs_plus)
+ bw_data_minus <- load.bigWig(gs_minus)
+ 
+ print("Collecting training data.")
+ center_t <- x_train_bed[,2]+(x_train_bed[,3]-x_train_bed[,2])/2
+ x_train <- read_genomic_data(chrom= x_train_bed[,1], center= center_t, bw_data_plus, bw_data_minus)
+ 
+ print("Collecting predicted data.")
+ center_p <- x_predict_bed[,2]+(x_predict_bed[,3]-x_predict_bed[,2])/2
+ x_predict <- read_genomic_data(chrom= x_predict_bed[,1], center= center_p, bw_data_plus, bw_data_minus)
+
+ pdf("RawDataTraces.pdf")
+  plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
+  plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
+ dev.off()
+
+ asvm <- svm(x_train, as.factor(y_train))
+
+ pred_acc <- sum(predict(asvm, x_predict) == as.factor(y_train))/NROW(y_predict)
+ print(paste("A:", pred_acc))
+
+ roc_values <- logreg.roc.calc(y_predict, predict(asvm, x_predict))
+ roc.plot(roc_values, ...)
+}
+
 
 ###################################
 ## Data source information.   Trains a model for each data type.
