@@ -97,7 +97,7 @@ groCap.minus.path <- "/usr/data/GROseq.parser/hg19/k562/groseq_tss/groseq_tss_wT
 ## PRO-seq.
 gs_plus  <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_plus.bigWig"#groseq/groseq_plus.bigWig" 
 gs_minus <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_minus.bigWig"#groseq/groseq_minus.bigWig" 
-proSeq_model <- opt.nnet(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, nhidden= c(1), main="PRO-seq")
+proSeq_model <- opt.nnet(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq")
 
 dev.off()
 
