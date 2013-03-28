@@ -42,7 +42,7 @@ rand_test_classes <- c(rep(1, NROW(rand_test_tss_bed)), rep(0, NROW(rand_test_no
 ## Functions to train and evaluate.
 
 ## Optimizes number of hidden nodes, and returns the optimal model.
-opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, nhidden= c(1, 5, 10, 20, seq(40, 200, 40)), ...) {
+opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, nhidden= c(1, seq(40, 200, 40)), ...) {
 
 # Get the data.
  bw_data_plus <- load.bigWig(gs_plus)
@@ -61,7 +61,7 @@ opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_p
  mod <- NULL
  acc <- -1
  for(i in nhidden) {
-  n <- nnet(y= y_train, x= x_train, size=i, MaxNWts= 25000, linout= TRUE) ## size -> num. nodes in the hidden layer.
+  n <- nnet(y= y_train, x= x_train, size=i, MaxNWts= 500000, linout= TRUE) ## size -> num. nodes in the hidden layer.
   pred <- predict(n, x_predict)
   pred[pred >  0.5] <- 1
   pred[pred <= 0.5] <- 0
