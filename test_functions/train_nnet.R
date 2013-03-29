@@ -12,7 +12,7 @@ source("roc.calc.R")
 
 ###################################
 ## Vars. 
-n.examp <- 10000
+n.examp <- 1000
 step.size   <- 20
 
 ###################################
@@ -25,7 +25,7 @@ rand_train_tss_bed <- GROcap_tss_bed[sort(sample(which(GROcap_tss_bed[,6]=="+"),
 ## Get transcription units.
 Gencode <- read.table("/usr/projects/GROseq.parser/annotations/gencode.comprehensive.bed", header=FALSE, skip=1)
 Gencode <- Gencode[Gencode[,11]== "protein_coding",]
-rand_train_notss_bed <- Gencode[sort(sample(which(Gencode[,6]=="+"), n.examp, replace=FALSE)),c(1:3)]
+rand_train_notss_bed <- Gencode[sort(sample(c(1:NROW(Gencode)), n.examp, replace=FALSE)),c(1:3)]
 
 # Combine.
 rand_train_bed <- rbind(rand_train_tss_bed, rand_train_notss_bed)
