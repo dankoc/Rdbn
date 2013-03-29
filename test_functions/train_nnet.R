@@ -12,7 +12,7 @@ source("roc.calc.R")
 
 ###################################
 ## Vars. 
-n.examp <- 1000
+n.examp <- 10000
 step.size   <- 20
 
 ###################################
@@ -113,6 +113,8 @@ opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_tra
 
  roc_values <- logreg.roc.calc(y_predict, predict(asvm, x_predict))
  roc.plot(roc_values, ...)
+ 
+ return(asvm)
 }
 
 
@@ -134,6 +136,8 @@ groCap.minus.path <- "/usr/data/GROseq.parser/hg19/k562/groseq_tss/groseq_tss_wT
 gs_plus  <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_plus.bigWig"#groseq/groseq_plus.bigWig" 
 gs_minus <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_minus.bigWig"#groseq/groseq_minus.bigWig" 
 proSeq_model <- opt.nnet(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq")
+
+proseq_svm_model <- opt.svm(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq")
 
 dev.off()
 
