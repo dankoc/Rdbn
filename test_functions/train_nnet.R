@@ -67,15 +67,13 @@ opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_p
  ## Plot a ROC plot.
  roc_values <- logreg.roc.calc(y_predict, predict(mod, x_predict))
  roc.plot(roc_values, ...)
- # plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
- # plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
 
 # Return the best performing neural network.
  return(mod)
 }
 
 require(e1071)
-opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, ...) {
+opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, print_raw_data= TRUE, ...) {
 
  print("Collecting training data.")
  x_train <- read_genomic_data(x_train_bed, gs_plus, gs_minus)
@@ -83,19 +81,23 @@ opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_tra
  print("Collecting predicted data.")
  x_predict <- read_genomic_data(x_predict_bed, gs_plus, gs_minus)
 
- pdf("RawDataTraces.pdf")
-  plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
-  plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
- dev.off()
-
- asvm <- svm(x_train, as.factor(y_train))
-
- pred_acc <- sum(predict(asvm, x_predict) == as.factor(y_train))/NROW(y_predict)
+ asvm <- svm(x_train, y_train)
+ pred <- predict(asvm, x_predict)
+ pred[pred >  0.5] <- 1
+ pred[pred <= 0.5] <- 0
+ pred_acc <- (sum(pred == y_predict)/NROW(y_predict))
  print(paste("A:", pred_acc))
 
  roc_values <- logreg.roc.calc(y_predict, predict(asvm, x_predict))
  roc.plot(roc_values, ...)
  
+ if(print_raw_data) {
+  plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l")
+  points(colSums(x_train[y_train == 0,]), col="gray", type="l")
+  plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l")
+  plot(colSums(x_predict[y_predict == 0,]), col="gray", type="l")
+ }
+
  return(asvm)
 }
 
@@ -115,16 +117,17 @@ groCap.minus.path <- "/usr/data/GROseq.parser/hg19/k562/groseq_tss/groseq_tss_wT
 #cage.minus.path <- "/usr/data/GROseq.parser/hg19/k562/cage/wgEncodeRikenCageK562NucleusPamMinusSignal.bigWig"
 
 ## GRO-seq
-#gs_plus  <- "/usr/data/GROseq.parser/hg19/k562/groseq/groseq_plus.bigWig" 
-#gs_minus <- "/usr/data/GROseq.parser/hg19/k562/groseq/groseq_minus.bigWig" 
+gs_plus  <- "/usr/data/GROseq.parser/hg19/k562/groseq/groseq_plus.bigWig" 
+gs_minus <- "/usr/data/GROseq.parser/hg19/k562/groseq/groseq_minus.bigWig" 
+proSeq_model <- opt.nnet(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq Nerual Net")
+proseq_svm_model <- opt.svm(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq SVM")
 
 ## PRO-seq.
 ps_plus  <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_plus.bigWig"
 ps_minus <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_minus.bigWig"
 
-proSeq_model <- opt.nnet(gs_plus= ps_plus, gs_minus= ps_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq")
-
-proseq_svm_model <- opt.svm(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq")
+proSeq_model <- opt.nnet(gs_plus= ps_plus, gs_minus= ps_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq Nerual Net")
+proseq_svm_model <- opt.svm(gs_plus= ps_plus, gs_minus= ps_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq SVM")
 
 dev.off()
 
