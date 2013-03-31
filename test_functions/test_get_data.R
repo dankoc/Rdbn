@@ -18,5 +18,5 @@ Gencode <- Gencode[sample(c(1:NROW(Gencode)), 10000),]
 bigWig_gencode_data <- colSums(collect.many(Gencode, bw_data_plus, bw_data_minus, halfWindow= step_size*n_windows, step= step_size))
 Rdbn_gencode_data <- colSums(read_genomic_data(Gencode, gs_plus, gs_minus, window_sizes= step_size, half_nWindows= n_windows))
 
-plot(bigWig_gencode_data, type="l", ylim=c(0, max(c(gencode_data, Rdbn_gencode_data))))
+plot(bigWig_gencode_data, type="l", ylim=c(0, max(c(bigWig_gencode_data, Rdbn_gencode_data))))
 points(Rdbn_gencode_data, type="l", col="red")
