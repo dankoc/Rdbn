@@ -74,7 +74,7 @@ void free_genomic_data_point(genomic_data_point_t dp, zoom_params_t zoom) {
 /*
  * max_dist_from_center --> Returns maximum bounds around a center position.
  */
-int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
+inline int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
   int max_bounds=0;
   for(int i=0;i<n_sizes;i++) {
     int curr_bounds= window_sizes[i]*half_n_windows[i];
@@ -89,7 +89,7 @@ int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
  * Note than since the center base is not included, it needs to be subtracted
  * from the position of interest, if that position falls past the center.
  */
-int get_bin_number(int center, int position, int window_size, int half_n_windows) {
+inline int get_bin_number(int center, int position, int window_size, int half_n_windows) {
   // How to get the bin number with these variables?!
   int left= center-window_size*half_n_windows;
   int right= center+window_size*half_n_windows;
@@ -153,7 +153,7 @@ double get_max(int n, double* data1, double* data2) {
  *      Right now, \beta= MAX/2 (defines position of 0.5).
  *                 \alpha= 2*log(1/0.01 - 1)/MAX  (Signal at 0 reads set to 0.01). 
  */
-void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
+inline void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
   double val_at_min=0.01;
   for(int i=0;i<zoom.n_sizes;i++) {
     // Get parameters.  Require value of 0.99 at MAX and 0.01 at 0.
@@ -173,7 +173,7 @@ void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
 /*
  * Moves C genomic_data_point_t type to a SEXP for return to R.
  */
-SEXP data_point_to_list(zoom_params_t zoom, genomic_data_point_t dp) {
+inline SEXP data_point_to_r_list(zoom_params_t zoom, genomic_data_point_t dp) {
   SEXP data_point;
   protect(data_point = allocVector(VECSXP, 2*zoom.n_sizes));
   
@@ -202,7 +202,7 @@ SEXP data_point_to_list(zoom_params_t zoom, genomic_data_point_t dp) {
  * Moves C genomic_data_point_t type to a SEXP for return to R.
  * This function generates a single vector.
  */
-SEXP data_point_to_vect(zoom_params_t zoom, genomic_data_point_t dp) {
+inline SEXP data_point_to_r_vect(zoom_params_t zoom, genomic_data_point_t dp) {
   SEXP data_point;
   
   // Count  number of windows to allocate R vector... 
@@ -258,7 +258,7 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
     scale_genomic_data(zoom, dp); // Scale data?!
     
     // Record ...
-    SEXP data_point= data_point_to_vect(zoom, dp);//data_point_to_list(zoom, dp);
+    SEXP data_point= data_point_to_r_vect(zoom, dp);//data_point_to_list(zoom, dp);
     SET_VECTOR_ELT(processed_data, i, data_point);
   }
   free_genomic_data_point(dp, zoom);

@@ -49,7 +49,7 @@ opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_p
  bw_data_minus <- load.bigWig(gs_minus)
  
  print("Collecting training data.")
- center_t <- x_train_bed[,2]+(x_train_bed[,3]-x_train_bed[,2])/2
+ center_t <- (x_train_bed[,3]+x_train_bed[,2])/2
  x_train <- read_genomic_data(chrom= x_train_bed[,1], center= center_t, bw_data_plus, bw_data_minus)
  
  print("Collecting predicted data.")
@@ -94,7 +94,7 @@ opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_tra
  bw_data_minus <- load.bigWig(gs_minus)
  
  print("Collecting training data.")
- center_t <- x_train_bed[,2]+(x_train_bed[,3]-x_train_bed[,2])/2
+ center_t <- (x_train_bed[,3]+x_train_bed[,2])/2
  x_train <- read_genomic_data(chrom= x_train_bed[,1], center= center_t, bw_data_plus, bw_data_minus)
  
  print("Collecting predicted data.")
