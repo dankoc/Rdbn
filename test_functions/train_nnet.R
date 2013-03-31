@@ -20,7 +20,7 @@ step.size   <- 20
 
 ## Train on whole genome, using Andre's GRO-cap TSS 'predictions' as the true set.
 GROcap_tss_bed <- read.table("/usr/projects/GROseq.parser/tss_new/hg19.k562.new_hmm2.bed", skip=1)
-rand_train_tss_bed <- GROcap_tss_bed[sort(sample(which(GROcap_tss_bed[,6]=="+"), n.examp, replace=FALSE)),c(1:3)]  ## Train from just he plus strand ... we have enough, and the negative strand expected to look the same.
+rand_train_tss_bed <- GROcap_tss_bed[sort(sample(c(1:NROW(GROcap_tss_bed)), n.examp, replace=FALSE)),c(1:3)]  ## Train from just he plus strand ... we have enough, and the negative strand expected to look the same.
 
 ## Get transcription units.
 Gencode <- read.table("/usr/projects/GROseq.parser/annotations/gencode.comprehensive.bed", header=FALSE, skip=1)
@@ -33,8 +33,8 @@ rand_train_classes <- c(rep(1, NROW(rand_train_tss_bed)), rep(0, NROW(rand_train
 
 # Now make a large test set for evaluating preformance. 
 # IDEA: Try to replace this with manually curated set.  Optimize w.r.t. the manually curated set.
-rand_test_tss_bed <- GROcap_tss_bed[sort(sample(which(GROcap_tss_bed[,6]=="+"), n.examp, replace=FALSE)),c(1:3)]  ## Evaluate.
-rand_test_notss_bed<- Gencode[sort(sample(which(Gencode[,6]=="+"), n.examp, replace=FALSE)),c(1:3)]
+rand_test_tss_bed <- GROcap_tss_bed[sort(sample(c(1:NROW(Gencode)), n.examp, replace=FALSE)),c(1:3)]  ## Evaluate.
+rand_test_notss_bed<- Gencode[sort(sample(c(1:NROW(GROcap_tss_bed)), n.examp, replace=FALSE)),c(1:3)]
 rand_test_bed <- rbind(rand_test_tss_bed, rand_test_notss_bed)
 rand_test_classes <- c(rep(1, NROW(rand_test_tss_bed)), rep(0, NROW(rand_test_notss_bed)))
 
