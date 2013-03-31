@@ -42,7 +42,7 @@ rand_test_classes <- c(rep(1, NROW(rand_test_tss_bed)), rep(0, NROW(rand_test_no
 ## Functions to train and evaluate.
 
 ## Optimizes number of hidden nodes, and returns the optimal model.
-opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, nhidden= c(5, 10, 25, 50), ...) {
+opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, nhidden= c(5, 50, 100, 200), ...) {
 
  print("Collecting training data.")
  x_train <- read_genomic_data(x_train_bed, gs_plus, gs_minus)
@@ -92,10 +92,10 @@ opt.svm <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_pr
  roc.plot(roc_values, ...)
  
  if(print_raw_data) {
-  plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l")
-  points(colSums(x_train[y_train == 0,]), col="gray", type="l")
-  plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l")
-  plot(colSums(x_predict[y_predict == 0,]), col="gray", type="l")
+  plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
+  points(colSums(x_train[y_train == 0,]), col="gray", type="l", ...)
+  plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
+  points(colSums(x_predict[y_predict == 0,]), col="gray", type="l", ...)
  }
 
  return(asvm)
