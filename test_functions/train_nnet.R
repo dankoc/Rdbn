@@ -44,24 +44,12 @@ rand_test_classes <- c(rep(1, NROW(rand_test_tss_bed)), rep(0, NROW(rand_test_no
 ## Optimizes number of hidden nodes, and returns the optimal model.
 opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, nhidden= c(1, seq(40, 200, 40)), ...) {
 
-# Get the data.
- bw_data_plus <- load.bigWig(gs_plus)
- bw_data_minus <- load.bigWig(gs_minus)
- 
  print("Collecting training data.")
- center_t <- (x_train_bed[,3]+x_train_bed[,2])/2
- x_train <- read_genomic_data(chrom= x_train_bed[,1], center= center_t, bw_data_plus, bw_data_minus)
+ x_train <- read_genomic_data(x_train_bed, gs_plus, gs_minus)
  
  print("Collecting predicted data.")
- center_p <- x_predict_bed[,2]+(x_predict_bed[,3]-x_predict_bed[,2])/2
- x_predict <- read_genomic_data(chrom= x_predict_bed[,1], center= center_p, bw_data_plus, bw_data_minus)
+ x_predict <- read_genomic_data(x_predict_bed, gs_plus, gs_minus)
 
-pdf("RawDataTraces.pdf")
- plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
- plot(colSums(x_predict[y_predict == 1,]), ylab="Prediction data", type="l", ...)
-dev.off()
-
- 
  print("Training a model")
 # Fit a feed-forard neural networks w/ each hidden node size.
  mod <- NULL
@@ -89,17 +77,11 @@ dev.off()
 require(e1071)
 opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, ...) {
 
-# Get the data.
- bw_data_plus <- load.bigWig(gs_plus)
- bw_data_minus <- load.bigWig(gs_minus)
- 
  print("Collecting training data.")
- center_t <- (x_train_bed[,3]+x_train_bed[,2])/2
- x_train <- read_genomic_data(chrom= x_train_bed[,1], center= center_t, bw_data_plus, bw_data_minus)
+ x_train <- read_genomic_data(x_train_bed, gs_plus, gs_minus)
  
  print("Collecting predicted data.")
- center_p <- x_predict_bed[,2]+(x_predict_bed[,3]-x_predict_bed[,2])/2
- x_predict <- read_genomic_data(chrom= x_predict_bed[,1], center= center_p, bw_data_plus, bw_data_minus)
+ x_predict <- read_genomic_data(x_predict_bed, gs_plus, gs_minus)
 
  pdf("RawDataTraces.pdf")
   plot(colSums(x_train[y_train == 1,]), ylab="Training data", type="l", ...)
@@ -122,20 +104,25 @@ opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_tra
 ## Data source information.   Trains a model for each data type.
 pdf("GROseq.plots.pdf")
 ## TSS. 
-#  GRO-cap.
-groCap.plus.path  <- "/usr/data/GROseq.parser/hg19/k562/groseq_tss/groseq_tss_wTAP_plus.bigWig" #bw.files[["groCap.plus"]] <-  load.bigWig(groCap.plus.path)#groCap.plus <-
-groCap.minus.path <- "/usr/data/GROseq.parser/hg19/k562/groseq_tss/groseq_tss_wTAP_minus.bigWig" #bw.files[["groCap.minus"]]<- load.bigWig(groCap.minus.path)#groCap.minus <-
+## GRO-cap.
+groCap.plus.path  <- "/usr/data/GROseq.parser/hg19/k562/groseq_tss/groseq_tss_wTAP_plus.bigWig" 
+groCap.minus.path <- "/usr/data/GROseq.parser/hg19/k562/groseq_tss/groseq_tss_wTAP_minus.bigWig"
 
 #groCap.minus.model <- opt.nnet(datapath= groCap.minus.path, rand.train.bed, rand.test.bed, rand.train.classes, main="GRO-cap Minus")
 
-#  Cage.
+## Cage.
 #cage.plus.path  <- "/usr/data/GROseq.parser/hg19/k562/cage/wgEncodeRikenCageK562NucleusPamPlusSignal.bigWig"
 #cage.minus.path <- "/usr/data/GROseq.parser/hg19/k562/cage/wgEncodeRikenCageK562NucleusPamMinusSignal.bigWig"
 
+## GRO-seq
+#gs_plus  <- "/usr/data/GROseq.parser/hg19/k562/groseq/groseq_plus.bigWig" 
+#gs_minus <- "/usr/data/GROseq.parser/hg19/k562/groseq/groseq_minus.bigWig" 
+
 ## PRO-seq.
-gs_plus  <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_plus.bigWig"#groseq/groseq_plus.bigWig" 
-gs_minus <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_minus.bigWig"#groseq/groseq_minus.bigWig" 
-proSeq_model <- opt.nnet(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq")
+ps_plus  <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_plus.bigWig"
+ps_minus <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_minus.bigWig"
+
+proSeq_model <- opt.nnet(gs_plus= ps_plus, gs_minus= ps_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq")
 
 proseq_svm_model <- opt.svm(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq")
 

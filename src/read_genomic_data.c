@@ -10,6 +10,7 @@
 #include <R_ext/Applic.h>
 #include <assert.h>
 #include "read_genomic_data.h"
+#include "bigwiglib.h"
 
 /*
  * set_zoom_params --> Creates a new zoom_params_t data type.
@@ -225,12 +226,27 @@ inline SEXP data_point_to_r_vect(zoom_params_t zoom, genomic_data_point_t dp) {
 }
 
 /*
+ * Reads the specified region from a bigWig file.
+ */
+rd read_from_bigWig_r(const char *chrom, int start, int end, bigwig_t bw_fwd, bigwig_t bw_rev) {
+  raw_data_t rd;
+  int out_length, out_is_blank;
+
+  // Read in raw data from the bigWig.
+  rd.forward= bigwig_readi(bw_fwd, chrom, start, end, 1, 1, &out_length, &out_is_blank);
+  rd.reverse= bigwig_readi(bw_rev, chrom, start, end, 1, 1, &out_length, &out_is_blank);
+  rd.size= Rf_nrows(out_length);
+
+  return(rd);
+}
+
+/*
  * R entry point ... for getting a particular center (or vector of centers).
  *
  * Switch to R vector using:
  * t(matrix(unlist(list(c(1:10), c(11:20), c(0:9))), ncol=3))
  */
-SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r, SEXP model_r) {
+SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, SEXP bigwig_minus_file_r, SEXP model_r) {
   int n_centers = Rf_nrows(centers_r);
   int *centers = INTEGER(centers_r);
   
@@ -239,13 +255,11 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
   zoom.n_sizes= Rf_nrows(VECTOR_ELT(model_r, 0));
   zoom.window_sizes= INTEGER(VECTOR_ELT(model_r, 0));
   zoom.half_n_windows= INTEGER(VECTOR_ELT(model_r, 1));
-  
-  // Set up raw data to work with C.
-  int n_positions= Rf_nrows(plus_counts_r);
-  raw_data_t rd;
-  rd.size= Rf_nrows(plus_counts_r);
-  rd.forward= INTEGER(plus_counts_r);
-  rd.reverse= INTEGER(minus_counts_r);
+
+  // Open bigWig files.
+  assert(is_bigwig(CHAR(STRING_ELT(bigwig_plus_file_r, indx)))==1 && is_bigwig(CHAR(STRING_ELT(bigwig_minus_file_r, indx)))==1);
+  bigWig_t bw_fwd = bigwig_load(CHAR(STRING_ELT(bigwig_plus_file_r,  indx)), ".");
+  bigWig_t bw_rev = bigwig_load(CHAR(STRING_ELT(bigwig_minus_file_r, indx)), ".");
   
   // Set up return variable.
   genomic_data_point_t dp= alloc_genomic_data_point(zoom);
@@ -253,8 +267,10 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
   PROTECT(processed_data = allocVector(VECSXP, n_centers));
 
   for(int i=0;i<n_centers;i++) {
+    // Read raw data, do windowing specified in model_r, and scale.
     int max_dist= max_dist_from_center(zoom.n_sizes, zoom.window_sizes, zoom.half_n_windows);
-    get_genomic_data(centers[i], zoom, rd, dp); // Get data..
+    raw_data_t rd= read_from_bigWig_r(CHAR(STRING_ELT(chrom_r,i)), centers[i]-max_dist, centers[i]+max_dist, bw_fwd, bw_rev);
+    get_genomic_data(max_dist, zoom, rd, dp); // Data center should be @ max_dist.  Total window should be 2*max_dist.
     scale_genomic_data(zoom, dp); // Scale data?!
     
     // Record ...
