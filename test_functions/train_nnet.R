@@ -42,7 +42,7 @@ rand_test_classes <- c(rep(1, NROW(rand_test_tss_bed)), rep(0, NROW(rand_test_no
 ## Functions to train and evaluate.
 
 ## Optimizes number of hidden nodes, and returns the optimal model.
-opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, nhidden= c(1, seq(40, 200, 40)), ...) {
+opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, nhidden= c(5, 10, 25, 50), ...) {
 
  print("Collecting training data.")
  x_train <- read_genomic_data(x_train_bed, gs_plus, gs_minus)
