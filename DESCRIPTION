@@ -4,7 +4,7 @@ Date: 2013-02-05
 Title: Fast code to learn deep belief networks in R.
 Author: Charles G. Danko <dankoc@gmail.com>
 Maintainer: Charles G. Danko <dankoc@gmail.com>
-Depends: R (>= 2.6), multicore, bigWig
+Depends: R (>= 2.6)
 LinkingTo:
 Suggests:
 Description: This package is an analysis pipeline for the analysis of GRO-seq data.
