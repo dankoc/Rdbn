@@ -75,7 +75,7 @@ void free_genomic_data_point(genomic_data_point_t dp, zoom_params_t zoom) {
 /*
  * max_dist_from_center --> Returns maximum bounds around a center position.
  */
-inline int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
+int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows) {
   int max_bounds=0;
   for(int i=0;i<n_sizes;i++) {
     int curr_bounds= window_sizes[i]*half_n_windows[i];
@@ -90,7 +90,7 @@ inline int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_wind
  * Note than since the center base is not included, it needs to be subtracted
  * from the position of interest, if that position falls past the center.
  */
-inline int get_bin_number(int center, int position, int window_size, int half_n_windows) {
+int get_bin_number(int center, int position, int window_size, int half_n_windows) {
   // How to get the bin number with these variables?!
   int left= center-window_size*half_n_windows;
   int right= center+window_size*half_n_windows;
@@ -154,7 +154,7 @@ double get_max(int n, double* data1, double* data2) {
  *      Right now, \beta= MAX/2 (defines position of 0.5).
  *                 \alpha= 2*log(1/0.01 - 1)/MAX  (Signal at 0 reads set to 0.01). 
  */
-inline void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
+void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
   double val_at_min=0.01;
   for(int i=0;i<zoom.n_sizes;i++) {
     // Get parameters.  Require value of 0.99 at MAX and 0.01 at 0.
@@ -174,7 +174,7 @@ inline void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp) {
 /*
  * Moves C genomic_data_point_t type to a SEXP for return to R.
  */
-inline SEXP data_point_to_r_list(zoom_params_t zoom, genomic_data_point_t dp) {
+SEXP data_point_to_r_list(zoom_params_t zoom, genomic_data_point_t dp) {
   SEXP data_point;
   protect(data_point = allocVector(VECSXP, 2*zoom.n_sizes));
   
@@ -203,7 +203,7 @@ inline SEXP data_point_to_r_list(zoom_params_t zoom, genomic_data_point_t dp) {
  * Moves C genomic_data_point_t type to a SEXP for return to R.
  * This function generates a single vector.
  */
-inline SEXP data_point_to_r_vect(zoom_params_t zoom, genomic_data_point_t dp) {
+SEXP data_point_to_r_vect(zoom_params_t zoom, genomic_data_point_t dp) {
   SEXP data_point;
   
   // Count  number of windows to allocate R vector... 
@@ -228,14 +228,14 @@ inline SEXP data_point_to_r_vect(zoom_params_t zoom, genomic_data_point_t dp) {
 /*
  * Reads the specified region from a bigWig file.
  */
-rd read_from_bigWig_r(const char *chrom, int start, int end, bigwig_t bw_fwd, bigwig_t bw_rev) {
+raw_data_t read_from_bigWig_r(const char *chrom, int start, int end, bigWig_t *bw_fwd, bigWig_t *bw_rev) {
   raw_data_t rd;
   int out_length, out_is_blank;
 
   // Read in raw data from the bigWig.
   rd.forward= bigwig_readi(bw_fwd, chrom, start, end, 1, 1, &out_length, &out_is_blank);
   rd.reverse= bigwig_readi(bw_rev, chrom, start, end, 1, 1, &out_length, &out_is_blank);
-  rd.size= Rf_nrows(out_length);
+  rd.size= out_length;
 
   return(rd);
 }
@@ -257,9 +257,9 @@ SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, S
   zoom.half_n_windows= INTEGER(VECTOR_ELT(model_r, 1));
 
   // Open bigWig files.
-  assert(is_bigwig(CHAR(STRING_ELT(bigwig_plus_file_r, indx)))==1 && is_bigwig(CHAR(STRING_ELT(bigwig_minus_file_r, indx)))==1);
-  bigWig_t bw_fwd = bigwig_load(CHAR(STRING_ELT(bigwig_plus_file_r,  indx)), ".");
-  bigWig_t bw_rev = bigwig_load(CHAR(STRING_ELT(bigwig_minus_file_r, indx)), ".");
+  assert(is_bigwig(CHAR(STRING_ELT(bigwig_plus_file_r, 0)))==1 && is_bigwig(CHAR(STRING_ELT(bigwig_minus_file_r, 0)))==1);
+  bigWig_t *bw_fwd = bigwig_load(CHAR(STRING_ELT(bigwig_plus_file_r,  0)), ".");
+  bigWig_t *bw_rev = bigwig_load(CHAR(STRING_ELT(bigwig_minus_file_r, 0)), ".");
   
   // Set up return variable.
   genomic_data_point_t dp= alloc_genomic_data_point(zoom);
