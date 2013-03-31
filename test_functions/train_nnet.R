@@ -73,7 +73,7 @@ opt.nnet <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_p
 }
 
 require(e1071)
-opt.svm(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, print_raw_data= TRUE, ...) {
+opt.svm <- function(gs_plus, gs_minus, x_train_bed, x_predict_bed, y_train, y_predict= y_train, print_raw_data= TRUE, ...) {
 
  print("Collecting training data.")
  x_train <- read_genomic_data(x_train_bed, gs_plus, gs_minus)
@@ -119,15 +119,14 @@ groCap.minus.path <- "/usr/data/GROseq.parser/hg19/k562/groseq_tss/groseq_tss_wT
 ## GRO-seq
 gs_plus  <- "/usr/data/GROseq.parser/hg19/k562/groseq/groseq_plus.bigWig" 
 gs_minus <- "/usr/data/GROseq.parser/hg19/k562/groseq/groseq_minus.bigWig" 
-proSeq_model <- opt.nnet(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq Nerual Net")
-proseq_svm_model <- opt.svm(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq SVM")
+proseq_svm_model <- opt.svm(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="GRO-seq SVM")
+proSeq_model <- opt.nnet(gs_plus= gs_plus, gs_minus= gs_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="GRO-seq Nerual Net")
 
 ## PRO-seq.
 ps_plus  <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_plus.bigWig"
 ps_minus <- "/usr/data/GROseq.parser/hg19/k562/proseq_celastrol_prelim/celastrol_proseq_0min_minus.bigWig"
-
-proSeq_model <- opt.nnet(gs_plus= ps_plus, gs_minus= ps_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq Nerual Net")
 proseq_svm_model <- opt.svm(gs_plus= ps_plus, gs_minus= ps_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq SVM")
+proSeq_model <- opt.nnet(gs_plus= ps_plus, gs_minus= ps_minus, x_train_bed= rand_train_bed, x_predict_bed= rand_test_bed, y_train= rand_train_classes, main="PRO-seq Nerual Net")
 
 dev.off()
 
