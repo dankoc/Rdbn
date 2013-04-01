@@ -67,7 +67,7 @@ void init_rbm(rbm_t *rbm, double learning_rate, double expected_frequency_on) {
 	  if(i==0) // Only do this once.
 	    rbm[0].bias_inputs[j]= expected_frequency_on; // log[pi=(1pi)] where pi is the proportion of training vectors in which unit i is on.
     }
-    rbm[0].bias_outputs= 0.0d;
+    rbm[0].bias_outputs[i]= 0.0d;
   }
 }
 
@@ -81,6 +81,13 @@ void init_rbm(rbm_t *rbm, double learning_rate, double expected_frequency_on) {
 void sample_states(double *prob, int n_states) {
   for(int i=0;i<n_states;i++)
     prob[i]= prob[i]>runif(0.0d, 1.0d)?1:0;
+}
+
+double *sample_states_cpy(double *prob, int n_states) {
+  double *states = (double*)calloc(n_states, sizeof(double));
+  for(int i=0;i<n_states;i++)
+    states[i]= prob[i]>runif(0.0d, 1.0d)?1:0;
+  return(states);
 }
 
 double logistic_function(double value) {
@@ -231,7 +238,9 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
     clamp_input(rbm, input_example[i], output_recon);
 	
    // Compute <vihj>_data ... in this computation, sample random states (?!).
-   compute_prod_matrix(rbm, sample_states(output_recon, rbm[0].n_outputs), input_example[i], data);
+   double* output_states= sample_states_cpy(output_recon, rbm[0].n_outputs);
+   compute_prod_matrix(rbm, output_states, input_example[i], data);
+   free(output_states);
    
    // Run Gibbs sampling for CDn steps.
    for(int cd=0;cd<CDn;cd++) {
