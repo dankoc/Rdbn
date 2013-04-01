@@ -177,36 +177,31 @@ void free_matrix(double **matrix, int ncols) {
   free(matrix);
 }
  
-void compute_prod_matrix(rbm_t *rbm, double *output, double *input, double **delta_weights) {
+void compute_freq_matrix(rbm_t *rbm, double *output, double *input, double **delta_weights) {
   // Compute the frequency with which output_i and input_j occur together.
   for(int i=0;i<rbm[0].n_outputs;i++) {
     for(int j=0;j<rbm[0].n_inputs;j++) {
-      // CGD: NOT SURE OF THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       delta_weights[i][j]+= output[i]*input[j]; // TODO: Shouldn't we be summing these?!?!?!  Sounds like the training manual wants a product?!
     }
   }
 }
 
 /*
- * Subtract matrix2 from matrix1.  The result will be in matrix1.
+ * Subtract each element of recon from data.  The result will be passed back in data.
  */
-void compute_matrix_difference(rbm_t *rbm, double **matrix1, double **matrix2) {
-  for(int i=0;i<rbm[0].n_outputs;i++) {
-    for(int j=0;j<rbm[0].n_inputs;j++) {
-      matrix1[i][j]-= matrix2[i][j];
-    }
-  }
+void compute_delta_w(rbm_t *rbm, double **data, double **recon) {
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    for(int j=0;j<rbm[0].n_inputs;j++)
+      data[i][j]-= recon[i][j];
 }
 
 /*
  * Add matrix1 and matrix2.  The result will be in matrix1.
  */
-void compute_matrix_sum(rbm_t *rbm, double **matrix1, double **matrix2) {
-  for(int i=0;i<rbm[0].n_outputs;i++) {
-    for(int j=0;j<rbm[0].n_inputs;j++) {
-      matrix1[i][j]+= matrix2[i][j];
-    }
-  }
+void apply_delta_w(rbm_t *rbm, double **io_weights, double **delta_w) {
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    for(int j=0;j<rbm[0].n_inputs;j++)
+      io_weights[i][j]+= rbm[0].learning_rate*delta_w[i][j];
 }
 
 
@@ -253,8 +248,8 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
 
   }
   // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon)
-  compute_matrix_difference(rbm, data, recon);
-  compute_matrix_sum(rbm, rbm[0].io_weights, data);
+  compute_delta_w(rbm, data, recon);
+  apply_delta_w(rbm, rbm[0].io_weights, data);
   
   // Cleanput temporary variables ...  
   free(output_recon);
