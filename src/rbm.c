@@ -9,6 +9,7 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
 #include <assert.h>
+#include "bigwiglib.h"
 #include "read_genomic_data.h"
 #include "rbm.h"
 
@@ -22,27 +23,27 @@
 rbm_t *alloc_rbm(int n_inputs, int n_outputs) {
   rbm_t *rbm =  (rbm_t*)malloc(sizeof(rbm_t));
   
-  rbm.n_inputs= n_inputs;
-  rbm.n_outputs= n_outputs;
-  rbm.bias_inputs= (double*)calloc(n_inputs, sizeof(double));
-  rbm.bias_outputs= (double*)calloc(n_outputs, sizeof(double));
+  rbm[0].n_inputs= n_inputs;
+  rbm[0].n_outputs= n_outputs;
+  rbm[0].bias_inputs= (double*)calloc(n_inputs, sizeof(double));
+  rbm[0].bias_outputs= (double*)calloc(n_outputs, sizeof(double));
   
-  rbm.io_weights= (double**)calloc(n_outputs, sizeof(double*));
+  rbm[0].io_weights= (double**)calloc(n_outputs, sizeof(double*));
   for(int i=0;i<n_outputs;i++)
-    rbm.io_weights[i] = (double*)calloc(n_inputs, sizeof(double));
+    rbm[0].io_weights[i] = (double*)calloc(n_inputs, sizeof(double));
 
 	return(rbm);
 }
 
 /*
- *  Frees an allocated RBM.
+ *  Frees an allocated rbm[0].
  */
 void free_rbm(rbm_t *rbm) {
-  for(int i=0;i<rbm.n_outputs;i++)
-    free(rbm.io_weights[i]);
-  free(rbm.io_weights);
-  free(rbm.bias_inputs);
-  free(rbm.bias_outputs);
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    free(rbm[0].io_weights[i]);
+  free(rbm[0].io_weights);
+  free(rbm[0].bias_inputs);
+  free(rbm[0].bias_outputs);
   free(rbm);
 }
 
@@ -53,20 +54,20 @@ void free_rbm(rbm_t *rbm) {
  *
  *  Arguments: 
  *    rbm                   --> Restricted boltzman machine object.
- *    learning_rate         --> Learning rate of the RBM.
+ *    learning_rate         --> Learning rate of the rbm[0].
  *    expected_frequency_on --> If possible, set to log[pi=(1pi)] where pi is the proportion of training vectors in which unit i is on.
  *
  */
 void init_rbm(rbm_t *rbm, double learning_rate, double expected_frequency_on) {
-  rbm.learning_rate= learning_rate;
+  rbm[0].learning_rate= learning_rate;
 
-  for(int i=0;i<rbm.n_outputs;i++) {
-    for(int j=0;j<rbm.n_inputs;j++) {
-	  rbm.io_weights[i][j]= rnorm(0.0d, 0.01d);
+  for(int i=0;i<rbm[0].n_outputs;i++) {
+    for(int j=0;j<rbm[0].n_inputs;j++) {
+	  rbm[0].io_weights[i][j]= rnorm(0.0d, 0.01d);
 	  if(i==0) // Only do this once.
-	    rbm.bias_inputs[j]= expected_frequency_on; // log[pi=(1pi)] where pi is the proportion of training vectors in which unit i is on.
+	    rbm[0].bias_inputs[j]= expected_frequency_on; // log[pi=(1pi)] where pi is the proportion of training vectors in which unit i is on.
     }
-    rbm.bias_outputs= 0.0d;
+    rbm[0].bias_outputs= 0.0d;
   }
 }
 
@@ -92,9 +93,9 @@ double logistic_function(double value) {
  *
  ************************************************************************************/
  double get_input_prob(rbm_t *rbm, int input_index, double *output) {
-  double prob= rbm.bias_inputs[i];
-  for(int i=0;i<rbm.n_outputs;i++)
-    prob+= output[i]*rbm.io_weights[i][input_index];
+  double prob= rbm[0].bias_inputs[input_index];
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    prob+= output[i]*rbm[0].io_weights[i][input_index];
   return(logistic_function(prob));
 }
  
@@ -106,13 +107,13 @@ double logistic_function(double value) {
  *    output --> The value of all output nodes ... Assumed to be a probability (i.e. [0,1], inclusive).
  */
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input) {
-  for(int i=0;i<rbm.n_inputs;i++) // Get prob. of input node by summing over output states.
+  for(int i=0;i<rbm[0].n_inputs;i++) // Get prob. of input node by summing over output states.
 	resulting_input[i]= get_input_prob(rbm, i, output);
 }
 
 // void clamp_output_sample(rbm_t *rbm, double *output, double *resulting_input) {
   // clamp_output(rbm, output, resulting_input);
-  // sample_states(resulting_input, rbm.n_inputs);
+  // sample_states(resulting_input, rbm[0].n_inputs);
 // }
 
 /************************************************************************************
@@ -121,9 +122,9 @@ void clamp_output(rbm_t *rbm, double *output, double *resulting_input) {
  *
  ************************************************************************************/
  double get_output_prob(rbm_t *rbm, int output_index, double *input) {
-  double prob= rbm.bias_inputs[i];
-  for(int i=0;i<rbm.n_inputs;i++)
-    prob+= input[i]*rbm.io_weights[output_index][i];
+  double prob= rbm[0].bias_outputs[output_index];
+  for(int i=0;i<rbm[0].n_inputs;i++)
+    prob+= input[i]*rbm[0].io_weights[output_index][i];
   return(logistic_function(prob));
 }
  
@@ -135,13 +136,13 @@ void clamp_output(rbm_t *rbm, double *output, double *resulting_input) {
  *    input  --> The value of all input nodes ... Assumed to be a probability (i.e. [0,1], inclusive).
  */
 void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
-  for(int i=0;i<rbm.n_outputs;i++) // Get prob. of input node by summing over output states.
+  for(int i=0;i<rbm[0].n_outputs;i++) // Get prob. of input node by summing over output states.
 	resulting_output[i]= get_output_prob(rbm, i, input);
 }
 
 // void clamp_input_sample(rbm_t *rbm, double *input, double *resulting_output) {
   // clamp_input(rbm, input, resulting_output); 
-  // sample_states(resulting_output, rbm.n_outputs);
+  // sample_states(resulting_output, rbm[0].n_outputs);
 // }
 
 /************************************************************************************
@@ -151,7 +152,7 @@ void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
  *  but if taining is slow going, this is something to optimize.
  */
 double **alloc_matrix(int ncols, int nrows) {
-  double **prod_mat= (double*)calloc(ncols, sizeof(double*));
+  double **prod_mat= (double**)calloc(ncols, sizeof(double*));
   for(int i=0;i<ncols;i++)
     prod_mat[i]= (double*)calloc(nrows, sizeof(double*));
   return(prod_mat);
@@ -171,8 +172,8 @@ void free_matrix(double **matrix, int ncols) {
  
 void compute_prod_matrix(rbm_t *rbm, double *output, double *input, double **delta_weights) {
   // Compute the frequency with which output_i and input_j occur together.
-  for(int i=0;i<rbm.n_outputs;i++) {
-    for(int j=0;j<rbm.n_inputs;j++) {
+  for(int i=0;i<rbm[0].n_outputs;i++) {
+    for(int j=0;j<rbm[0].n_inputs;j++) {
       // CGD: NOT SURE OF THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       delta_weights[i][j]+= output[i]*input[j]; // TODO: Shouldn't we be summing these?!?!?!  Sounds like the training manual wants a product?!
     }
@@ -183,8 +184,8 @@ void compute_prod_matrix(rbm_t *rbm, double *output, double *input, double **del
  * Subtract matrix2 from matrix1.  The result will be in matrix1.
  */
 void compute_matrix_difference(rbm_t *rbm, double **matrix1, double **matrix2) {
-  for(int i=0;i<rbm.n_outputs;i++) {
-    for(int j=0;j<rbm.n_inputs;j++) {
+  for(int i=0;i<rbm[0].n_outputs;i++) {
+    for(int j=0;j<rbm[0].n_inputs;j++) {
       matrix1[i][j]-= matrix2[i][j];
     }
   }
@@ -194,8 +195,8 @@ void compute_matrix_difference(rbm_t *rbm, double **matrix1, double **matrix2) {
  * Add matrix1 and matrix2.  The result will be in matrix1.
  */
 void compute_matrix_sum(rbm_t *rbm, double **matrix1, double **matrix2) {
-  for(int i=0;i<rbm.n_outputs;i++) {
-    for(int j=0;j<rbm.n_inputs;j++) {
+  for(int i=0;i<rbm[0].n_outputs;i++) {
+    for(int j=0;j<rbm[0].n_inputs;j++) {
       matrix1[i][j]+= matrix2[i][j];
     }
   }
@@ -217,20 +218,20 @@ void compute_matrix_sum(rbm_t *rbm, double **matrix1, double **matrix2) {
 void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
   // Init. matrices that will be the two components of \delta w_{ij}
   // CGD: Do I really need 2?!  If I'm adding in compute_prod_matrix, I can just subtract in each step...
-  double **data= alloc_matrix(rbm.n_outputs, rbm.n_inputs);
-  double **recon= alloc_matrix(rbm.n_outputs, rbm.n_inputs);
-  init_matrix(data, rbm.n_outputs, rbm.n_inputs);
-  init_matrix(recon, rbm.n_outputs, rbm.n_inputs);
+  double **data= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);
+  double **recon= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);
+  init_matrix(data, rbm[0].n_outputs, rbm[0].n_inputs);
+  init_matrix(recon, rbm[0].n_outputs, rbm[0].n_inputs);
   
-  double *output_recon= (double*)calloc(rbm.n_outputs, sizeof(double));
-  double *input_recon= (double*)calloc(rbm.n_inputs, sizeof(double));
+  double *output_recon= (double*)calloc(rbm[0].n_outputs, sizeof(double));
+  double *input_recon= (double*)calloc(rbm[0].n_inputs, sizeof(double));
   
   for(int i=0;i<batch_size;i++) { // Foreach item in the batch.
     // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
     clamp_input(rbm, input_example[i], output_recon);
 	
    // Compute <vihj>_data ... in this computation, sample random states (?!).
-   compute_prod_matrix(rbm, sample_states(obs_output, rbm.n_outputs), input_example[i], data);
+   compute_prod_matrix(rbm, sample_states(output_recon, rbm[0].n_outputs), input_example[i], data);
    
    // Run Gibbs sampling for CDn steps.
    for(int cd=0;cd<CDn;cd++) {
@@ -244,13 +245,13 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
   }
   // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon)
   compute_matrix_difference(rbm, data, recon);
-  compute_matrix_sum(rbm, rbm.io_weights, data);
+  compute_matrix_sum(rbm, rbm[0].io_weights, data);
   
   // Cleanput temporary variables ...  
   free(output_recon);
   free(input_recon);
-  free_matrix(data);
-  free_matrix(recon);
+  free_matrix(data, rbm[0].n_outputs);
+  free_matrix(recon, rbm[0].n_outputs);
 }
 
 

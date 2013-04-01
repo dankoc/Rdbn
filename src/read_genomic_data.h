@@ -1,3 +1,5 @@
+#include "bigwiglib.h"
+
 #ifndef read_genomic_data_H 
 #define read_genomic_data_H
 
