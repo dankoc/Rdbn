@@ -1,6 +1,5 @@
 /*
- * Functions required to work with logs.  
- *
+ * Pulls genomic data from a bigwig file(s).  
  */
 #include <R.h>
 #include <Rdefines.h>

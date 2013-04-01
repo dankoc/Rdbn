@@ -76,7 +76,7 @@ setMethod("train", c(rbm="rbm"),
 	  out2_samp_vec <- clamp_output(rbm, in_samp_vec)
 	  
 	  ## Compute <vihj>_recon
-	  c_data <- in_samp_vec*
+	  #c_data <- in_samp_vec*
 	  
 	  ## Update weights.
 	  rmb@io_weights <- rmb@io_weights+rmb@learning_rate*(c_data-c_recon)

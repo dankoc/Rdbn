@@ -21,5 +21,10 @@ typedef struct {
   int *reverse;
 } raw_data_t;
 
+raw_data_t read_from_bigWig_r(const char *chrom, int start, int end, bigWig_t *bw_fwd, bigWig_t *bw_rev);
+void get_genomic_data(int center, zoom_params_t zoom, raw_data_t chrom_counts, genomic_data_point_t dp);
+void scale_genomic_data(zoom_params_t zoom, genomic_data_point_t dp);
+int max_dist_from_center(int n_sizes, int *window_sizes, int *half_n_windows);
+
 #endif
 
