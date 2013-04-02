@@ -12,6 +12,7 @@
 #include "bigwiglib.h"
 #include "read_genomic_data.h"
 #include "rbm.h"
+#include "matrix_functions.h"
 
 /*************************************************************************************
  *  Functions of initiatlizing, allocating, and free-ing rbm_t.
@@ -153,73 +154,6 @@ void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
 // }
 
 /************************************************************************************
- *  Functions for training. 
- * 
- *  Many of these are for manipulating matrices.  Try using naive functions ...
- *  but if taining is slow going, this is something to optimize.
- */
-double **alloc_matrix(int ncols, int nrows) {
-  double **prod_mat= (double**)calloc(ncols, sizeof(double*));
-  for(int i=0;i<ncols;i++)
-    prod_mat[i]= (double*)calloc(nrows, sizeof(double*));
-  return(prod_mat);
-}
-
-void init_matrix(double **matrix, int ncols, int nrows, double init_value) {
-  for(int i=0;i<ncols;i++)
-    for(int j=0;j<nrows;j++)
-	  matrix[i][j]= init_value;
-}
-
-void free_matrix(double **matrix, int ncols) {
-  for(int i=0;i<ncols;i++)
-    free(matrix[i]);
-  free(matrix);
-}
- 
-/*
- * Computes the Hadamard product of two matrices.
- *
- * Multiplies matrix1 and matrix2.  The result will be in matrix1.
- *
- * Probably a more efficient way to compute this...
- */
-void hadamard_product(double **matrix1, double **matrix2, int n_cols, int n_rows) {
-  for(int i=0;i<n_cols;i++)
-    for(int j=0;j<n_cols;j++)
-	  matrix1[i][j] *= matrix2[i][j];
-}
-
-/*
- * Compute a matrix representing all posible products of two vectors, output and input.
- *
- */
-void init_freq_matrix(rbm_t *rbm, double *output, double *input, double **delta_weights) {
-  // Compute the frequency with which output_i and input_j occur together.
-  for(int i=0;i<rbm[0].n_outputs;i++)
-    for(int j=0;j<rbm[0].n_inputs;j++)
-      delta_weights[i][j]= output[i]*input[j];
-}
-
-/*
- * Subtract each element of recon from data.  The result will be passed back in data.
- */
-void compute_delta_w(rbm_t *rbm, double **data, double *output_recon, double *input_recon) {
-  for(int i=0;i<rbm[0].n_outputs;i++)
-    for(int j=0;j<rbm[0].n_inputs;j++)
-      data[i][j]-= output_recon[i]*input_recon[j];
-}
-
-/*
- * Add matricies io_weights and delta_w.  The result will be in io_weights.
- */
-void apply_delta_w(rbm_t *rbm, double **io_weights, double **delta_w, int batch_size) {
-  for(int i=0;i<rbm[0].n_outputs;i++)
-    for(int j=0;j<rbm[0].n_inputs;j++)
-      io_weights[i][j]+= rbm[0].learning_rate*delta_w[i][j]/(double)batch_size;
-}
-
-/************************************************************************************
  *
  *  Optimize the weights weights over a training dataset using contrastive divergence.
  *
@@ -232,38 +166,57 @@ void apply_delta_w(rbm_t *rbm, double **io_weights, double **delta_w, int batch_
  *  Following recommendations in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf (V. 1; dated: Aug. 2nd 2010).
  */
 void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
+  // Thesse are for updating edge weights.
   double **data= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs); // Will be (<v_i h_j>_{data} - <v_i h_j>_{recon}) representing one element of the batch.
   double **batch= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
   init_matrix(batch, rbm[0].n_outputs, rbm[0].n_inputs, 1.0f); // Init. to 1; later multiply each **data matrix.
   
   double *output_recon= (double*)calloc(rbm[0].n_outputs, sizeof(double));
   double *input_recon= (double*)calloc(rbm[0].n_inputs, sizeof(double));
+
+  // For updating biases (we'd call these priors).
+  double *output_bias_batch= (double*)calloc(rbm[0].n_outputs, sizeof(double));
+  double *input_bias_batch= (double*)calloc(rbm[0].n_inputs, sizeof(double));
+  init_vector(output_bias_batch, rbm[0].n_outputs, 1);
+  init_vector(input_bias_batch, rbm[0].n_inputs, 1);
   
   for(int i=0;i<batch_size;i++) { // Foreach item in the batch.
-   clamp_input(rbm, input_example[i], output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
+    clamp_input(rbm, input_example[i], output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
 
-   // Compute <vihj>_data ... in this computation, sample random states (?!).
-   double* output_states= sample_states_cpy(output_recon, rbm[0].n_outputs);
-   init_freq_matrix(rbm, output_states, input_example[i], data);
-   free(output_states);
-   
-   // Run Gibbs sampling for CDn steps.
-   for(int cd=0;cd<CDn;cd++) {
-     clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
-     clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
-   }
+    // Compute <vihj>_data ... in this computation, sample random states (?!).
+    double* output_states= sample_states_cpy(output_recon, rbm[0].n_outputs);
+    init_freq_matrix(rbm, output_states, input_example[i], data);
+    
+    // Run Gibbs sampling for CDn steps.
+    for(int cd=0;cd<CDn;cd++) {
+      clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
+      clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
+    }
      
-   // Compute <vihj>_recon
-   compute_delta_w(rbm, data, output_recon, input_recon);
-   hadamard_product(batch, data, rbm[0].n_outputs, rbm[0].n_inputs);
+    // Compute <vihj>_recon
+    compute_delta_w(rbm, data, output_recon, input_recon);
+    hadamard_product(batch, data, rbm[0].n_outputs, rbm[0].n_inputs);
 
+    // Compute \delta_bias (a.k.a prior).
+	double *delta_bias_output= vector_difference_cpy(output_states, output_recon); // CGD: SHOULD i BE USING SAMPLED STATES HERE?? DON'T THINK SO!!
+	double *delta_bias_input= vector_difference_cpy(input_example[i], input_recon);
+    vector_product(output_bias_batch, delta_bias_output, rbm[0].n_outputs);
+	vector_product(input_bias_batch, delta_bias_input, rbm[0].n_inputs);
+	
+    free(output_states);
+	free(delta_bias_output);
+	free(delta_bias_input);
   }
   // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon)
-  apply_delta_w(rbm, rbm[0].io_weights, batch, batch_size);
+  apply_delta_w(rbm, batch, batch_size);
+  apply_delta_bias_output(rbm, delta_bias_output, batch_size);
+  apply_delta_bias_input(rbm, delta_bias_input, batch_size);
   
   // Cleanup temporary variables ...  
   free(output_recon);
   free(input_recon);
   free_matrix(data, rbm[0].n_outputs);
   free_matrix(batch, rbm[0].n_outputs);
+  free(output_bias_batch);
+  free(input_bias_batch);
 }
