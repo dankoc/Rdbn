@@ -179,11 +179,9 @@ void free_matrix(double **matrix, int ncols) {
  
 void compute_freq_matrix(rbm_t *rbm, double *output, double *input, double **delta_weights) {
   // Compute the frequency with which output_i and input_j occur together.
-  for(int i=0;i<rbm[0].n_outputs;i++) {
-    for(int j=0;j<rbm[0].n_inputs;j++) {
-      delta_weights[i][j]+= output[i]*input[j]; // TODO: Shouldn't we be summing these?!?!?!  Sounds like the training manual wants a product?!
-    }
-  }
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    for(int j=0;j<rbm[0].n_inputs;j++)
+      delta_weights[i][j]+= output[i]*input[j];
 }
 
 /*
@@ -219,7 +217,6 @@ void apply_delta_w(rbm_t *rbm, double **io_weights, double **delta_w) {
  */
 void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
   // Init. matrices that will be the two components of \delta w_{ij}
-  // CGD: Do I really need 2?!  If I'm adding in compute_prod_matrix, I can just subtract in each step...
   double **data= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);
   double **recon= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);
   init_matrix(data, rbm[0].n_outputs, rbm[0].n_inputs);
