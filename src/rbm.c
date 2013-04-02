@@ -165,10 +165,10 @@ double **alloc_matrix(int ncols, int nrows) {
   return(prod_mat);
 }
 
-void init_matrix(double **matrix, int ncols, int nrows) {
+void init_matrix(double **matrix, int ncols, int nrows, double init_value) {
   for(int i=0;i<ncols;i++)
-    for(int j=0;j<ncols;j++)
-	  matrix[i][j]= 0.0d;
+    for(int j=0;j<nrows;j++)
+	  matrix[i][j]= init_value;
 }
 
 void free_matrix(double **matrix, int ncols) {
@@ -177,31 +177,47 @@ void free_matrix(double **matrix, int ncols) {
   free(matrix);
 }
  
-void compute_freq_matrix(rbm_t *rbm, double *output, double *input, double **delta_weights) {
+/*
+ * Computes the Hadamard product of two matrices.
+ *
+ * Multiplies matrix1 and matrix2.  The result will be in matrix1.
+ *
+ * Probably a more efficient way to compute this...
+ */
+void hadamard_product(double **matrix1, double **matrix2, int n_cols, int n_rows) {
+  for(int i=0;i<n_cols;i++)
+    for(int j=0;j<n_cols;j++)
+	  matrix1[i][j] *= matrix2[i][j];
+}
+
+/*
+ * Compute a matrix representing all posible products of two vectors, output and input.
+ *
+ */
+void init_freq_matrix(rbm_t *rbm, double *output, double *input, double **delta_weights) {
   // Compute the frequency with which output_i and input_j occur together.
   for(int i=0;i<rbm[0].n_outputs;i++)
     for(int j=0;j<rbm[0].n_inputs;j++)
-      delta_weights[i][j]+= output[i]*input[j];
+      delta_weights[i][j]= output[i]*input[j];
 }
 
 /*
  * Subtract each element of recon from data.  The result will be passed back in data.
  */
-void compute_delta_w(rbm_t *rbm, double **data, double **recon) {
+void compute_delta_w(rbm_t *rbm, double **data, double *output_recon, double *input_recon) {
   for(int i=0;i<rbm[0].n_outputs;i++)
     for(int j=0;j<rbm[0].n_inputs;j++)
-      data[i][j]-= recon[i][j];
+      data[i][j]-= output_recon[i]*input_recon[j];
 }
 
 /*
- * Add matrix1 and matrix2.  The result will be in matrix1.
+ * Add matricies io_weights and delta_w.  The result will be in io_weights.
  */
-void apply_delta_w(rbm_t *rbm, double **io_weights, double **delta_w) {
+void apply_delta_w(rbm_t *rbm, double **io_weights, double **delta_w, int batch_size) {
   for(int i=0;i<rbm[0].n_outputs;i++)
     for(int j=0;j<rbm[0].n_inputs;j++)
-      io_weights[i][j]+= rbm[0].learning_rate*delta_w[i][j];
+      io_weights[i][j]+= rbm[0].learning_rate*delta_w[i][j]/(double)batch_size;
 }
-
 
 /************************************************************************************
  *
@@ -216,22 +232,19 @@ void apply_delta_w(rbm_t *rbm, double **io_weights, double **delta_w) {
  *  Following recommendations in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf (V. 1; dated: Aug. 2nd 2010).
  */
 void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
-  // Init. matrices that will be the two components of \delta w_{ij}
-  double **data= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);
-  double **recon= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);
-  init_matrix(data, rbm[0].n_outputs, rbm[0].n_inputs);
-  init_matrix(recon, rbm[0].n_outputs, rbm[0].n_inputs);
+  double **data= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs); // Will be (<v_i h_j>_{data} - <v_i h_j>_{recon}) representing one element of the batch.
+  double **batch= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
+  init_matrix(batch, rbm[0].n_outputs, rbm[0].n_inputs, 1.0f); // Init. to 1; later multiply each **data matrix.
   
   double *output_recon= (double*)calloc(rbm[0].n_outputs, sizeof(double));
   double *input_recon= (double*)calloc(rbm[0].n_inputs, sizeof(double));
   
   for(int i=0;i<batch_size;i++) { // Foreach item in the batch.
-    // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
-    clamp_input(rbm, input_example[i], output_recon);
-	
+   clamp_input(rbm, input_example[i], output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
+
    // Compute <vihj>_data ... in this computation, sample random states (?!).
    double* output_states= sample_states_cpy(output_recon, rbm[0].n_outputs);
-   compute_prod_matrix(rbm, output_states, input_example[i], data);
+   init_freq_matrix(rbm, output_states, input_example[i], data);
    free(output_states);
    
    // Run Gibbs sampling for CDn steps.
@@ -241,18 +254,16 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
    }
      
    // Compute <vihj>_recon
-   compute_prod_matrix(rbm, output_recon, input_recon, recon);
+   compute_delta_w(rbm, data, output_recon, input_recon);
+   hadamard_product(batch, data, rbm[0].n_outputs, rbm[0].n_inputs);
 
   }
   // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon)
-  compute_delta_w(rbm, data, recon);
-  apply_delta_w(rbm, rbm[0].io_weights, data);
+  apply_delta_w(rbm, rbm[0].io_weights, batch, batch_size);
   
-  // Cleanput temporary variables ...  
+  // Cleanup temporary variables ...  
   free(output_recon);
   free(input_recon);
   free_matrix(data, rbm[0].n_outputs);
-  free_matrix(recon, rbm[0].n_outputs);
+  free_matrix(batch, rbm[0].n_outputs);
 }
-
-
