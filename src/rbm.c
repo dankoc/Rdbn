@@ -196,7 +196,7 @@ void apply_delta_bias_input(rbm_t *rbm, double *delta_bias_input, int batch_size
  *  or less agrees with comments in: http://www.elen.ucl.ac.be/Proceedings/esann/esannpdf/es2012-71.pdf.
  * Don't know what all these how-to pages are talking about when they say 'multiplying matrices', though!?
  */
-void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
+void train(rbm_t *rbm, double *input_example, int batch_size, int CDn) {
   // Thesse are for updating edge weights.
   matrix_t *data= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs); // Will be (<v_i h_j>_{data} - <v_i h_j>_{recon}) representing one element of the batch.
   matrix_t *batch= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
@@ -212,11 +212,11 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
   init_vector(input_bias_batch, rbm[0].n_inputs, 0);
   
   for(int i=0;i<batch_size;i++) { // Foreach item in the batch.
-    clamp_input(rbm, input_example[i], output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
+    clamp_input(rbm, input_example, output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
 
     // Compute <vihj>_data ... in this computation, sample random states (?!).
     double* output_states= sample_states_cpy(output_recon, rbm[0].n_outputs);
-    init_freq_matrix(rbm, output_states, input_example[i], data);
+    init_freq_matrix(rbm, output_states, input_example, data);
     
     // Run Gibbs sampling for CDn steps.
     for(int cd=0;cd<CDn;cd++) {
@@ -229,12 +229,15 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
     matrix_sum(batch, data);
 
     // Compute \delta_bias (a.k.a prior).
-	clamp_input(rbm, input_example[i], output_states); // CGD: SHOULD i BE USING SAMPLED STATES WHEN COMPUTING delta_bias_output?? i DON'T THINK SO!!
-	double *delta_bias_output= vector_difference_cpy(output_states, output_recon, rbm[0].n_outputs); 
-	double *delta_bias_input= vector_difference_cpy(input_example[i], input_recon, rbm[0].n_inputs);
+    clamp_input(rbm, input_example, output_states); // CGD: SHOULD i BE USING SAMPLED STATES WHEN COMPUTING delta_bias_output?? i DON'T THINK SO!!
+    double *delta_bias_output= vector_difference_cpy(output_states, output_recon, rbm[0].n_outputs); 
+    double *delta_bias_input= vector_difference_cpy(input_example, input_recon, rbm[0].n_inputs);
     vector_sum(output_bias_batch, delta_bias_output, rbm[0].n_outputs);
-	vector_sum(input_bias_batch, delta_bias_input, rbm[0].n_inputs);
+    vector_sum(input_bias_batch, delta_bias_input, rbm[0].n_inputs);
     free(output_states);	free(delta_bias_output);	free(delta_bias_input);
+	
+    // Update the input_example pointer to the next input sample.
+    input_example+= rbm[0].n_inputs;
   }
   // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon)
   apply_delta_w(rbm, batch, batch_size);
@@ -247,5 +250,15 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
   free(output_bias_batch);  free(input_bias_batch);
 }
 
+/************************************************************************************
+ *
+ *  An R interface for RBM training ...
+ */
+ 
+SEXP train_rbm_R(SEXP rbm, SEXP training_data) {
+  SEXP returnValue;
+  
+  return(returnValue);
+}
 
 
