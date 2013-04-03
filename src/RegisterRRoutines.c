@@ -10,7 +10,7 @@
 #include <R_ext/Rdynload.h>
 
 
-SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r, SEXP model_r);
+SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, SEXP bigwig_minus_file_r, SEXP model_r);
 
 /**************************************************************
  *
@@ -19,7 +19,7 @@ SEXP get_genomic_data_R(SEXP centers_r, SEXP plus_counts_r, SEXP minus_counts_r,
  **************************************************************/
 void R_init_GROseq(DllInfo *info) {
      R_CallMethodDef callMethods[]  = {
-       {"get_genomic_data_R", (DL_FUNC)&get_genomic_data_R, 4},
+       {"get_genomic_data_R", (DL_FUNC)&get_genomic_data_R, 5},
        {NULL, NULL, 0}
      };
 

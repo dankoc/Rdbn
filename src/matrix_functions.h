@@ -1,21 +1,27 @@
 #ifndef matrix_functions_H 
 #define matrix_functions_H
 
-#include "rbm.h"
+typedef struct {
+  int ncols;
+  int nrows;
 
-double **alloc_matrix(int ncols, int nrows);
-void init_matrix(double **matrix, int ncols, int nrows, double init_value);
-void free_matrix(double **matrix, int ncols);
-void hadamard_product(double **matrix1, double **matrix2, int n_cols, int n_rows);
-void init_freq_matrix(rbm_t *rbm, double *output, double *input, double **delta_weights);
-void compute_delta_w(rbm_t *rbm, double **data, double *output_recon, double *input_recon);
-void apply_delta_w(rbm_t *rbm, double **delta_w, int batch_size);
+  double *matrix; // Hoping to avoid the overhead in double**;
+} matrix_t;
+
+matrix_t *alloc_matrix(int ncols, int nrows);
+void init_matrix(matrix_t *m, double init_value);
+void init_matrix_rnorm(matrix_t *m, double mean, double varience);
+void free_matrix(matrix_t *m);
+double get_matrix_value(matrix_t *m, int col, int row);
+void set_matrix_value(matrix_t *m, int col, int row, double value);
+
+void hadamard_product(matrix_t *m1, matrix_t *m2);
+void sum_gradient(matrix_t m1, matrix_t m2);
 
 void init_vector(double *vector, int n, double init_value);
 void vector_product(double *vector1, double *vector2, int n);
+void vector_sum(double *vector1, double *vector2, int n);
 double *vector_difference_cpy(double *vector1, double *vector2, int n);
-void apply_delta_bias_output(rbm_t *rbm, double *delta_bias_output, int batch_size);
-void apply_delta_bias_input(rbm_t *rbm, double *delta_bias_input, int batch_size);
 
 #endif
 
