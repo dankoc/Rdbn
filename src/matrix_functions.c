@@ -3,11 +3,12 @@
  *
  * Try to allow vectors to be either 1xN or Nx1 matrices.
  */
- 
+
+#include <Rmath.h> 
 #include "matrix_functions.h"
  
 matrix_t *alloc_matrix(int ncols, int nrows) {
-  matrix_t *m;
+  matrix_t *m= (matrix_t*)calloc(1, sizeof(matrix_t));
   m[0].matrix= (double*)calloc(ncols*nrows, sizeof(double));
   m[0].ncols= ncols;
   m[0].nrows= nrows;
@@ -21,7 +22,7 @@ void init_matrix(matrix_t *m, double init_value) {
 
 void init_matrix_rnorm(matrix_t *m, double mean, double varience) {
   for(int i=0;i<(m[0].ncols*m[0].nrows);i++)
-	  matrix[0].m[i]= rnorm(mean, varience);
+	  m[0].matrix[i]= rnorm(mean, varience);
 }
 
 void free_matrix(matrix_t *m) {
@@ -53,7 +54,7 @@ void hadamard_product(matrix_t *m1, matrix_t *m2) {
 /*
  * Computes the sum of two matrices, m1 and m2.  The result will be in m1.
  */
-void matrix_sum(matrix_t m1, matrix_t m2) {
+void matrix_sum(matrix_t *m1, matrix_t *m2) {
   for(int i=0;i<(m1[0].ncols*m1[0].nrows);i++)
 	  m1[0].matrix[i] += m2[0].matrix[i];
 }
@@ -63,7 +64,7 @@ void matrix_sum(matrix_t m1, matrix_t m2) {
  */
  
 void init_vector(double *vector, int n, double init_value) {
-  for(i=0;i<n;i++)
+  for(int i=0;i<n;i++)
     vector[i]= init_value;
 }
 

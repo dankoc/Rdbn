@@ -16,7 +16,7 @@ double get_matrix_value(matrix_t *m, int col, int row);
 void set_matrix_value(matrix_t *m, int col, int row, double value);
 
 void hadamard_product(matrix_t *m1, matrix_t *m2);
-void sum_gradient(matrix_t m1, matrix_t m2);
+void matrix_sum(matrix_t *m1, matrix_t *m2);
 
 void init_vector(double *vector, int n, double init_value);
 void vector_product(double *vector1, double *vector2, int n);

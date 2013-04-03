@@ -151,21 +151,21 @@ void init_freq_matrix(rbm_t *rbm, double *output, double *input, matrix_t *delta
 void compute_delta_w(rbm_t *rbm, matrix_t *data, double *output_recon, double *input_recon) {
   for(int i=0;i<rbm[0].n_outputs;i++)
     for(int j=0;j<rbm[0].n_inputs;j++) {
-	  double data_i_j_old= get_matrix_value(data, i, j);
-	  double data_i_j_new= data_i_j-output_recon[i]*input_recon[j]
+      double data_i_j_old= get_matrix_value(data, i, j);
+      double data_i_j_new= data_i_j_old-output_recon[i]*input_recon[j];
       set_matrix_value(data, i, j, data_i_j_new); // Really need to inline these setter-getter functions.
-	}
+    }
 }
 
 /*Add matricies io_weights and delta_w.  The result will be in io_weights.*/
 void apply_delta_w(rbm_t *rbm, matrix_t *delta_w, int batch_size) {
   for(int i=0;i<rbm[0].n_outputs;i++)
     for(int j=0;j<rbm[0].n_inputs;j++) {
-	  double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
-	  double delta_w_i_j= get_matrix_value(delta_w, i, j);
-	  double new_w_i_j= previous_w_i_j+rbm[0].learning_rate*delta_w_i_j/(double)batch_size;
-      set_matrix_value(rbm.io_weights, i, j, new_w_i_j);
-	}
+      double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
+      double delta_w_i_j= get_matrix_value(delta_w, i, j);
+      double new_w_i_j= previous_w_i_j+rbm[0].learning_rate*delta_w_i_j/(double)batch_size;
+      set_matrix_value(rbm[0].io_weights, i, j, new_w_i_j);
+    }
 }
 
 /*Update output biases.*/
@@ -230,8 +230,8 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
 
     // Compute \delta_bias (a.k.a prior).
 	clamp_input(rbm, input_example[i], output_states); // CGD: SHOULD i BE USING SAMPLED STATES WHEN COMPUTING delta_bias_output?? i DON'T THINK SO!!
-	double *delta_bias_output= vector_difference_cpy(output_states, output_recon); 
-	double *delta_bias_input= vector_difference_cpy(input_example[i], input_recon);
+	double *delta_bias_output= vector_difference_cpy(output_states, output_recon, rbm[0].n_outputs); 
+	double *delta_bias_input= vector_difference_cpy(input_example[i], input_recon, rbm[0].n_inputs);
     vector_sum(output_bias_batch, delta_bias_output, rbm[0].n_outputs);
 	vector_sum(input_bias_batch, delta_bias_input, rbm[0].n_inputs);
     free(output_states);	free(delta_bias_output);	free(delta_bias_input);
@@ -243,7 +243,7 @@ void train(rbm_t *rbm, double **input_example, int batch_size, int CDn) {
   
   // Cleanup temporary variables ...  
   free(output_recon);   free(input_recon);
-  free_matrix(data, rbm[0].n_outputs);  free_matrix(batch, rbm[0].n_outputs);
+  free_matrix(data);  free_matrix(batch);
   free(output_bias_batch);  free(input_bias_batch);
 }
 
