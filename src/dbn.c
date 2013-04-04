@@ -22,7 +22,7 @@
  */
 void free_dbn(dbn_t *dbn) {
   for(int l=0;l<dbn[0].n_rbms;l++)
-    free_rbm(dbn[0].rbms[l]);
+    free_rbm(dbn[0].rbms+l);
   Free(dbn[0].layer_sizes);
   Free(dbn);
 }
@@ -32,7 +32,7 @@ void free_dbn(dbn_t *dbn) {
  */
 double *get_layer_outputs(dbn_t *dbn, double *input, int layer) {
   double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs, double);
-  clamp_input(dbn[0].rbms[layer], input, layer_output);
+  clamp_input(dbn[0].rbms+layer, input, layer_output);
   return(layer_output);
 }
 
@@ -41,14 +41,14 @@ double *get_layer_outputs(dbn_t *dbn, double *input, int layer) {
  */
 void dbn_train(dbn_t *dbn, double *examples) {
   // Trian the first layer.
-  train(dbn[0].rbms[0], examples);
+  train(dbn[0].rbms+0, examples);
 
   // train later layers.
   double *previous_layer_input, *next_layer_input;
   previous_layer_input= examples;
   for(int layer=1;layer<dbn[0].n_rbms;layer++) {
     next_layer_input= get_layer_outputs(dbn, previous_layer_input, layer-1); // Get the output from the previous layer; that's the input to the next layer ...
-    train(dbn[0].rbms[layer], next_layer_input); // Train the current layer.
+    train(dbn[0].rbms+layer, next_layer_input); // Train the current layer.
   
     // Free the previous input layer (unless we're on the first pass and pointing to *examples.
 	if(layer>1) // DO NOT free *examples.
@@ -65,8 +65,8 @@ void dbn_train(dbn_t *dbn, double *examples) {
 dbn_t *dbn_r_to_c(SEXP dbn_r) {
   dbn_t *dbn= (dbn_t*)R_alloc(1, sizeof(dbn_t));
 
-  dbn[0].n_layers= INTEGER(GET_SLOT(rbm_r,Rf_install("n_layers")))[0];
-  dbn[0].layer_sizes= INTEGER(GET_SLOT(rbm_r, Rf_install("layer_sizes")));
+  dbn[0].n_layers= INTEGER(GET_SLOT(dbn_r,Rf_install("n_layers")))[0];
+  dbn[0].layer_sizes= INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
 
   dbn[0].n_rbms= dbn[0].n_layers-1;
   dbn[0].rbms= (rbm_t*)R_alloc(dbn[0].n_rbms, sizeof(rbm_t));
@@ -86,4 +86,5 @@ SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r) {
   dbn_train(dbn, examples);
   return(dbn_r);
 }
+
 

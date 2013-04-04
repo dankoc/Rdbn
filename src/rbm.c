@@ -302,13 +302,13 @@ SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r) {
 
   int n_examples= Rf_nrows(training_data_r)/rbm[0].n_inputs;
   double *input_example= REAL(training_data_r);
-  int n_epocs= floor(n_examples/batch_size);
+  int n_epocs= floor(n_examples/rbm[0].batch_size);
 
   //for(int i=0;i<rbm[0].n_inputs;i++) Rprintf("%f ", input_example[3*6+i]);
 
   for(int i=0;i<n_epocs;i++) {
     train(rbm, input_example);
-    input_example+= batch_size*rbm[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
+    input_example+= rbm[0].batch_size*rbm[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
   }
 
   return(rbm_r);

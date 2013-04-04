@@ -10,5 +10,7 @@ typedef struct {
   rbm_t *rbms;       // Pointer to a layer of restricted boltzman machines.
 } dbn_t;
 
+SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r);
+
 #endif
 

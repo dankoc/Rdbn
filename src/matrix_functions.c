@@ -4,6 +4,7 @@
  * Try to allow vectors to be either 1xN or Nx1 matrices.
  */
 
+#include <R.h>
 #include <Rmath.h> 
 #include "matrix_functions.h"
  
