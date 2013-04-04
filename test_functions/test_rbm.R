@@ -14,8 +14,8 @@
  ## Convert to a matrix and repeat 100 times (for training).
  data_matrix <- matrix(data.matrix(training_data), nrow=6)[,sample(c(1:6), 10000, replace=TRUE)]
  
- rr <- rbm(n_inputs= as.integer(6), n_outputs= as.integer(2))
- train(rr, data= data_matrix, batch_size=10, cdn=1)
+ rr <- rbm(n_inputs= as.integer(6), n_outputs= as.integer(2), batch_size=10, cd_n=1)
+ rbm.train(rr, data= data_matrix)
 
  #clamp_output(rr, c(0,1)) ## Currently dosen't work...
  

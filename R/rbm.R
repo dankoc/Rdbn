@@ -11,10 +11,14 @@ setClass("rbm",#"restricted_boltzman_machine",
   representation(
     n_inputs="integer",      ## Number of nodes in the input layer.
     n_outputs="integer",     ## Number of nodes in the output layer.
+    io_weights="matrix",     ## The actual weights matrix, connecting each input to output.
+    bias_inputs="numeric",   ## Bias vector, inputs.
+    bias_outputs="numeric",  ## Bias vector, outputs.
+
+    ## Learning parameters.  These might be updated as learning progresses.
     learning_rate="numeric", ## How quickly the netowrk 'learns'.
-    io_weights="matrix",      ## The actual weights matrix, connecting each input to output.
-    bias_inputs="numeric",    ## Bias vector, inputs.
-    bias_outputs="numeric"   ## Bias vector, outputs.
+	cd_n="integer",          ## Number of steps of Gibbs sampling when doing contrastive divergence.
+	batch_size="integer"     ## Number of input examples to use in a 'mini-batch'.
   ),
 )
 
@@ -22,7 +26,7 @@ setClass("rbm",#"restricted_boltzman_machine",
 # e.g.:
 # rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
 # Initial weights set using S8.1 in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
+rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
     ## Initialize weights.
     if(is.null(io_weights)) {
 	  io_weights <- matrix(rnorm(n_inputs*n_outputs, mean=0, sd=0.01), ncol=n_outputs)
@@ -48,8 +52,9 @@ rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_in
 	}
 
     new("rbm", n_inputs=as.integer(n_inputs), n_outputs=as.integer(n_outputs), 
-	learning_rate=as.real(learning_rate), io_weights=io_weights, 
-	bias_inputs= bias_inputs, bias_outputs= bias_outputs)
+      cd_n=as.integer(cd_n), batch_size=as.integer(batch_size),
+      learning_rate=as.real(learning_rate), io_weights=io_weights, 
+      bias_inputs= bias_inputs, bias_outputs= bias_outputs)
 }
 
  # require(Rdbn)
@@ -58,25 +63,26 @@ rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_in
 
 #` Method to train a boltzman machine (stored in rbm).
 #` @param rbm The boltzman machine.
-#` @param data A data matrix wherein each row represents an observation. NCOL(data)= n_inputs.
+#` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
-setGeneric("train", 
+setGeneric("rbm.train", 
   def=function(rbm, data, ...) {
 	stopifnot(class(rbm) == "rbm")
-	standardGeneric("train")
+	standardGeneric("rbm.train")
 })
   
-setMethod("train", c(rbm="rbm"), 
-  function(rbm, data, batch_size=10, cdn= 1) { ## Regularization/ LASSO type options?!
+setMethod("rbm.train", c(rbm="rbm"), 
+  function(rbm, data) { ## Regularization/ LASSO type options?!
   	stopifnot(NROW(data) == rbm@n_inputs)
 	
 	## Reassign input biases to training examples?!  As suggested in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
 	
 	
 	## Pass to C for training.
-    .Call("train_rbm_R", rbm, as.real(data), as.integer(batch_size), as.integer(cdn), package="Rdbn") 
+    .Call("train_rbm_R", rbm, as.real(data), package="Rdbn") 
 })
 
+###########################################################################################################################################
 ### Brought these back for now. Perhaps useful?! ##########################################################################################
   
 #` 'Clamps' the input vector and runs the boltzmann machine to get the output node (i.e. get output conditional on specified input).

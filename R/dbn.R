@@ -16,13 +16,10 @@ setClass("dbn",#"restricted_boltzman_machine",
 )
 
 # constructor.
-# e.g.:
-# rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
-# Initial weights set using S8.1 in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-dbn <- function(n_layers, layer_sizes) {
+dbn <- function(n_layers, layer_sizes, batch_size=1, learning_rate=0.1, cd_n=1) {
   rbm_network <- list()
   for(i in 1:(n_layers-1)) {
-    rbm_network[[i]] <- rbm(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1])
+    rbm_network[[i]] <- rbm(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n)
   }
   new("dbn", n_layers=as.integer(n_layers), layer_sizes=as.integer(layer_sizes), network= rbm_network)
 }
@@ -32,18 +29,18 @@ dbn <- function(n_layers, layer_sizes) {
  # train(rr, matrix(c(1:10), ncol=5))
 
 #` Method to train a boltzman machine (stored in rbm).
-#` @param rbm The boltzman machine.
-#` @param data A data matrix wherein each row represents an observation. NCOL(data)= n_inputs.
+#` @param dbn The layered network of RBMs.
+#` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
-setGeneric("train_dbn", 
+setGeneric("dbn.train", 
   def=function(dbn, data, ...) {
 	stopifnot(class(dbn) == "dbn")
-	standardGeneric("train_dbn")
+	standardGeneric("dbn.train")
 })
   
-setMethod("train_dbn", c(dbn="dbn"), 
-  function(dbn, data, batch_size=10, cdn= 1) { ## Regularization/ LASSO type options?!
-#  	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
+setMethod("dbn.train", c(dbn="dbn"), 
+  function(dbn, data) {
+  	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
 #    .Call("train_rbm_R", rbm, as.real(data), as.integer(batch_size), as.integer(cdn), package="Rdbn") 
 })
 
