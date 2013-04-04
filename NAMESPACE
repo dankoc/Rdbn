@@ -1,5 +1,5 @@
 useDynLib(Rdbn)
-export(read_genomic_data)
+export(read_genomic_data, rbm)
 exportClasses("rbm")
-#exportMethods(train, clamp_input, clamp_output)
+exportMethods(train)
 

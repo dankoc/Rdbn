@@ -15,7 +15,7 @@ setClass("rbm",#"restricted_boltzman_machine",
     io_weights="matrix",      ## The actual weights matrix, connecting each input to output.
     bias_inputs="numeric",    ## Bias vector, inputs.
     bias_outputs="numeric"   ## Bias vector, outputs.
-  )
+  ),
 )
 
 # constructor.
