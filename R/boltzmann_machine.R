@@ -51,6 +51,10 @@ rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_in
 			io_weights=io_weights, bias_inputs= bias_inputs, bias_outputs= bias_outputs)
 }
 
+ # require(Rdbn)
+ # rr <- rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
+ # train(rr, matrix(c(1:10), ncol=5))
+
 #` Method to train a boltzman machine (stored in rbm).
 #` @param rbm The boltzman machine.
 #` @param data A data matrix wherein each row represents an observation. NCOL(data)= n_inputs.

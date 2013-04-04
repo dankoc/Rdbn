@@ -256,7 +256,7 @@ void train(rbm_t *rbm, double *input_example, int batch_size, int CDn) {
  */
  
 SEXP train_rbm_R(SEXP rbm, SEXP training_data) {
-  SEXP returnValue;
+  SEXP returnValue= GET_SLOT(rbm, );
   
   return(returnValue);
 }
