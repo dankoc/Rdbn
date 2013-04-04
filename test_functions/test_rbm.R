@@ -12,11 +12,12 @@
  training_data <- t(training_data)
  
  ## Convert to a matrix and repeat 100 times (for training).
- data_matrix <- matrix(data.matrix(training_data), nrow=6)[,sample(c(1:6), 1000, replace=TRUE)]
+ data_matrix <- matrix(data.matrix(training_data), nrow=6)[,sample(c(1:6), 10000, replace=TRUE)]
  
  rr <- rbm(n_inputs= as.integer(6), n_outputs= as.integer(2))
  train(rr, data= data_matrix, batch_size=10, cdn=1)
 
+ #clamp_output(rr, c(0,1)) ## Currently dosen't work...
  
  ## NOTES: 
  # (1) My batch size is affecting my weights.  I don't think that should be so!
