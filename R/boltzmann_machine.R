@@ -66,8 +66,8 @@ setGeneric("train",
 })
   
 setMethod("train", c(rbm="rbm"), 
-  function(rbm, data, cdn= 1, batch_size=10) { ## Regularization/ LASSO type options?!
+  function(rbm, data, batch_size=10, cdn= 1) { ## Regularization/ LASSO type options?!
   	stopifnot(NCOL(data) == rbm@n_inputs)
-    .Call("train_rbm_R", rbm, as.real(data), as.integer(cdn), as.integer(batch_size), package="Rdbn") 
+    .Call("train_rbm_R", rbm, as.real(data), as.integer(batch_size), as.integer(cdn), package="Rdbn") 
 })
 

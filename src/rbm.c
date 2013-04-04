@@ -279,9 +279,14 @@ SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP batch_size_r, SEXP cdn_r
   //set_matrix_value(rbm[0].io_weights, 0, 0, 99100); // Try making a change?! ANS: WE SEEM TO BE SHARING! 
   int batch_size= INTEGER(batch_size_r)[0];
   int CDn= INTEGER(cdn_r)[0];
+  int n_examples= Rf_nrows(training_data_r);
   double *input_example= REAL(training_data_r);
-
-  train(rbm, input_example, batch_size, CDn);
+  int n_epocs= floor(n_examples/batch_size);
+  
+  for(int i=0;i<n_epocs;i++) {
+    train(rbm, input_example, batch_size, CDn);
+	input_example+= batch_size*rbm[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
+  }
 
   return(rbm_r);
 }
