@@ -22,3 +22,7 @@
  ## NOTES: 
  # (1) My batch size is affecting my weights.  I don't think that should be so!
  # (2) 
+ 
+ ## Train DBN...
+ db <- dbn(n_layers= 3, layer_sizes= c(6,6,2), batch_size=10, cd_n=1)
+ dbn.train(db, data= data_matrix)
