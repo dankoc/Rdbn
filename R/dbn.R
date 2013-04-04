@@ -24,7 +24,7 @@ dbn <- function(n_layers, layer_sizes) {
   for(i in 1:(n_layers-1)) {
     rbm_network[[i]] <- rbm(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1])
   }
-  new("dbn", n_layers=n_layers, layer_sizes=layer_sizes, network= rbm_network)
+  new("dbn", n_layers=as.integer(n_layers), layer_sizes=as.integer(layer_sizes), network= rbm_network)
 }
 
  # require(Rdbn)

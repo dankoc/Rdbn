@@ -47,8 +47,9 @@ rbm <- function(n_inputs, n_outputs, learning_rate=0.1, io_weights=NULL, bias_in
 	  stopifnot(n_outputs == NROW(bias_outputs))
 	}
 
-    new("rbm", n_inputs=n_inputs, n_outputs=n_outputs, learning_rate=learning_rate, 
-			io_weights=io_weights, bias_inputs= bias_inputs, bias_outputs= bias_outputs)
+    new("rbm", n_inputs=as.integer(n_inputs), n_outputs=as.integer(n_outputs), 
+	learning_rate=as.real(learning_rate), io_weights=io_weights, 
+	bias_inputs= bias_inputs, bias_outputs= bias_outputs)
 }
 
  # require(Rdbn)
