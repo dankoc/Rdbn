@@ -122,7 +122,7 @@ void clamp_output(rbm_t rbm, double *output, double *resulting_input) {
  *  Functions to fix the output nodes to and sample values at the input nodes
  *
  ************************************************************************************/
- double get_output_prob(rbm_t *rbm, int output_index, double *input) {
+ double get_output_prob(rbm_t rbm, int output_index, double *input) {
   double prob= rbm.bias_outputs[output_index];
   for(int i=0;i<rbm.n_inputs;i++)
     prob+= input[i]*get_matrix_value(rbm.io_weights, output_index, i);
@@ -175,13 +175,13 @@ void apply_delta_w(rbm_t rbm, matrix_t *delta_w) {
 }
 
 /*Update output biases.*/
-void apply_delta_bias_output(rbm_t *rbm, double *delta_bias_output) {
+void apply_delta_bias_output(rbm_t rbm, double *delta_bias_output) {
   for(int i=0;i<rbm.n_outputs;i++) 
     rbm.bias_outputs[i] += rbm.learning_rate*delta_bias_output[i]/(double)rbm.batch_size;
 }
 
 /*Update input biases.*/
-void apply_delta_bias_input(rbm_t *rbm, double *delta_bias_input) {
+void apply_delta_bias_input(rbm_t rbm, double *delta_bias_input) {
   for(int j=0;j<rbm.n_inputs;j++)
     rbm.bias_inputs[j] += rbm.learning_rate*delta_bias_input[j]/(double)rbm.batch_size;
 }
@@ -276,7 +276,7 @@ void train(rbm_t rbm, double *input_example) { // Use velocity?!; Use sparsity t
  *  An R interface for RBM training ...
  */
 
-rbm_t *rbm_r_to_c(SEXP rbm_r) {
+rbm_t rbm_r_to_c(SEXP rbm_r) {
   rbm_t rbm;//= (rbm_t*)R_alloc(1, sizeof(rbm_t));
 
   rbm.n_inputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_inputs")))[0];

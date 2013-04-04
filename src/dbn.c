@@ -22,7 +22,7 @@
  */
 void free_dbn(dbn_t dbn) {
   for(int l=0;l<dbn.n_rbms;l++)
-    free_rbm(dbn.rbms+l);
+    free_rbm(dbn.rbms[l]);
   Free(dbn.layer_sizes);
 }
 

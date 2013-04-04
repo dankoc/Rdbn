@@ -17,7 +17,7 @@ typedef struct {
 
 rbm_t alloc_rbm(int n_inputs, int n_outputs);
 void free_rbm(rbm_t rbm);
-void init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on);
+rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on);
 
 void clamp_input(rbm_t rbm, double *input, double *resulting_output);
 void clamp_output(rbm_t rbm, double *output, double *resulting_input);
