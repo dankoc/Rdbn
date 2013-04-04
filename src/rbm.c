@@ -254,11 +254,36 @@ void train(rbm_t *rbm, double *input_example, int batch_size, int CDn) {
  *
  *  An R interface for RBM training ...
  */
+
+rbm_t *rbm_r_to_c(SEXP rbm_r) {
+  rbm_t *rbm= (rbm_t*)R_alloc(1, sizeof(rbm_t));
+
+  rbm[0].n_inputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_inputs")))[0];
+  rbm[0].n_outputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_outputs")))[0];
+  rbm[0].learning_rate= REAL(GET_SLOT(rbm_r,Rf_install("learning_rate")))[0];
+
+  rbm[0].bias_inputs= REAL(GET_SLOT(rbm_r,Rf_install("bias_inputs")));
+  rbm[0].bias_outputs= REAL(GET_SLOT(rbm_r, Rf_install("bias_outputs")));
+
+  rbm[0].io_weights = (matrix_t*)R_alloc(1, sizeof(matrix_t));
+  rbm[0].io_weights[0].matrix= REAL(GET_SLOT(rbm_r, Rf_install("io_weights")));
+  rbm[0].io_weights[0].ncols= rbm[0].n_outputs;
+  rbm[0].io_weights[0].nrows= rbm[0].n_inputs;
+
+  return(rbm);
+}
+
  
-SEXP train_rbm_R(SEXP rbm, SEXP training_data) {
-  SEXP returnValue= GET_SLOT(rbm, );
-  
-  return(returnValue);
+SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP batch_size_r, SEXP cdn_r) {
+  rbm_t *rbm= rbm_r_to_c(rbm_r); // Get values from R function.
+  //set_matrix_value(rbm[0].io_weights, 0, 0, 99100); // Try making a change?! ANS: WE SEEM TO BE SHARING! 
+  int batch_size= INTEGER(batch_size_r)[0];
+  int CDn= INTEGER(cdn_r)[0];
+  double *input_example= REAL(training_data_r);
+
+  train(rbm, input_example, batch_size, CDn);
+
+  return(rbm_r);
 }
 
 

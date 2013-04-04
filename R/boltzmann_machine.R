@@ -15,7 +15,7 @@ setClass("rbm",#"restricted_boltzman_machine",
     io_weights="matrix",      ## The actual weights matrix, connecting each input to output.
     bias_inputs="numeric",    ## Bias vector, inputs.
     bias_outputs="numeric"   ## Bias vector, outputs.
-  )
+  ),
 )
 
 # constructor.
@@ -68,7 +68,6 @@ setGeneric("train",
 setMethod("train", c(rbm="rbm"), 
   function(rbm, data, cdn= 1, batch_size=10) { ## Regularization/ LASSO type options?!
   	stopifnot(NCOL(data) == rbm@n_inputs)
-	training_data <- c(1:10)
-    .Call("train_rbm_R", rbm, training_data, as.integer(cdn), as.integer(batch_size), package="Rdbn") 
+    .Call("train_rbm_R", rbm, as.real(data), as.integer(cdn), as.integer(batch_size), package="Rdbn") 
 })
 
