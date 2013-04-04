@@ -35,13 +35,13 @@ dbn <- function(n_layers, layer_sizes) {
 #` @param rbm The boltzman machine.
 #` @param data A data matrix wherein each row represents an observation. NCOL(data)= n_inputs.
 #` @export
-setGeneric("train", 
+setGeneric("train_dbn", 
   def=function(dbn, data, ...) {
 	stopifnot(class(dbn) == "dbn")
-	standardGeneric("train")
+	standardGeneric("train_dbn")
 })
   
-setMethod("train", c(dbn="dbn"), 
+setMethod("train_dbn", c(dbn="dbn"), 
   function(dbn, data, batch_size=10, cdn= 1) { ## Regularization/ LASSO type options?!
 #  	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
 #    .Call("train_rbm_R", rbm, as.real(data), as.integer(batch_size), as.integer(cdn), package="Rdbn") 

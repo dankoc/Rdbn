@@ -121,14 +121,14 @@ setMethod("clamp_output", c(rbm="rbm"),
 ## Returns a vector of probabilities by sampling the input vect_pr.
 #setGeneric("sample_states", def=function(rbm, vect_pr) {standardGeneric("sample_states")} )
 #setMethod("sample_states", c(rbm="rbm"), 
-sample_states <- function(rbm, vect_pr) {
+sample_states <- function(vect_pr) {
     vect_pr > runif(NROW(vect_pr))
 }#)
 
 ## Returns the output of the logicstic function.
 #setGeneric("logistic_function", def=function(rbm, vect_val) {standardGeneric("logistic_function")} )
 #setMethod("logistic_function", c(rbm="rbm"), 
-logistic_function <- function(rbm, vect_val) {
+logistic_function <- function(vect_val) {
     return(1/(1+exp(-vect_val)))
 }#)
 
