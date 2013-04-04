@@ -9,10 +9,10 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 
+#include "read_genomic_data.h"
 
-SEXP get_genomic_data_R(SEXP chrom_r, SEXP centers_r, SEXP bigwig_plus_file_r, SEXP bigwig_minus_file_r, SEXP model_r);
-SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r);
-SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r);
+#include "rbm.h"
+#include "dbn.h"
 
 /**************************************************************
  *
