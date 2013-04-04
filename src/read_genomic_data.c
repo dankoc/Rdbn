@@ -47,12 +47,12 @@ void init_genomic_data_point(genomic_data_point_t dp, zoom_params_t zoom) {
  */
 genomic_data_point_t alloc_genomic_data_point(zoom_params_t zoom) {
   genomic_data_point_t dp;
-  dp.forward = (double**)Calloc(zoom.n_sizes,sizeof(double*));
-  dp.reverse = (double**)Calloc(zoom.n_sizes,sizeof(double*));
+  dp.forward = (double**)Calloc(zoom.n_sizes,double*);
+  dp.reverse = (double**)Calloc(zoom.n_sizes,double*);
   
   for(int i=0;i<zoom.n_sizes;i++) {
-    dp.forward[i] = (double*)Calloc((2*zoom.half_n_windows[i]),sizeof(double));
-    dp.reverse[i] = (double*)Calloc((2*zoom.half_n_windows[i]),sizeof(double));
+    dp.forward[i] = (double*)Calloc((2*zoom.half_n_windows[i]),double);
+    dp.reverse[i] = (double*)Calloc((2*zoom.half_n_windows[i]),double);
   }
   
   return(dp);

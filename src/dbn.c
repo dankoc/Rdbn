@@ -31,7 +31,7 @@ void free_dbn(dbn_t *dbn) {
  * Clamps the input for a given layer.  Returns a new *double with the output of that layer.
  */
 double *get_layer_outputs(dbn_t *dbn, double *input, int layer) {
-  double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs, sizeof(double));
+  double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs, double);
   clamp_input(dbn[0].rbms[layer], input, layer_output);
   return(layer_output);
 }

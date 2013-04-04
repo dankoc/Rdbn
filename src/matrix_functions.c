@@ -8,8 +8,8 @@
 #include "matrix_functions.h"
  
 matrix_t *alloc_matrix(int ncols, int nrows) {
-  matrix_t *m= (matrix_t*)Calloc(1, sizeof(matrix_t));
-  m[0].matrix= (double*)Calloc(ncols*nrows, sizeof(double));
+  matrix_t *m= (matrix_t*)Calloc(1, matrix_t);
+  m[0].matrix= (double*)Calloc(ncols*nrows, double);
   m[0].ncols= ncols;
   m[0].nrows= nrows;
   return(m);
@@ -89,7 +89,7 @@ void vector_sum(double *vector1, double *vector2, int n) {
  * Element-by-element product of two vectors, returned in vector1.
  */
 double *vector_difference_cpy(double *vector1, double *vector2, int n) {
-  double *difference= (double*)Calloc(n, sizeof(double));
+  double *difference= (double*)Calloc(n, double);
   for(int i=0;i<n;i++)
     difference[i] = vector1[i]-vector2[i];
   return(difference);

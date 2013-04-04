@@ -24,8 +24,8 @@ rbm_t *alloc_rbm(int n_inputs, int n_outputs) {
   
   rbm[0].n_inputs= n_inputs;
   rbm[0].n_outputs= n_outputs;
-  rbm[0].bias_inputs= (double*)Calloc(n_inputs, sizeof(double));
-  rbm[0].bias_outputs= (double*)Calloc(n_outputs, sizeof(double));
+  rbm[0].bias_inputs= (double*)Calloc(n_inputs, double);
+  rbm[0].bias_outputs= (double*)Calloc(n_outputs, double);
 
   rbm[0].io_weights= alloc_matrix(n_outputs, n_inputs);
 
@@ -82,7 +82,7 @@ void sample_states(double *prob, int n_states) {
 }
 
 double *sample_states_cpy(double *prob, int n_states) {
-  double *states = (double*)Calloc(n_states, sizeof(double));
+  double *states = (double*)Calloc(n_states, double);
   for(int i=0;i<n_states;i++)
     states[i]= prob[i]>runif(0.0d, 1.0d)?1:0;
   return(states);
@@ -196,8 +196,8 @@ void apply_delta_bias_input(rbm_t *rbm, double *delta_bias_input) {
  */
 void do_batch_member(rbm_t *rbm,  double *input_example, matrix_t *batch, double *output_bias_batch, double *input_bias_batch) {
   matrix_t *data= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs); // Will be (<v_i h_j>_{data} - <v_i h_j>_{recon}) representing one element of the batch.
-  double *output_recon= (double*)Calloc(rbm[0].n_outputs, sizeof(double));
-  double *input_recon= (double*)Calloc(rbm[0].n_inputs, sizeof(double));
+  double *output_recon= (double*)Calloc(rbm[0].n_outputs, double);
+  double *input_recon= (double*)Calloc(rbm[0].n_inputs, double);
 
   clamp_input(rbm, input_example, output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
 
@@ -249,8 +249,8 @@ void train(rbm_t *rbm, double *input_example) { // Use velocity?!; Use sparsity 
   init_matrix(batch, 0.0f); // Init. to 1; later multiply each **data matrix.
   
   // For updating biases (we'd call these priors).
-  double *output_bias_batch= (double*)Calloc(rbm[0].n_outputs, sizeof(double));
-  double *input_bias_batch= (double*)Calloc(rbm[0].n_inputs, sizeof(double));
+  double *output_bias_batch= (double*)Calloc(rbm[0].n_outputs, double);
+  double *input_bias_batch= (double*)Calloc(rbm[0].n_inputs, double);
   init_vector(output_bias_batch, rbm[0].n_outputs, 0);
   init_vector(input_bias_batch, rbm[0].n_inputs, 0);
   
