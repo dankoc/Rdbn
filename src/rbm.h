@@ -15,15 +15,15 @@ typedef struct {
   int batch_size;       // Specifies the batch size for training.
 } rbm_t;
 
-rbm_t *alloc_rbm(int n_inputs, int n_outputs);
-void free_rbm(rbm_t *rbm);
-void init_rbm(rbm_t *rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on);
+rbm_t alloc_rbm(int n_inputs, int n_outputs);
+void free_rbm(rbm_t rbm);
+void init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on);
 
-void clamp_input(rbm_t *rbm, double *input, double *resulting_output);
-void clamp_output(rbm_t *rbm, double *output, double *resulting_input);
+void clamp_input(rbm_t rbm, double *input, double *resulting_output);
+void clamp_output(rbm_t rbm, double *output, double *resulting_input);
 
-rbm_t *rbm_r_to_c(SEXP rbm_r);
-void train(rbm_t *rbm, double *input_example);
+rbm_t rbm_r_to_c(SEXP rbm_r);
+void train(rbm_t rbm, double *input_example);
 
 
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r);
