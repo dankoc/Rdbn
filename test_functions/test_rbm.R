@@ -14,7 +14,7 @@
  ## Convert to a matrix and repeat 100 times (for training).
  data_matrix <- matrix(data.matrix(training_data), nrow=6)[,sample(c(1:6), 10000, replace=TRUE)]
  
- rr <- rbm(n_inputs= as.integer(6), n_outputs= as.integer(2), batch_size=10, cd_n=1)
+ rr <- rbm(n_inputs= 6, n_outputs= 2, batch_size=10, cd_n=1)
  rbm.train(rr, data= data_matrix)
 
  #clamp_output(rr, c(0,1)) ## Currently dosen't work...
@@ -24,5 +24,5 @@
  # (2) 
  
  ## Train DBN...
- db <- dbn(n_layers= 3, layer_sizes= c(6,6,2), batch_size=10, cd_n=1)
+ db <- dbn(n_layers= 3, layer_sizes= c(6,2,2), batch_size=10, cd_n=1)
  dbn.train(db, data= data_matrix)
