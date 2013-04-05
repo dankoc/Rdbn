@@ -26,3 +26,6 @@
  ## Train DBN...
  db <- dbn(n_layers= 3, layer_sizes= c(6,2,2), batch_size=10, cd_n=1)
  dbn.train(db, data= data_matrix)
+
+ # db <- dbn(n_layers= 5, layer_sizes= c(784,500,500,2000,10))
+ 
