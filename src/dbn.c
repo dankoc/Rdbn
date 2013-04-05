@@ -65,6 +65,7 @@ dbn_t dbn_r_to_c(SEXP dbn_r) {
   dbn_t dbn;//= (dbn_t*)R_alloc(1, sizeof(dbn_t));
 
   dbn.n_layers= INTEGER(GET_SLOT(dbn_r,Rf_install("n_layers")))[0];
+  dbn.n_rbms= dbn.n_layers-1;
   dbn.layer_sizes= INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
 
   dbn.n_rbms= dbn.n_layers-1;
@@ -72,7 +73,8 @@ dbn_t dbn_r_to_c(SEXP dbn_r) {
   for(int i=0;i<dbn.n_rbms;i++) {
     dbn.rbms[i]= rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i)); // Apply rbm_r_to_c for network[[i]].
   }
-  return(dbn);
+
+ return(dbn);
 }
 
 /*

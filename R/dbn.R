@@ -41,6 +41,6 @@ setGeneric("dbn.train",
 setMethod("dbn.train", c(dbn="dbn"), 
   function(dbn, data) {
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
-    .Call("train_dbn_R", rbm, as.real(data), package="Rdbn") 
+    .Call("train_dbn_R", dbn, as.real(data), package="Rdbn") 
 })
 
