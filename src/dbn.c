@@ -29,16 +29,27 @@ void free_dbn(dbn_t dbn) {
 /*
  * Clamps the input for a given layer.  Returns a new *double with the output of that layer.
  */
-double *get_layer_outputs(dbn_t dbn, double *input, int layer) {
-  double *layer_output= (double*)Calloc(dbn.rbms[layer].n_outputs, double);
-  clamp_input(dbn.rbms[layer], input, layer_output);
+double *get_layer_outputs(dbn_t dbn, int layer, double *input, int n_inputs) {
+  double *layer_output= (double*)Calloc(dbn.rbms[layer].n_outputs*n_inputs, double);
+  double *layer_output_ptr= layer_output;
+  for(int i=0;i<n_inputs;i++) { // One-by-one fill in the outputs.
+    clamp_input(dbn.rbms[layer], input, layer_output_ptr);
+	input+= dbn.rbms[layer].n_inputs; // Increment pointers.
+	layer_output_ptr+= dbn.rbms[layer].n_outputs;
+  }
   return(layer_output);
 }
 
 /*
  *  Trains a deep belief network, layer-by-layer.
+ *
+ *  Arguments:
+ *    dbn        --> Full representation of the deep belief network.
+ *    examples   --> Examples of input used to train the network.
+ *    n_examples --> Number of examples passed to the training.
+ *    n_epocs    --> Number of times to iterate over the input examples during training.
  */
-void dbn_train(dbn_t dbn, double *examples) {
+void dbn_train(dbn_t dbn, double *examples, int n_examples, int n_epocs) {
   // Trian the first layer.
   train(dbn.rbms[0], examples);
 
@@ -46,8 +57,8 @@ void dbn_train(dbn_t dbn, double *examples) {
   double *previous_layer_input, *next_layer_input;
   previous_layer_input= examples;
   for(int layer=1;layer<dbn.n_rbms;layer++) {
-    next_layer_input= get_layer_outputs(dbn, previous_layer_input, layer-1); // Get the output from the previous layer; that's the input to the next layer ...
-    train(dbn.rbms[layer], next_layer_input); // Train the current layer.
+    next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
+    rbm_train(dbn.rbms[layer], next_layer_input, n_examples, n_epocs); // Train the current layer.
   
     // Free the previous input layer (unless we're on the first pass and pointing to *examples.
 	if(layer>1) // DO NOT free *examples.
@@ -80,11 +91,15 @@ dbn_t dbn_r_to_c(SEXP dbn_r) {
 /*
  *  R interface to training a deep belief network ...
  */ 
-SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r) {
+SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r) {
   dbn_t dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
+  int n_examples= Rf_nrows(training_data_r)/dbn.rbm[0].n_inputs;
   double *examples= REAL(training_data_r);
-  dbn_train(dbn, examples);
+
+  int n_epocs= INTEGER(n_epocs_r)[0];
+  
+  dbn_train(dbn, examples, n_examples, n_epocs);
   return(dbn_r);
 }
 

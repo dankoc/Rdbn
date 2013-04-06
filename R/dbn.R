@@ -34,14 +34,14 @@ dbn <- function(n_layers, layer_sizes, batch_size=1, learning_rate=0.1, cd_n=1, 
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("dbn.train", 
-  def=function(dbn, data, ...) {
+  def=function(dbn, data, n_epocs= 1000) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.train")
 })
   
 setMethod("dbn.train", c(dbn="dbn"), 
-  function(dbn, data) {
+  function(dbn, data, n_epocs= 1000) {
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
-    .Call("train_dbn_R", dbn, as.real(data), package="Rdbn") 
+    .Call("train_dbn_R", dbn, as.real(data), as.integer(n_epocs), package="Rdbn") 
 })
 

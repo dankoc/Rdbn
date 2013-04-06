@@ -32,10 +32,9 @@ void clamp_input(rbm_t rbm, double *input, double *resulting_output);
 void clamp_output(rbm_t rbm, double *output, double *resulting_input);
 
 rbm_t rbm_r_to_c(SEXP rbm_r);
-void train(rbm_t rbm, double *input_example);
+void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs);
 
-
-SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r);
+SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r);
 
 #endif
 

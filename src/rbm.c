@@ -244,7 +244,7 @@ void do_batch_member(rbm_t rbm,  double *input_example, matrix_t *batch, double 
  *  or less agrees with comments in: http://www.elen.ucl.ac.be/Proceedings/esann/esannpdf/es2012-71.pdf.
  * Don't know what all these how-to pages are talking about when they say 'multiplying matrices', though!?
  */
-void train(rbm_t rbm, double *input_example) { // Use velocity?!; Use sparsity target?!
+void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use sparsity target?!  // Change name to 
   // Thesse are for updating edge weights.
   matrix_t *batch= alloc_matrix(rbm.n_outputs, rbm.n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
   init_matrix(batch, 0.0f); // Init. to 1; later multiply each **data matrix.
@@ -269,6 +269,32 @@ void train(rbm_t rbm, double *input_example) { // Use velocity?!; Use sparsity t
   // Cleanup temporary variables ...  
   free_matrix(batch);
   Free(output_bias_batch);  Free(input_bias_batch);
+}
+
+/*
+ * Shortcut to loop over examples for a given number of epocs.
+ *
+ * Arguments: 
+ *   rbm           --> Restricted boltzman machine.
+ *   input_example --> Input example used for training.  Each columns represents a unique training case.
+ *   n_examples    --> Specifies the number of examples provided.
+ *   n_epocs       --> Specifies the number of times the training program loops over the examples.
+ *
+ * Assumptions: 
+ *   --> n_examples is a multiple of rbm.batch_size ... additional examples are ignored.
+ */
+void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs) {
+  double *current_position;
+  int n_training_iterations= floor(n_examples/rbm.batch_size); 
+  
+  for(int i=0;i<n_epocs;i++) {
+    current_position= input_example; // Reset training pointer.
+    for(int j=0;j<n_training_iterations;j++) {
+      do_minibatch(rbm, current_position);  // Do a minibatch using the current position of the training pointer.
+      current_position+= rbm.batch_size*rbm.n_inputs; // Increment the input_example pointer batch_size # of columns.
+	}
+  }
+
 }
 
 /************************************************************************************
@@ -309,20 +335,15 @@ rbm_t rbm_r_to_c(SEXP rbm_r) {
 }
 
  
-SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r) {
+SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r) {
   rbm_t rbm= rbm_r_to_c(rbm_r); // Get values from R function.
 
   int n_examples= Rf_nrows(training_data_r)/rbm.n_inputs;
+  int n_epocs= INTEGER(n_epocs_r)[0];
   double *input_example= REAL(training_data_r);
-  int n_epocs= floor(n_examples/rbm.batch_size);
 
-  //for(int i=0;i<rbm.n_inputs;i++) Rprintf("%f ", input_example[3*6+i]);
-
-  for(int i=0;i<n_epocs;i++) {
-    train(rbm, input_example);
-    input_example+= rbm.batch_size*rbm.n_inputs; // Increment the input_example pointer batch_size # of columns.
-  }
-
+  rbm_train(rbm, input_example, n_examples, n_epocs);
+  
   return(rbm_r);
 }
 
