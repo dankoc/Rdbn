@@ -12,7 +12,7 @@
  training_data <- t(training_data)
  
  ## Convert to a matrix and repeat 100 times (for training).
- data_matrix <- matrix(data.matrix(training_data), nrow=6)[,sample(c(1:6), 10000, replace=TRUE)]
+ data_matrix <- matrix(data.matrix(training_data), nrow=6)[,sample(c(1:6), 1, replace=TRUE)]
  
  rr <- rbm(n_inputs= 6, n_outputs= 2, batch_size=10, cd_n=1)
  rbm.train(rr, data= data_matrix, n_epocs= 1000)
