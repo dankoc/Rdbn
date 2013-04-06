@@ -22,6 +22,7 @@ typedef struct {
   double momentum_decay;  // \Mu; Rate at which old gradients are discarded.
   matrix_t *momentum;     // Momentum term; serves as memory for other mini-batch members.  Speeds the rate of convergence.
   
+  // Also implement sparsity controls(?!).
 } rbm_t;
 
 rbm_t alloc_rbm(int n_inputs, int n_outputs);
