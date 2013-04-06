@@ -16,10 +16,11 @@ setClass("dbn",#"restricted_boltzman_machine",
 )
 
 # constructor.
-dbn <- function(n_layers, layer_sizes, batch_size=1, learning_rate=0.1, cd_n=1) {
+dbn <- function(n_layers, layer_sizes, batch_size=1, learning_rate=0.1, cd_n=1, momentum_decay= NA) {
   rbm_network <- list()
   for(i in 1:(n_layers-1)) {
-    rbm_network[[i]] <- rbm(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n)
+    rbm_network[[i]] <- rbm(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], 
+      batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
   }
   new("dbn", n_layers=as.integer(n_layers), layer_sizes=as.integer(layer_sizes), network= rbm_network)
 }

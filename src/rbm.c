@@ -294,6 +294,17 @@ rbm_t rbm_r_to_c(SEXP rbm_r) {
   rbm.batch_size= INTEGER(GET_SLOT(rbm_r, Rf_install("batch_size")))[0];
   rbm.cd_n= INTEGER(GET_SLOT(rbm_r, Rf_install("cd_n")))[0];
 
+  rbm.use_momentum= INTEGER(GET_SLOT(rbm_r, Rf_install("use_momentum")))[0];
+  
+  if(rbm.use_momentum) {
+    rbm.momentum_decay= REAL(GET_SLOT(rbm_r, Rf_install("momentum_decay")));
+    rbm.momentum= (matrix_t*)R_alloc(1, sizeof(matrix_t));
+	
+    rbm.momentum[0].matrix= REAL(GET_SLOT(rbm_r, Rf_install("momentum")));
+    rbm.momentum[0].ncols= rbm.n_outputs;
+    rbm.momentum[0].nrows= rbm.n_inputs;
+  }
+
   return(rbm);
 }
 

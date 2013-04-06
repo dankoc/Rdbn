@@ -9,16 +9,22 @@
 #` @export
 setClass("rbm",#"restricted_boltzman_machine", 
   representation(
-    n_inputs="integer",      ## Number of nodes in the input layer.
-    n_outputs="integer",     ## Number of nodes in the output layer.
-    io_weights="matrix",     ## The actual weights matrix, connecting each input to output.
-    bias_inputs="numeric",   ## Bias vector, inputs.
-    bias_outputs="numeric",  ## Bias vector, outputs.
+    n_inputs="integer",       ## Number of nodes in the input layer.
+    n_outputs="integer",      ## Number of nodes in the output layer.
+    io_weights="matrix",      ## The actual weights matrix, connecting each input to output.
+    bias_inputs="numeric",    ## Bias vector, inputs.
+    bias_outputs="numeric",   ## Bias vector, outputs.
 
     ## Learning parameters.  These might be updated as learning progresses.
-    learning_rate="numeric", ## How quickly the netowrk 'learns'.
-	cd_n="integer",          ## Number of steps of Gibbs sampling when doing contrastive divergence.
-	batch_size="integer"     ## Number of input examples to use in a 'mini-batch'.
+    learning_rate="numeric",  ## How quickly the netowrk 'learns'.
+	cd_n="integer",           ## Number of steps of Gibbs sampling when doing contrastive divergence.
+	batch_size="integer",     ## Number of input examples to use in a 'mini-batch'.
+	
+	## Special learning options.  These are NOT guaranteed to be set.
+	## See in: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf; pp. 75; also see: pp.5(background),73(Adapting Nesterov methods).
+	use_momentum="logical",   ## Use momentum during fitting.
+	momentum_decay="numeric", ## \Mu; Rate at which old gradients are discarded.
+	momentum="matrix"         ## Momentum term; serves as memory for other mini-batch members.  Speeds the rate of convergence.
   ),
 )
 
@@ -26,35 +32,46 @@ setClass("rbm",#"restricted_boltzman_machine",
 # e.g.:
 # rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
 # Initial weights set using S8.1 in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
-    ## Initialize weights.
-    if(is.null(io_weights)) {
-	  io_weights <- matrix(rnorm(n_inputs*n_outputs, mean=0, sd=0.01), ncol=n_outputs)
-	}
-	else { ## If specified ... check dimenstions.
-	  stopifnot(NROW(io_weights) == n_inputs & NCOL(io_weights) == n_outputs)
-	}
+rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, momentum_decay= NA, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
+  ## Initialize weights.
+  if(is.null(io_weights)) {
+    io_weights <- matrix(rnorm(n_inputs*n_outputs, mean=0, sd=0.01), ncol=n_outputs)
+  }
+  else { ## If specified ... check dimenstions.
+    stopifnot(NROW(io_weights) == n_inputs & NCOL(io_weights) == n_outputs)
+  }
 
-	## Initialize bias vectors for inputs.
-	if(is.null(bias_inputs)) {
-	  bias_inputs <- rep(0, n_inputs)#rnorm(n_inputs, mean=0, sd=0.01)
-	}
-	else {
-	  stopifnot(n_inputs == NROW(bias_inputs))
-	}
+  ## Initialize bias vectors for inputs.
+  if(is.null(bias_inputs)) {
+    bias_inputs <- rep(0, n_inputs)#rnorm(n_inputs, mean=0, sd=0.01)
+  }
+  else {
+    stopifnot(n_inputs == NROW(bias_inputs))
+  }
 
-	## Initialize bias vectors for outputs.	
-	if(is.null(bias_outputs)) {
-	  bias_outputs <- rep(0, n_outputs)#rnorm(n_outputs, mean=0, sd=0.01)
-	}
-	else {
-	  stopifnot(n_outputs == NROW(bias_outputs))
-	}
+  ## Initialize bias vectors for outputs.	
+  if(is.null(bias_outputs)) {
+    bias_outputs <- rep(0, n_outputs)#rnorm(n_outputs, mean=0, sd=0.01)
+  }
+  else {
+    stopifnot(n_outputs == NROW(bias_outputs))
+  }
 
-    new("rbm", n_inputs=as.integer(n_inputs), n_outputs=as.integer(n_outputs), 
-      cd_n=as.integer(cd_n), batch_size=as.integer(batch_size),
-      learning_rate=as.real(learning_rate), io_weights=io_weights, 
-      bias_inputs= bias_inputs, bias_outputs= bias_outputs)
+  if(is.na(momentum_decay)) {
+    use_momentum=FALSE
+    momentum <- integer(0)
+  }
+  else {
+    stopifnot(momentum_decay <= 1 & momentum_decay >= 0) ## Momentum decay between 0 and 1.
+    use_momentum=TRUE
+    momentum <- matrix(0, nrow=n_inputs, ncol=n_outputs)
+  }
+
+  new("rbm", n_inputs=as.integer(n_inputs), n_outputs=as.integer(n_outputs), 
+    cd_n=as.integer(cd_n), batch_size=as.integer(batch_size),
+    learning_rate=as.real(learning_rate), io_weights=io_weights, 
+    bias_inputs= bias_inputs, bias_outputs= bias_outputs,
+    use_momentum= as.logical(use_momentum), momentum= momentum, momentum_decay= as.real(momentum_decay))
 }
 
  # require(Rdbn)
