@@ -51,7 +51,7 @@ double *get_layer_outputs(dbn_t dbn, int layer, double *input, int n_inputs) {
  */
 void dbn_train(dbn_t dbn, double *examples, int n_examples, int n_epocs) {
   // Trian the first layer.
-  train(dbn.rbms[0], examples);
+  rbm_train(dbn.rbms[0], examples, n_examples, n_epocs);
 
   // train later layers.
   double *previous_layer_input, *next_layer_input;
@@ -94,7 +94,7 @@ dbn_t dbn_r_to_c(SEXP dbn_r) {
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r) {
   dbn_t dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
-  int n_examples= Rf_nrows(training_data_r)/dbn.rbm[0].n_inputs;
+  int n_examples= Rf_nrows(training_data_r)/dbn.rbms[0].n_inputs;
   double *examples= REAL(training_data_r);
 
   int n_epocs= INTEGER(n_epocs_r)[0];

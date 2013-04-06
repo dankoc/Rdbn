@@ -323,7 +323,7 @@ rbm_t rbm_r_to_c(SEXP rbm_r) {
   rbm.use_momentum= INTEGER(GET_SLOT(rbm_r, Rf_install("use_momentum")))[0];
   
   if(rbm.use_momentum) {
-    rbm.momentum_decay= REAL(GET_SLOT(rbm_r, Rf_install("momentum_decay")));
+    rbm.momentum_decay= REAL(GET_SLOT(rbm_r, Rf_install("momentum_decay")))[0];
     rbm.momentum= (matrix_t*)R_alloc(1, sizeof(matrix_t));
 	
     rbm.momentum[0].matrix= REAL(GET_SLOT(rbm_r, Rf_install("momentum")));
