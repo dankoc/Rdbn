@@ -59,7 +59,7 @@ rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, mo
 
   if(is.na(momentum_decay)) {
     use_momentum=FALSE
-    momentum <- integer(0)
+    momentum <- matrix(integer(0))
   }
   else {
     stopifnot(momentum_decay <= 1 & momentum_decay >= 0) ## Momentum decay between 0 and 1.
