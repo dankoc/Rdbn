@@ -70,11 +70,11 @@ rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double
   return(rbm);
 }
 
-
+/*
 delta_w_t alloc() {
 
 }
-
+*/
 void free_delta_w(delta_w_t dw) {
   free_matrix(dw.delta_w);
   Free(dw.delta_output_bias);
@@ -94,7 +94,7 @@ void sample_states(double *prob, int n_states) {
 }
 
 double sample_state(double prob) {
-  return(prob[i]>runif(0.0d, 1.0d)?1:0);
+  return(prob>runif(0.0d, 1.0d)?1:0);
 }
 
 double *sample_states_cpy(double *prob, int n_states) {
@@ -161,16 +161,16 @@ void clamp_input(rbm_t rbm, double *input, double *resulting_output) {
  Functions for getting/ updating during training. */
  
 /*Subtract each element of recon from data.  The result will be passed back in data.*/
-void compute_delta_w(rbm_t rbm, delta_w_t batch, double *init_output_recon, double *input_example, double *output_recon, double *input_reconstruction) {
+void compute_delta_w(rbm_t rbm, delta_w_t batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
   for(int i=0;i<rbm.n_outputs;i++) {
-    batch.delta_output_bias+= init_output_recon[i]-output_recon[i];
+    batch.delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm.n_inputs;j++) {
       double delta_w_i_j= get_matrix_value(batch.delta_w, i, j)+
 			(sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
       set_matrix_value(batch.delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions.
 	  
       if(i==0) // Only 
-        batch.delta_input_bias+= input_example[j]-input_recon[j]; 
+        batch.delta_input_bias[j]+= input_example[j]-input_recon[j]; 
     }
   }
 }
@@ -219,7 +219,7 @@ void initial_momentum_step(rbm_t rbm) {
   for(int i=0;i<rbm.n_outputs;i++) {
     rbm.bias_outputs[i] += rbm.learning_rate*dw.delta_output_bias[i]/(double)rbm.batch_size; 
     for(int j=0;j<rbm.n_inputs;j++) {
-      double step= rbm.learning_rate*get_matrix_value(delta_w, i, j)/(double)rbm.batch_size; // For the momentum method ... do I still scale by the batch size?!
+      double step= rbm.learning_rate*get_matrix_value(dw.delta_w, i, j)/(double)rbm.batch_size; // For the momentum method ... do I still scale by the batch size?!
 
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
 	  // \theta_t' was applied before taking the step.
