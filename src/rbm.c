@@ -201,6 +201,8 @@ void apply_delta_w(rbm_t rbm, delta_w_t dw) {
  *  We use the momentum approach suggested by Nesterov, and adapted by Ilya Sutskever.
  *  Described here: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf.
  *  See pp. 75 of the Sutskever thesis, and in particular equations 7.10-7.11.
+ *
+ *  Currently does NOT use momentum approach for updating biases, although that is straightforward to implement.
  */
 
 void initial_momentum_step(rbm_t rbm) {
@@ -215,24 +217,24 @@ void initial_momentum_step(rbm_t rbm) {
     }
 }
  
- void apply_momentum_correction(rbm_t rbm, delta_w_t dw) {
+void apply_momentum_correction(rbm_t rbm, delta_w_t dw) {
   for(int i=0;i<rbm.n_outputs;i++) {
-    rbm.bias_outputs[i] += rbm.learning_rate*dw.delta_output_bias[i]/(double)rbm.batch_size; 
+    rbm.bias_outputs[i]+= rbm.learning_rate*dw.delta_output_bias[i]/(double)rbm.batch_size; 
     for(int j=0;j<rbm.n_inputs;j++) {
       double step= rbm.learning_rate*get_matrix_value(dw.delta_w, i, j)/(double)rbm.batch_size; // For the momentum method ... do I still scale by the batch size?!
 
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
-	  // \theta_t' was applied before taking the step.
+      // \theta_t' was applied before taking the step.
       double previous_w_i_j= get_matrix_value(rbm.io_weights, i, j);
-      set_matrix_value(rbm.io_weights, i, j, previous_w_i_j-step);  //  
+      set_matrix_value(rbm.io_weights, i, j, previous_w_i_j+step);  //  
 	  
       // Update velocities.  v_t = v_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.11, 2nd half).
-	  // v_t' was applied before taking the step.
+      // v_t' was applied before taking the step.
       double previous_momentum_i_j= get_matrix_value(rbm.momentum, i, j);
-	  set_matrix_value(rbm.io_weights, i, j, previous_momentum_i_j-step);
+        set_matrix_value(rbm.momentum, i, j, previous_momentum_i_j+step);
 
       if(i==0) // Only update once...
-        rbm.bias_inputs[j] += rbm.learning_rate*dw.delta_input_bias[j]/(double)rbm.batch_size;
+        rbm.bias_inputs[j]+= rbm.learning_rate*dw.delta_input_bias[j]/(double)rbm.batch_size;
     }
   }
 }
