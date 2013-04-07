@@ -93,6 +93,10 @@ void sample_states(double *prob, int n_states) {
     prob[i]= prob[i]>runif(0.0d, 1.0d)?1:0;
 }
 
+double sample_state(double prob) {
+  return(prob[i]>runif(0.0d, 1.0d)?1:0);
+}
+
 double *sample_states_cpy(double *prob, int n_states) {
   double *states = (double*)Calloc(n_states, double);
   for(int i=0;i<n_states;i++)
@@ -157,13 +161,16 @@ void clamp_input(rbm_t rbm, double *input, double *resulting_output) {
  Functions for getting/ updating during training. */
  
 /*Subtract each element of recon from data.  The result will be passed back in data.*/
-void compute_delta_w(rbm_t rbm, delta_w_t batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
+void compute_delta_w(rbm_t rbm, delta_w_t batch, double *init_output_recon, double *input_example, double *output_recon, double *input_reconstruction) {
   for(int i=0;i<rbm.n_outputs;i++) {
-    batch.delta_output_bias+= 
+    batch.delta_output_bias+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm.n_inputs;j++) {
       double delta_w_i_j= get_matrix_value(batch.delta_w, i, j)+
-			(init_output_recon[i]*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data*ViHj_recon>
+			(sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
       set_matrix_value(batch.delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions.
+	  
+      if(i==0) // Only 
+        batch.delta_input_bias+= input_example[j]-input_recon[j]; 
     }
   }
 }
@@ -247,6 +254,7 @@ void do_batch_member(rbm_t rbm,  double *input_example, delta_w_t batch) {
   double *output_recon= (double*)Calloc(rbm.n_outputs, double);
   double *input_recon= (double*)Calloc(rbm.n_inputs, double);
   clamp_input(rbm, input_example, output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
+  
   for(int cd=0;cd<rbm.cd_n;cd++) {
     clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
     clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
@@ -288,15 +296,18 @@ void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use spa
   init_vector(batch.delta_input_bias, rbm.n_inputs, 0);
   }
   
-  if(rbm.use_momentum) { // If using momentum Take a step BEFORE computing the local gradient.
+  // If using momentum Take a step BEFORE computing the local gradient.
+  if(rbm.use_momentum) { 
     initial_momentum_step(rbm);
   }
   
+  // Compute the \sum gradient over the mini-batch.
   for(int i=0;i<rbm.batch_size;i++) { // Foreach item in the batch.
     do_batch_member(rbm, input_example, batch);
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
   
+  // Take a step in teh direction of the gradient.
   if(rbm.use_momentum) { // Correct and update momentum term.
     apply_momentum_correction(rbm, batch); 
   }
