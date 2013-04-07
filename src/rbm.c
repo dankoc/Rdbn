@@ -186,6 +186,44 @@ void apply_delta_bias_input(rbm_t rbm, double *delta_bias_input) {
     rbm.bias_inputs[j] += rbm.learning_rate*delta_bias_input[j]/(double)rbm.batch_size;
 }
 
+/*
+ * These functions for updating both weights and velocities together, using the momentum approach.
+ *
+ *  We use the momentum approach suggested by Nesterov, and adapted by Ilya Sutskever.
+ *  Described here: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf.
+ *  See pp. 75 of the Sutskever thesis, and in particular equations 7.10-7.11.
+ */
+
+void initial_momentum_step(rbm_t rbm) {
+  for(int i=0;i<rbm.n_outputs;i++)
+    for(int j=0;j<rbm.n_inputs;j++) {
+      // Computes(eq 7.11, 1st half): v_t=\mu_{t-1}v_{t-1}.
+      double momentum_i_j= rbm.momentum_decay*get_matrix_value(rbm.momentum, i, j); 
+      set_matrix_value(rbm.momentum, i, j, momentum_i_j); // Updates momentum matrix.
+
+      // Computes(eq 7.10, 1st half): \theta_t = \theta_{t-1} + \mu_{t-11}v_{t-1}.
+      set_matrix_value(rbm.io_weights, i, j, get_matrix_value(rbm.io_weights, i, j)+momentum_i_j);
+    }
+}
+ 
+ void apply_momentum_correction(rbm_t rbm, matrix_t *delta_w) {
+  for(int i=0;i<rbm.n_outputs;i++)
+    for(int j=0;j<rbm.n_inputs;j++) {
+      double step= rbm.learning_rate*get_matrix_value(delta_w, i, j)/(double)rbm.batch_size; // For the momentum method ... do I still scale by the batch size?!
+
+      // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
+	  // \theta_t' was applied before taking the step.
+      double previous_w_i_j= get_matrix_value(rbm.io_weights, i, j);
+      set_matrix_value(rbm.io_weights, i, j, previous_w_i_j-step);  //  
+	  
+      // Update velocities.  v_t = v_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.11, 2nd half).
+	  // v_t' was applied before taking the step.
+      double previous_momentum_i_j= get_matrix_value(rbm.momentum, i, j);
+	  set_matrix_value(rbm.io_weights, i, j, previous_momentum_i_j-step);
+    }
+}
+
+
 /*  
  * Processes a single batch element, and increments the delta_w, delta_bias_input, and delta_bias_output
  *  weights accordingly.
@@ -199,7 +237,7 @@ void do_batch_member(rbm_t rbm,  double *input_example, matrix_t *batch, double 
   matrix_t *data= alloc_matrix(rbm.n_outputs, rbm.n_inputs); // Will be (<v_i h_j>_{data} - <v_i h_j>_{recon}) representing one element of the batch.
   double *output_recon= (double*)Calloc(rbm.n_outputs, double);
   double *input_recon= (double*)Calloc(rbm.n_inputs, double);
-
+  
   clamp_input(rbm, input_example, output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
 
   // Compute <vihj>_data ... in this computation, sample random states (?!).
@@ -255,15 +293,23 @@ void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use spa
   init_vector(output_bias_batch, rbm.n_outputs, 0);
   init_vector(input_bias_batch, rbm.n_inputs, 0);
   
+  if(rbm.use_momentum) { // If using momentum Take a step BEFORE computing the local gradient.
+    initial_momentum_step(rbm);
+  }
+  
   // How to asses convergence?!  Do that here?!
   for(int i=0;i<rbm.batch_size;i++) { // Foreach item in the batch.
     do_batch_member(rbm, input_example, batch, output_bias_batch, input_bias_batch);
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
   
-  // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon)
-  apply_delta_w(rbm, batch);
-  apply_delta_bias_output(rbm, output_bias_batch);
+  if(rbm.use_momentum) { // Correct and update momentum term.
+    apply_momentum_correction(rbm, batch); 
+  }
+  else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
+    apply_delta_w(rbm, batch);
+  }
+  apply_delta_bias_output(rbm, output_bias_batch); // Should I be applying the momentum method to the biases as well?!
   apply_delta_bias_input(rbm, input_bias_batch);
   
   // Cleanup temporary variables ...  
