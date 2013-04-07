@@ -25,6 +25,12 @@ typedef struct {
   // Also implement sparsity controls(?!).
 } rbm_t;
 
+typedef struct {
+  matrix_t *delta_w;
+  double *delta_output_bias;
+  double *delta_input_bias;
+} delta_w_t;
+
 rbm_t alloc_rbm(int n_inputs, int n_outputs);
 void free_rbm(rbm_t rbm);
 rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on);

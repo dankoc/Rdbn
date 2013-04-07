@@ -70,6 +70,17 @@ rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double
   return(rbm);
 }
 
+
+delta_w_t alloc() {
+
+}
+
+void free_delta_w(delta_w_t dw) {
+  free_matrix(dw.delta_w);
+  Free(dw.delta_output_bias);
+  Free(dw.delta_input_bias);
+}
+
 /*************************************************************************************
  *  Common functions required for many of the input/ output clamping and fitting ...
  */
@@ -145,45 +156,36 @@ void clamp_input(rbm_t rbm, double *input, double *resulting_output) {
 /**********************************************************************
  Functions for getting/ updating during training. */
  
-/*Compute a matrix representing all posible products of two vectors, output and input.*/
-void init_freq_matrix(rbm_t rbm, double *output, double *input, matrix_t *delta_weights) {
-  // Compute the frequency with which output_i and input_j occur together.
-  for(int i=0;i<rbm.n_outputs;i++)
-    for(int j=0;j<rbm.n_inputs;j++)
-      set_matrix_value(delta_weights, i, j, output[i]*input[j]);
-}
-
 /*Subtract each element of recon from data.  The result will be passed back in data.*/
-void compute_delta_w(rbm_t rbm, matrix_t *data, double *output_recon, double *input_recon) {
-  for(int i=0;i<rbm.n_outputs;i++)
+void compute_delta_w(rbm_t rbm, delta_w_t batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
+  for(int i=0;i<rbm.n_outputs;i++) {
+    batch.delta_output_bias+= 
     for(int j=0;j<rbm.n_inputs;j++) {
-      double data_i_j_old= get_matrix_value(data, i, j);
-      double data_i_j_new= data_i_j_old-output_recon[i]*input_recon[j];
-      set_matrix_value(data, i, j, data_i_j_new); // Really need to inline these setter-getter functions.
+      double delta_w_i_j= get_matrix_value(batch.delta_w, i, j)+
+			(init_output_recon[i]*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data*ViHj_recon>
+      set_matrix_value(batch.delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions.
     }
+  }
 }
 
-/*Add matricies io_weights and delta_w.  The result will be in io_weights.*/
-void apply_delta_w(rbm_t rbm, matrix_t *delta_w) {
-  for(int i=0;i<rbm.n_outputs;i++)
+/*
+ * Add matricies io_weights and delta_w.  The result will be in io_weights.
+ *
+ * Also includes 
+ */
+void apply_delta_w(rbm_t rbm, delta_w_t dw) {
+  for(int i=0;i<rbm.n_outputs;i++) {
+    rbm.bias_outputs[i] += rbm.learning_rate*dw.delta_output_bias[i]/(double)rbm.batch_size; 
     for(int j=0;j<rbm.n_inputs;j++) {
       double previous_w_i_j= get_matrix_value(rbm.io_weights, i, j);
-      double delta_w_i_j= get_matrix_value(delta_w, i, j);
+      double delta_w_i_j= get_matrix_value(dw.delta_w, i, j);
       double new_w_i_j= previous_w_i_j+rbm.learning_rate*delta_w_i_j/(double)rbm.batch_size;
       set_matrix_value(rbm.io_weights, i, j, new_w_i_j);
+	  
+      if(i==0) // Only update once...
+        rbm.bias_inputs[j] += rbm.learning_rate*dw.delta_input_bias[j]/(double)rbm.batch_size;
     }
-}
-
-/*Update output biases.*/
-void apply_delta_bias_output(rbm_t rbm, double *delta_bias_output) {
-  for(int i=0;i<rbm.n_outputs;i++) 
-    rbm.bias_outputs[i] += rbm.learning_rate*delta_bias_output[i]/(double)rbm.batch_size;
-}
-
-/*Update input biases.*/
-void apply_delta_bias_input(rbm_t rbm, double *delta_bias_input) {
-  for(int j=0;j<rbm.n_inputs;j++)
-    rbm.bias_inputs[j] += rbm.learning_rate*delta_bias_input[j]/(double)rbm.batch_size;
+  }
 }
 
 /*
@@ -206,8 +208,9 @@ void initial_momentum_step(rbm_t rbm) {
     }
 }
  
- void apply_momentum_correction(rbm_t rbm, matrix_t *delta_w) {
-  for(int i=0;i<rbm.n_outputs;i++)
+ void apply_momentum_correction(rbm_t rbm, delta_w_t dw) {
+  for(int i=0;i<rbm.n_outputs;i++) {
+    rbm.bias_outputs[i] += rbm.learning_rate*dw.delta_output_bias[i]/(double)rbm.batch_size; 
     for(int j=0;j<rbm.n_inputs;j++) {
       double step= rbm.learning_rate*get_matrix_value(delta_w, i, j)/(double)rbm.batch_size; // For the momentum method ... do I still scale by the batch size?!
 
@@ -220,7 +223,11 @@ void initial_momentum_step(rbm_t rbm) {
 	  // v_t' was applied before taking the step.
       double previous_momentum_i_j= get_matrix_value(rbm.momentum, i, j);
 	  set_matrix_value(rbm.io_weights, i, j, previous_momentum_i_j-step);
+
+      if(i==0) // Only update once...
+        rbm.bias_inputs[j] += rbm.learning_rate*dw.delta_input_bias[j]/(double)rbm.batch_size;
     }
+  }
 }
 
 
@@ -233,37 +240,24 @@ void initial_momentum_step(rbm_t rbm) {
  *    
  *
  */
-void do_batch_member(rbm_t rbm,  double *input_example, matrix_t *batch, double *output_bias_batch, double *input_bias_batch) {
-  matrix_t *data= alloc_matrix(rbm.n_outputs, rbm.n_inputs); // Will be (<v_i h_j>_{data} - <v_i h_j>_{recon}) representing one element of the batch.
+void do_batch_member(rbm_t rbm,  double *input_example, delta_w_t batch) {
+ 
+  // Run Gibbs sampling for CDn steps.
+  double *init_output_recon= (double*)Calloc(rbm.n_outputs, double);
   double *output_recon= (double*)Calloc(rbm.n_outputs, double);
   double *input_recon= (double*)Calloc(rbm.n_inputs, double);
-  
   clamp_input(rbm, input_example, output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
-
-  // Compute <vihj>_data ... in this computation, sample random states (?!).
-  double* output_states= sample_states_cpy(output_recon, rbm.n_outputs);
-  init_freq_matrix(rbm, output_states, input_example, data);
-    
-  // Run Gibbs sampling for CDn steps.
   for(int cd=0;cd<rbm.cd_n;cd++) {
     clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
     clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
   }
      
-  // Compute <vihj>_recon
-  compute_delta_w(rbm, data, output_recon, input_recon);
-  matrix_sum(batch, data); // Update batch.
+  // Put all of this together so that only 1 loop is required ...
+  // Compute  ... in this computation, sample random states (?!).
+  // Compute <vihj>_data-<vihj>_recon and update batch.
+  compute_delta_w(rbm, batch, init_output_recon, input_example, output_recon, input_recon);
 
-  // Compute \delta_bias (a.k.a prior).
-  clamp_input(rbm, input_example, output_states); // CGD: SHOULD i BE USING SAMPLED STATES WHEN COMPUTING delta_bias_output?? i DON'T THINK SO!!
-  double *delta_bias_output= vector_difference_cpy(output_states, output_recon, rbm.n_outputs); 
-  double *delta_bias_input= vector_difference_cpy(input_example, input_recon, rbm.n_inputs);
-  vector_sum(output_bias_batch, delta_bias_output, rbm.n_outputs); // Update output_bias_batch.
-  vector_sum(input_bias_batch, delta_bias_input, rbm.n_inputs); // Update input_bias_batch
-
-  Free(output_states);	Free(delta_bias_output);	Free(delta_bias_input);
-  Free(output_recon);   Free(input_recon);
-  free_matrix(data);  
+  Free(init_output_recon); Free(output_recon); Free(input_recon);
 }
 
 /************************************************************************************
@@ -283,23 +277,23 @@ void do_batch_member(rbm_t rbm,  double *input_example, matrix_t *batch, double 
  * Don't know what all these how-to pages are talking about when they say 'multiplying matrices', though!?
  */
 void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use sparsity target?!  // Change name to 
-  // Thesse are for updating edge weights.
-  matrix_t *batch= alloc_matrix(rbm.n_outputs, rbm.n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
-  init_matrix(batch, 0.0f); // Init. to 1; later multiply each **data matrix.
-  
-  // For updating biases (we'd call these priors).
-  double *output_bias_batch= (double*)Calloc(rbm.n_outputs, double);
-  double *input_bias_batch= (double*)Calloc(rbm.n_inputs, double);
-  init_vector(output_bias_batch, rbm.n_outputs, 0);
-  init_vector(input_bias_batch, rbm.n_inputs, 0);
+  // Thesse are for updating edge weights and biases...
+  delta_w_t batch;
+  { // TODO: Re-write this initialization for a single loop through n_outputs and n_inputs.
+  batch.delta_w= alloc_matrix(rbm.n_outputs, rbm.n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
+  batch.delta_output_bias= (double*)Calloc(rbm.n_outputs, double); // output_bias_batch
+  batch.delta_input_bias= (double*)Calloc(rbm.n_inputs, double); // input_bias_batch
+  init_matrix(batch.delta_w, 0.0f); // Init. to 1; later multiply each **data matrix.
+  init_vector(batch.delta_output_bias, rbm.n_outputs, 0);
+  init_vector(batch.delta_input_bias, rbm.n_inputs, 0);
+  }
   
   if(rbm.use_momentum) { // If using momentum Take a step BEFORE computing the local gradient.
     initial_momentum_step(rbm);
   }
   
-  // How to asses convergence?!  Do that here?!
   for(int i=0;i<rbm.batch_size;i++) { // Foreach item in the batch.
-    do_batch_member(rbm, input_example, batch, output_bias_batch, input_bias_batch);
+    do_batch_member(rbm, input_example, batch);
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
   
@@ -309,12 +303,9 @@ void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use spa
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
     apply_delta_w(rbm, batch);
   }
-  apply_delta_bias_output(rbm, output_bias_batch); // Should I be applying the momentum method to the biases as well?!
-  apply_delta_bias_input(rbm, input_bias_batch);
   
   // Cleanup temporary variables ...  
-  free_matrix(batch);
-  Free(output_bias_batch);  Free(input_bias_batch);
+  free_delta_w(batch);
 }
 
 /*
