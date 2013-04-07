@@ -24,6 +24,7 @@ void init_vector(double *vector, int n, double init_value);
 void vector_product(double *vector1, double *vector2, int n);
 void vector_sum(double *vector1, double *vector2, int n);
 double *vector_difference_cpy(double *vector1, double *vector2, int n);
+double *vector_copy(double *vector, int n);
 
 #endif
 

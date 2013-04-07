@@ -95,3 +95,13 @@ double *vector_difference_cpy(double *vector1, double *vector2, int n) {
     difference[i] = vector1[i]-vector2[i];
   return(difference);
 }
+
+/*
+ *  Copies a double *vector into a new vector.  Returns the copy.
+ */
+double *vector_copy(double *vector, int n) {
+  double *v_copy= (double*)Calloc(n, double);
+  for(int i=0;i<n;i++)
+    v_copy[i]= vector[i];
+  return(v_copy);
+}
