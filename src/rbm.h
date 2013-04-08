@@ -15,6 +15,8 @@ typedef struct {
   double learning_rate;   // Rate at which the model learns.
   int cd_n;               // Specifies the number of Gibbs sampling steps used for contrastive divergence during training.
   int batch_size;         // Specifies the batch size for training.
+  int update_input_biases;// Boolean value which specifies whether the bias_input vector is updated.
+                          // Often should NOT be updated ... e.g. when the same value should be specified by the output in a dbn...
   
   // Special learning options.  These are NOT guaranteed to be set.
   // See in: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf; pp. 75; also see: pp.5(background),73(Adapting Nesterov methods).
@@ -25,10 +27,16 @@ typedef struct {
   // Also implement sparsity controls(?!).
 } rbm_t;
 
-typedef struct {
+typedef struct { // Used for information storage/ passing during training.
   matrix_t *delta_w;
   double *delta_output_bias;
+  
+  int update_input_bias; // Logical; determines whether or not to update input biases.  Prevents input_biases from being updated by a dbn during backpropagation.
   double *delta_input_bias;
+  
+  // Applying delta_w uses the parameters specified here.
+  int batch_size;
+  double learning_rate;
 } delta_w_t;
 
 rbm_t alloc_rbm(int n_inputs, int n_outputs);
@@ -37,6 +45,10 @@ rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double
 
 void clamp_input(rbm_t rbm, double *input, double *resulting_output);
 void clamp_output(rbm_t rbm, double *output, double *resulting_input);
+
+void apply_delta_w(rbm_t rbm, delta_w_t dw);
+void sum_delta_w(delta_w_t batch, delta_w_t dw);
+void free_delta_w(delta_w_t dw);
 
 rbm_t rbm_r_to_c(SEXP rbm_r);
 void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs);

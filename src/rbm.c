@@ -70,16 +70,29 @@ rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double
   return(rbm);
 }
 
-/*
-delta_w_t alloc() {
+/*************************************************************************************
+ *  Convenience functions for a delta_w_t object.
+ */
 
-}
-*/
+/* delta_w_t alloc() {} */
+
 void free_delta_w(delta_w_t dw) {
   free_matrix(dw.delta_w);
   Free(dw.delta_output_bias);
-  Free(dw.delta_input_bias);
+
+  if(dw.update_input_bias)
+    Free(dw.delta_input_bias);
 }
+
+
+/* Takes the sum of two delta_w_t variables, batch and dw.  Sum returned in batch. */
+void sum_delta_w(delta_w_t batch, delta_w_t dw) {
+  matrix_sum(batch.delta_w, dw.delta_w);
+  vector_sum(batch.delta_output_bias, dw.delta_output_bias);
+  if(batch.update_input_bias && dw.update_input_bias)
+    vector_sum(batch.delta_input_bias, dw.delta_input_bias);
+}
+
 
 /*************************************************************************************
  *  Common functions required for many of the input/ output clamping and fitting ...
@@ -182,15 +195,15 @@ void compute_delta_w(rbm_t rbm, delta_w_t batch, double *init_output_recon, doub
  */
 void apply_delta_w(rbm_t rbm, delta_w_t dw) {
   for(int i=0;i<rbm.n_outputs;i++) {
-    rbm.bias_outputs[i] += rbm.learning_rate*dw.delta_output_bias[i]/(double)rbm.batch_size; 
+    rbm.bias_outputs[i] += dw.learning_rate*dw.delta_output_bias[i]/(double)dw.batch_size; 
     for(int j=0;j<rbm.n_inputs;j++) {
       double previous_w_i_j= get_matrix_value(rbm.io_weights, i, j);
       double delta_w_i_j= get_matrix_value(dw.delta_w, i, j);
-      double new_w_i_j= previous_w_i_j+rbm.learning_rate*delta_w_i_j/(double)rbm.batch_size;
+      double new_w_i_j= previous_w_i_j+dw.learning_rate*delta_w_i_j/(double)dw.batch_size;
       set_matrix_value(rbm.io_weights, i, j, new_w_i_j);
 	  
-      if(i==0) // Only update once...
-        rbm.bias_inputs[j] += rbm.learning_rate*dw.delta_input_bias[j]/(double)rbm.batch_size;
+      if(i==0 && rbm.update_input_biases && dw.update_input_bias) // Only update once... and if everything says to update.
+        rbm.bias_inputs[j] += dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
     }
   }
 }
@@ -219,9 +232,9 @@ void initial_momentum_step(rbm_t rbm) {
  
 void apply_momentum_correction(rbm_t rbm, delta_w_t dw) {
   for(int i=0;i<rbm.n_outputs;i++) {
-    rbm.bias_outputs[i]+= rbm.learning_rate*dw.delta_output_bias[i]/(double)rbm.batch_size; 
+    rbm.bias_outputs[i]+= dw.learning_rate*dw.delta_output_bias[i]/(double)dw.batch_size; 
     for(int j=0;j<rbm.n_inputs;j++) {
-      double step= rbm.learning_rate*get_matrix_value(dw.delta_w, i, j)/(double)rbm.batch_size; // For the momentum method ... do I still scale by the batch size?!
+      double step= dw.learning_rate*get_matrix_value(dw.delta_w, i, j)/(double)dw.batch_size; // For the momentum method ... do I still scale by the batch size?!
 
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
       // \theta_t' was applied before taking the step.
@@ -233,8 +246,8 @@ void apply_momentum_correction(rbm_t rbm, delta_w_t dw) {
       double previous_momentum_i_j= get_matrix_value(rbm.momentum, i, j);
         set_matrix_value(rbm.momentum, i, j, previous_momentum_i_j+step);
 
-      if(i==0) // Only update once...
-        rbm.bias_inputs[j]+= rbm.learning_rate*dw.delta_input_bias[j]/(double)rbm.batch_size;
+      if(i==0 && rbm.update_input_biases && dw.update_input_bias) // Only update once... and if everything says to update.
+        rbm.bias_inputs[j]+= dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
     }
   }
 }
@@ -276,8 +289,6 @@ void do_batch_member(rbm_t rbm,  double *input_example, delta_w_t batch) {
  *  Arguments:
  *    rbm           --> Restricted boltzman machine.
  *    input_example --> A matrix (n_inptus x batch_size) of input examples.  
- *    batch_size    --> Specifies the number of input examples provided.  
- *    CDn           --> Number of iterations of Gibbs sampling before taking the resulting state.
  *
  *  Following recommendations in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf (V. 1; dated: Aug. 2nd 2010).
  *
@@ -295,6 +306,9 @@ void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use spa
   init_matrix(batch.delta_w, 0.0f); // Init. to 1; later multiply each **data matrix.
   init_vector(batch.delta_output_bias, rbm.n_outputs, 0);
   init_vector(batch.delta_input_bias, rbm.n_inputs, 0);
+  batch.update_input_bias= 1;
+  batch.batch_size= rbm.batch_size;
+  batch.learning_rate= rbm.learning_rate;
   }
   
   // If using momentum Take a step BEFORE computing the local gradient.

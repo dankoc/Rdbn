@@ -24,7 +24,7 @@
  # (2) 
  
  ## Train DBN...
- db <- dbn(n_layers= 3, layer_sizes= c(6,2,2), batch_size=10, cd_n=1)
+ db <- dbn(n_layers= 3, layer_sizes= c(6,2,2), batch_size=10, cd_n=1, momentum_decay= 0.9)
  dbn.train(db, data= data_matrix, n_epocs= 10000)
 
  # db <- dbn(n_layers= 5, layer_sizes= c(784,500,500,2000,10))

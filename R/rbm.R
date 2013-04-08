@@ -9,22 +9,23 @@
 #` @export
 setClass("rbm",#"restricted_boltzman_machine", 
   representation(
-    n_inputs="integer",       ## Number of nodes in the input layer.
-    n_outputs="integer",      ## Number of nodes in the output layer.
-    io_weights="matrix",      ## The actual weights matrix, connecting each input to output.
-    bias_inputs="numeric",    ## Bias vector, inputs.
-    bias_outputs="numeric",   ## Bias vector, outputs.
+    n_inputs="integer",            ## Number of nodes in the input layer.
+    n_outputs="integer",           ## Number of nodes in the output layer.
+    io_weights="matrix",           ## The actual weights matrix, connecting each input to output.
+    bias_inputs="numeric",         ## Bias vector, inputs.
+    bias_outputs="numeric",        ## Bias vector, outputs.
 
     ## Learning parameters.  These might be updated as learning progresses.
-    learning_rate="numeric",  ## How quickly the netowrk 'learns'.
-	cd_n="integer",           ## Number of steps of Gibbs sampling when doing contrastive divergence.
-	batch_size="integer",     ## Number of input examples to use in a 'mini-batch'.
+    learning_rate="numeric",       ## How quickly the netowrk 'learns'.
+	cd_n="integer",                ## Number of steps of Gibbs sampling when doing contrastive divergence.
+	batch_size="integer",          ## Number of input examples to use in a 'mini-batch'.
+	update_input_biases="logical", ## Whether or not to update the biases of the input layer.
 	
 	## Special learning options.  These are NOT guaranteed to be set.
 	## See in: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf; pp. 75; also see: pp.5(background),73(Adapting Nesterov methods).
-	use_momentum="logical",   ## Use momentum during fitting.
-	momentum_decay="numeric", ## \Mu; Rate at which old gradients are discarded.
-	momentum="matrix"         ## Momentum term; serves as memory for other mini-batch members.  Speeds the rate of convergence.
+	use_momentum="logical",        ## Use momentum during fitting.
+	momentum_decay="numeric",      ## \Mu; Rate at which old gradients are discarded.
+	momentum="matrix"              ## Momentum term; serves as memory for other mini-batch members.  Speeds the rate of convergence.
   ),
 )
 
@@ -32,7 +33,7 @@ setClass("rbm",#"restricted_boltzman_machine",
 # e.g.:
 # rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
 # Initial weights set using S8.1 in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, momentum_decay= NA, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
+rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, update_input_biases=update_input_biases, momentum_decay= NA, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
   ## Initialize weights.
   if(is.null(io_weights)) {
     io_weights <- matrix(rnorm(n_inputs*n_outputs, mean=0, sd=0.01), ncol=n_outputs)
@@ -70,7 +71,7 @@ rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, mo
   new("rbm", n_inputs=as.integer(n_inputs), n_outputs=as.integer(n_outputs), 
     cd_n=as.integer(cd_n), batch_size=as.integer(batch_size),
     learning_rate=as.real(learning_rate), io_weights=io_weights, 
-    bias_inputs= bias_inputs, bias_outputs= bias_outputs,
+    bias_inputs= bias_inputs, bias_outputs= bias_outputs, update_input_biases=update_input_biases,
     use_momentum= as.logical(use_momentum), momentum= momentum, momentum_decay= as.real(momentum_decay))
 }
 
@@ -92,8 +93,8 @@ setMethod("rbm.train", c(rbm="rbm"),
   function(rbm, data, n_epocs= 1000) { ## Regularization/ LASSO type options?!
   	stopifnot(NROW(data) == rbm@n_inputs)
 	
-	## Reassign input biases to training examples?!  As suggested in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-	
+	## Reassign input biases to training example requencies?!  As suggested in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
+	rbm@bias_inputs <- as.real(rowSums(data)/NROW(data))
 	
 	## Pass to C for training.
     .Call("train_rbm_R", rbm, as.real(data), as.integer(n_epocs), package="Rdbn") 
