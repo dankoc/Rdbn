@@ -9,12 +9,12 @@
 #` @export
 setClass("dbn",#"restricted_boltzman_machine", 
   representation(
-    n_layers="integer",     ## Number of network layers, including input and output.
-    layer_sizes="integer",  ## Integer vector, representing the number of nodes in layers 1 (input/ visible) .. n (output/ hidden).
-    network="list",         ## A list comprised of RBMs.  Indexed from the input to output layer.
+    n_layers="integer",       ## Number of network layers, including input and output.
+    layer_sizes="integer",    ## Integer vector, representing the number of nodes in layers 1 (input/ visible) .. n (output/ hidden).
+    network="list",           ## A list comprised of RBMs.  Indexed from the input to output layer.
 
-	learning_rate="real",   ## Learning rate for the deep belief network; used during backpropagation.
-	batch_size="integer"    ## Size of the mini-batch to use during backpropagation.
+    learning_rate="numeric",  ## Learning rate for the deep belief network; used during backpropagation.
+    batch_size="integer"      ## Size of the mini-batch to use during backpropagation.
   ),
 )
 
@@ -60,7 +60,7 @@ setMethod("dbn.train", c(dbn="dbn"),
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("dbn.refine", 
-  def=function(dbn, data, n_epocs= 1000) {
+  def=function(dbn, data, labels, n_epocs= 1000) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.refine")
 })

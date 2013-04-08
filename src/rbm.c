@@ -88,9 +88,9 @@ void free_delta_w(delta_w_t dw) {
 /* Takes the sum of two delta_w_t variables, batch and dw.  Sum returned in batch. */
 void sum_delta_w(delta_w_t batch, delta_w_t dw) {
   matrix_sum(batch.delta_w, dw.delta_w);
-  vector_sum(batch.delta_output_bias, dw.delta_output_bias);
+  vector_sum(batch.delta_output_bias, dw.delta_output_bias, batch.delta_w[0].ncols);
   if(batch.update_input_bias && dw.update_input_bias)
-    vector_sum(batch.delta_input_bias, dw.delta_input_bias);
+    vector_sum(batch.delta_input_bias, dw.delta_input_bias, batch.delta_w[0].nrows);
 }
 
 

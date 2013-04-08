@@ -33,7 +33,7 @@ setClass("rbm",#"restricted_boltzman_machine",
 # e.g.:
 # rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
 # Initial weights set using S8.1 in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, update_input_biases=update_input_biases, momentum_decay= NA, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
+rbm <- function(n_inputs, n_outputs, batch_size=1, learning_rate=0.1, cd_n=1, update_input_biases=FALSE, momentum_decay= NA, io_weights=NULL, bias_inputs=NULL, bias_outputs=NULL) {
   ## Initialize weights.
   if(is.null(io_weights)) {
     io_weights <- matrix(rnorm(n_inputs*n_outputs, mean=0, sd=0.01), ncol=n_outputs)
@@ -94,7 +94,7 @@ setMethod("rbm.train", c(rbm="rbm"),
   	stopifnot(NROW(data) == rbm@n_inputs)
 	
 	## Reassign input biases to training example requencies?!  As suggested in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-	rbm@bias_inputs <- as.real(rowSums(data)/NROW(data))
+	rbm@bias_inputs <- as.real(rowSums(data)/NCOL(data))
 	
 	## Pass to C for training.
     .Call("train_rbm_R", rbm, as.real(data), as.integer(n_epocs), package="Rdbn") 

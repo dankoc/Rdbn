@@ -50,9 +50,9 @@ double *dbn_compute(dbn_t dbn, double *input) {
   double *current_input= vector_copy(input, dbn.rbms[0].n_inputs);
   double *layer_output;
   for(int i=0;i<dbn.n_rbms;i++) {
-    layer_output= get_layer_outputs(dbn.rbms, i, current_input, 1);
-	Free(current_input);  // Careful of memory leaks when switching around these pointers!!
-	current_input= layer_output;
+    layer_output= get_layer_outputs(dbn, i, current_input, 1);
+    Free(current_input);  // Careful of memory leaks when switching around these pointers!!
+    current_input= layer_output;
   }
   return(layer_output);
 }
@@ -63,7 +63,7 @@ double **dbn_compute_store_layers(dbn_t dbn, double *input) {
   double **layer_output= (double**)Calloc(dbn.n_layers, double*);
   layer_output[0]= vector_copy(input, dbn.rbms[0].n_inputs);
   for(int i=0;i<dbn.n_rbms;i++) {
-    layer_output[i+1]= get_layer_outputs(dbn.rbms, i, layer_output[i], 1);
+    layer_output[i+1]= get_layer_outputs(dbn, i, layer_output[i], 1);
   }
   return(layer_output);
 }
