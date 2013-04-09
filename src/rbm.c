@@ -98,11 +98,11 @@ void free_delta_w(delta_w_t dw) {
 }
 
 void free_delta_w_ptr(delta_w_t *dw) {
-  free_matrix(dw.delta_w);
-  Free(dw.delta_output_bias);
+  free_matrix(dw[0].delta_w);
+  Free(dw[0].delta_output_bias);
 
-  if(dw.update_input_bias)
-    Free(dw.delta_input_bias);
+  if(dw[0].update_input_bias)
+    Free(dw[0].delta_input_bias);
 
   Free(dw);
 }
@@ -314,7 +314,7 @@ void *rbm_partial_minibatch(void *ptab) {
     
   // Compute the \sum gradient over the mini-batch.
   for(int i=0;i<pta[0].do_n_elements;i++) { // Foreach item in the batch.
-    do_batch_member(rbm, input_example, pta.batch[0]);
+    do_batch_member(rbm, input_example, pta[0].batch[0]);
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
   
@@ -383,7 +383,7 @@ void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velo
   pta.input= input_example;
   pta.do_n_elements= rbm.batch_size;
   pta.batch= alloc_dwt_from_rbm(rbm);
-  rbm_partial_minibatch(&pta));
+  rbm_partial_minibatch(&pta);
   
   // Take a step in teh direction of the gradient.
   if(rbm.use_momentum) { // Correct and update momentum term.
