@@ -285,6 +285,10 @@ void do_batch_member(rbm_t rbm,  double *input_example, delta_w_t batch) {
  * Don't know what all these how-to pages are talking about when they say 'multiplying matrices', though!?
  */
 void *rbm_partial_minibatch(void *ptab) {
+  rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)ptab;
+  rbm_t rbm= pta[0].rbm;
+  double *input_example= pta[0].input;
+  
   // Thesse are for updating edge weights and biases...
   delta_w_t batch;
   { // TODO: Re-write this initialization for a single loop through n_outputs and n_inputs.
@@ -300,7 +304,7 @@ void *rbm_partial_minibatch(void *ptab) {
   }
   
   // Compute the \sum gradient over the mini-batch.
-  for(int i=0;i<rbm.batch_size;i++) { // Foreach item in the batch.
+  for(int i=0;i<pta[0].n_per_batch;i++) { // Foreach item in the batch.
     do_batch_member(rbm, input_example, batch);
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
