@@ -97,13 +97,14 @@ void free_delta_w(delta_w_t dw) {
     Free(dw.delta_input_bias);
 }
 
-void free_delta_w_ptr(delta_w_t *dw) {
-  free_matrix(dw[0].delta_w);
-  Free(dw[0].delta_output_bias);
+void free_delta_w_ptr(delta_w_t *dw, int n) {
+  for(int i=0;i<n;i++) {
+    free_matrix(dw[i].delta_w);
+    Free(dw[i].delta_output_bias);
 
-  if(dw[0].update_input_bias)
-    Free(dw[0].delta_input_bias);
-
+    if(dw[i].update_input_bias)
+      Free(dw[i].delta_input_bias);
+  }
   Free(dw);
 }
 
@@ -354,7 +355,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
     }
     else {
       sum_delta_w(batch[0], pta[i].batch[0]);
-      free_delta_w_ptr(pta[i].batch);
+      free_delta_w_ptr(pta[i].batch, 1);
     }
   }
   Free(pta); Free(threads);
@@ -368,7 +369,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
   }
   
   // Cleanup temporary variables ...  
-  free_delta_w_ptr(batch); 
+  free_delta_w_ptr(batch, 1); 
 }
 
  
@@ -394,7 +395,7 @@ void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velo
   }
   
   // Cleanup temporary variables ...  
-  free_delta_w_ptr(pta.batch); 
+  free_delta_w_ptr(pta.batch, 1); 
 }
 
 /*
@@ -471,7 +472,6 @@ rbm_t rbm_r_to_c(SEXP rbm_r) {
   return(rbm);
 }
 
- 
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r) {
   rbm_t rbm= rbm_r_to_c(rbm_r); // Get values from R function.
 

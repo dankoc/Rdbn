@@ -168,9 +168,8 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
     else {
       for(int j=0;j<pta[0].dbn.n_rbms;j++) {
         sum_delta_w(partial_batch[j], dw[j]);
-        free_delta_w(dw[j]);
       }
-      Free(dw);
+      free_delta_w_ptr(dw, pta[0].dbn.n_rbms);
     }
     // Increment pointers.
     pta[0].input+= pta[0].dbn.rbms[0].n_inputs;
@@ -192,9 +191,8 @@ void backpropagation_minibatch(dbn_t dbn, double *input, double *expected_output
   // Update the weights.
   for(int i=0;i<dbn.n_rbms;i++) {
     apply_delta_w(dbn.rbms[i], batch[i]);
-	free_delta_w(batch[i]);
   }
-  Free(batch);
+  free_delta_w_ptr(batch, dbn.n_rbms);
 }
 /////////////\IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
 
@@ -236,18 +234,17 @@ void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expect
     else {
       for(int j=0;j<dbn.n_rbms;j++) {
         sum_delta_w(batch[j], dw[j]);
-        free_delta_w(dw[j]);
       }
-      Free(dw);
+      free_delta_w_ptr(dw, dbn.n_rbms);
     }
   }
   
   // Update the weights.
   for(int i=0;i<dbn.n_rbms;i++) {
     apply_delta_w(dbn.rbms[i], batch[i]);
-	free_delta_w(batch[i]);
   }
-  Free(batch); Free(threads); Free(pta);
+  free_delta_w_ptr(batch, dbn.n_rbms);
+  Free(threads); Free(pta);
 }
 /////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
 
