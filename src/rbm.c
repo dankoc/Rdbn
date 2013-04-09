@@ -1,7 +1,7 @@
 /*
  * Functions required to work with logs.  
  *
- */
+ */ 
 #include <R.h>
 #include <Rdefines.h>
 #include <Rmath.h>
