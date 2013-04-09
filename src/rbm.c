@@ -323,7 +323,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
   int n_per_batch= floor(rbm.batch_size/n_threads);
-  int remainder= rbm.batch_size % n_threads;
+  int remainder= (rbm.batch_size%n_threads==0)?n_per_batch:(rbm.batch_size%n_threads);
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].rbm= rbm;
@@ -408,7 +408,10 @@ void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs, in
   for(int i=0;i<n_epocs;i++) {
     current_position= input_example; // Reset training pointer.
     for(int j=0;j<n_training_iterations;j++) {
-      do_minibatch_pthreads(rbm, current_position, n_threads);  // Do a minibatch using the current position of the training pointer.
+      if(n_threads >0)
+        do_minibatch_pthreads(rbm, current_position, n_threads);  // Do a minibatch using the current position of the training pointer.
+      else 
+        do_minibatch(rbm, current_position, n_threads);
       current_position+= rbm.batch_size*rbm.n_inputs; // Increment the input_example pointer batch_size # of columns.
 	}
   }
