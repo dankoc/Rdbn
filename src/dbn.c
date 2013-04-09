@@ -37,11 +37,11 @@ delta_w_t *alloc_dwt_from_dbn(dbn_t dbn) {
     int n_outputs_cl= dbn.rbms[i].n_outputs;
     int n_inputs_cl= dbn.rbms[i].n_inputs;
 
-    batch[l].delta_w= alloc_matrix(n_outputs_cl, n_inputs_cl);
-    batch[l].delta_output_bias= (double*)Calloc(n_outputs_cl, double);
-    batch[l].update_input_bias= 0;
-    batch[l].batch_size= dbn.batch_size;
-    batch[l].learning_rate= dbn.learning_rate;
+    batch[i].delta_w= alloc_matrix(n_outputs_cl, n_inputs_cl);
+    batch[i].delta_output_bias= (double*)Calloc(n_outputs_cl, double);
+    batch[i].update_input_bias= 0;
+    batch[i].batch_size= dbn.batch_size;
+    batch[i].learning_rate= dbn.learning_rate;
   }
   return(batch);
 }
@@ -188,7 +188,7 @@ void backpropagation_minibatch(dbn_t dbn, double *input, double *expected_output
   for(int i=0;i<dbn.n_rbms;i++) {
     apply_delta_w(dbn.rbms[i], pta.batch[i]);
   }
-  free_delta_w_ptr(batch, dbn.n_rbms);
+  free_delta_w_ptr(pta.batch, dbn.n_rbms);
 }
 /////////////\IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
 
@@ -230,7 +230,7 @@ void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expect
       for(int j=0;j<dbn.n_rbms;j++) {
         sum_delta_w(batch[j], pta[i].batch[j]);
       }
-      free_delta_w_ptr(pta[i].batch[j], dbn.n_rbms);
+      free_delta_w_ptr(pta[i].batch, dbn.n_rbms);
     }
   }
   Free(pta); Free(threads);
