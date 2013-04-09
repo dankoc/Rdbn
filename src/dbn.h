@@ -16,6 +16,14 @@ typedef struct {
   // Should I implement using momentum method here too?! 
 } dbn_t;
 
+typedef struct {
+  dbn_t dbn;
+  double *input;
+  double *expected_output;
+  
+  int do_n_elements;
+} dbn_pthread_arg_t;
+
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r);
 SEXP refine_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r);
 

@@ -9,6 +9,7 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
 #include <assert.h>
+#include <pthread.h>
 #include "dbn.h"
 #include "rbm.h"
 #include "matrix_functions.h"
@@ -155,30 +156,39 @@ delta_w_t *backpropagation(dbn_t dbn, double *input, double *expected_output) {
   return(weight_errors);
 }
 
-/* Runs the backpropagation algorithm over each element of a mini-batch. */
-void backpropagation_minibatch(dbn_t dbn, double *input, double *expected_output) {
-  delta_w_t *dw, *batch;
+void *partial_minibatch(void *ptab) {
+  dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
 
-  // Foreach element in the mini-batch, compute the error function using backpropagation.
-  for(int i=0;i<dbn.batch_size;i++) {
-    dw= backpropagation(dbn, input, expected_output);
+  delta_w_t *dw, *partial_batch;
+  for(int i=0;i<pta[0].do_n_elements;i++) {
+    dw= backpropagation(pta[0].dbn, pta[0].input, pta[0].expected_output);
 	
-	// Record into batch.
     if(i==0) {
-      batch= dw;
+      partial_batch= dw;
     }
     else {
-      for(int j=0;j<dbn.n_rbms;j++) {
-        sum_delta_w(batch[j], dw[j]);
+      for(int j=0;j<pta[0].dbn.n_rbms;j++) {
+        sum_delta_w(partial_batch[j], dw[j]);
         free_delta_w(dw[j]);
       }
       Free(dw);
     }
-	
     // Increment pointers.
-    input+= dbn.rbms[0].n_inputs;
-    expected_output+= dbn.rbms[dbn.n_rbms-1].n_outputs;
+    pta[0].input+= pta[0].dbn.rbms[0].n_inputs;
+    pta[0].expected_output+= pta[0].dbn.rbms[pta[0].dbn.n_rbms-1].n_outputs;
   }
+  return((void*)partial_batch);
+}
+
+/////////////IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
+/* Runs the backpropagation algorithm over each element of a mini-batch. */
+void backpropagation_minibatch(dbn_t dbn, double *input, double *expected_output) {
+  dbn_pthread_arg_t pta;
+  pta.dbn= dbn;
+  pta.input= input;
+  pta.expected_output= expected_output;
+  pta.do_n_elements= dbn.batch_size;
+  delta_w_t *batch=(delta_w_t*)partial_minibatch(&pta);
   
   // Update the weights.
   for(int i=0;i<dbn.n_rbms;i++) {
@@ -187,6 +197,60 @@ void backpropagation_minibatch(dbn_t dbn, double *input, double *expected_output
   }
   Free(batch);
 }
+/////////////\IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
+
+/////////////IF PTREADS, USE THIS. ///////////////////////////////////////////////
+/* Runs the backpropagation algorithm over each element of a mini-batch. */
+void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expected_output, int n_threads) {
+
+  // Activate each as a separate thread.
+  dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
+  pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
+  int n_per_batch= floor(dbn.batch_size/n_threads);
+  int remainder= dbn.batch_size % n_threads;
+  for(int i=0;i<n_threads;i++) {
+    // Set up data passed to partial_minibatch()
+    pta[i].dbn= dbn;
+    pta[i].input= input;
+    pta[i].expected_output= expected_output;
+
+	// Set up the number inputs to be evaluated by the thread.
+    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
+	  
+    pthread_create(threads+i, NULL, partial_minibatch, (void*)(pta+i));
+	
+	// Increment pointers for the next thread.
+	input+= pta[i].do_n_elements*dbn.rbms[0].n_inputs;
+	expected_output+= pta[i].do_n_elements*dbn.rbms[dbn.n_rbms-1].n_outputs;
+  }
+
+  // Wait for threads to complete, and combine the data into a single vector.
+  delta_w_t *batch, *dw;
+  for(int i=0;i<n_threads;i++) {
+    void **return_val;
+    pthread_join(threads+i, return_val);
+	dw= (delta_w_t*)return_val;
+	
+    if(i==0) {
+      batch= dw;
+    }
+    else {
+      for(int j=0;j<pta[0].dbn.n_rbms;j++) {
+        sum_delta_w(batch[j], dw[j]);
+        free_delta_w(dw[j]);
+      }
+      Free(dw);
+    }
+  }
+  
+  // Update the weights.
+  for(int i=0;i<dbn.n_rbms;i++) {
+    apply_delta_w(dbn.rbms[i], batch[i]);
+	free_delta_w(batch[i]);
+  }
+  Free(batch); Free(threads); Free(pta);
+}
+/////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
 
 /*
  * Refines the deep belief network using backpropagation of error derivitives for a given number of epocs.

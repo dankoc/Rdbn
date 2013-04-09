@@ -420,5 +420,3 @@ SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r) {
   
   return(rbm_r);
 }
-
-

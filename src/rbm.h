@@ -15,8 +15,6 @@ typedef struct {
   double learning_rate;   // Rate at which the model learns.
   int cd_n;               // Specifies the number of Gibbs sampling steps used for contrastive divergence during training.
   int batch_size;         // Specifies the batch size for training.
-  int update_input_biases;// Boolean value which specifies whether the bias_input vector is updated.
-                          // Often should NOT be updated ... e.g. when the same value should be specified by the output in a dbn...
   
   // Special learning options.  These are NOT guaranteed to be set.
   // See in: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf; pp. 75; also see: pp.5(background),73(Adapting Nesterov methods).
