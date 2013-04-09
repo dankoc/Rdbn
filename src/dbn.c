@@ -290,15 +290,19 @@ void dbn_refine(dbn_t dbn, double *input_example, double *output_example, int n_
  */
 void dbn_train(dbn_t dbn, double *examples, int n_examples, int n_epocs, int n_threads) {
   // Trian the first layer.
+  Rprintf("Training layer 1: ");
   rbm_train(dbn.rbms[0], examples, n_examples, n_epocs, n_threads);
-
+  Rprintf("\n");
+  
   // train later layers.
   double *previous_layer_input, *next_layer_input;
   previous_layer_input= examples;
   for(int layer=1;layer<dbn.n_rbms;layer++) {
     next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
-    rbm_train(dbn.rbms[layer], next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
-  
+   Rprintf("Training layer %d: ",layer);
+   rbm_train(dbn.rbms[layer], next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
+   Rprintf("\n", i);
+
     // Free the previous input layer (unless we're on the first pass and pointing to *examples.
 	if(layer>1) // DO NOT free *examples.
       Free(previous_layer_input); // Free the previous input layer.

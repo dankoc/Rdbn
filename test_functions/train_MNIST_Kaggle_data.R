@@ -18,5 +18,15 @@
 
 setwd("/home/dankoc/testData/MNIst_db_handwriting/csv")
 
-##
-##
+## Read data from csv.
+train <- read.table("train.csv.gz", header=TRUE, sep=",")
+data <- t(train[,c(2:NCOL(train))])/255
+label <- train[,1]
+
+## Train a deep belief network.
+require(Rdbn)
+db <- dbn(n_layers= 5, layer_sizes= c(784,1000,500,250,10), batch_size=1000, cd_n=1, momentum_decay= 0.9)
+db2 <- dbn.train(db, data= data, n_epocs= 1000, n_threads=5) ## For some reason, only 1 processor is taxed on swiftgen?!
+
+q("yes")
+
