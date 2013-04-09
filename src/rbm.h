@@ -37,6 +37,13 @@ typedef struct { // Used for information storage/ passing during training.
   double learning_rate;
 } delta_w_t;
 
+typedef struct {
+  rbm_t rbm;
+  double *input;
+  
+  int do_n_elements;
+} rbm_pthread_arg_t;
+
 rbm_t alloc_rbm(int n_inputs, int n_outputs);
 void free_rbm(rbm_t rbm);
 rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on);

@@ -8,7 +8,7 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
-#include <assert.h>
+#include <pthread.h>
 #include "rbm.h"
 #include "matrix_functions.h"
 
@@ -101,20 +101,8 @@ void sum_delta_w(delta_w_t batch, delta_w_t dw) {
 /*
  *  Changes prob to 0 || 1 by sampling over a uniform.
  */
-void sample_states(double *prob, int n_states) {
-  for(int i=0;i<n_states;i++)
-    prob[i]= prob[i]>runif(0.0d, 1.0d)?1:0;
-}
-
 double sample_state(double prob) {
   return(prob>runif(0.0d, 1.0d)?1:0);
-}
-
-double *sample_states_cpy(double *prob, int n_states) {
-  double *states = (double*)Calloc(n_states, double);
-  for(int i=0;i<n_states;i++)
-    states[i]= prob[i]>runif(0.0d, 1.0d)?1:0;
-  return(states);
 }
 
 double logistic_function(double value) {
@@ -296,7 +284,7 @@ void do_batch_member(rbm_t rbm,  double *input_example, delta_w_t batch) {
  *  or less agrees with comments in: http://www.elen.ucl.ac.be/Proceedings/esann/esannpdf/es2012-71.pdf.
  * Don't know what all these how-to pages are talking about when they say 'multiplying matrices', though!?
  */
-void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use sparsity target?!  // Change name to 
+void *rbm_partial_minibatch(void *ptab) {
   // Thesse are for updating edge weights and biases...
   delta_w_t batch;
   { // TODO: Re-write this initialization for a single loop through n_outputs and n_inputs.
@@ -311,27 +299,93 @@ void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use spa
   batch.learning_rate= rbm.learning_rate;
   }
   
-  // If using momentum Take a step BEFORE computing the local gradient.
-  if(rbm.use_momentum) { 
-    initial_momentum_step(rbm);
-  }
-  
   // Compute the \sum gradient over the mini-batch.
   for(int i=0;i<rbm.batch_size;i++) { // Foreach item in the batch.
     do_batch_member(rbm, input_example, batch);
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
   
+  return((void*)&batch);
+}
+
+void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
+  // If using momentum Take a step BEFORE computing the local gradient.
+  if(rbm.use_momentum) { 
+    initial_momentum_step(rbm);
+  }
+  
+  // Activate each as a separate thread.
+  dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
+  pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
+  int n_per_batch= floor(rbm.batch_size/n_threads);
+  int remainder= rbm.batch_size % n_threads;
+  for(int i=0;i<n_threads;i++) {
+    // Set up data passed to partial_minibatch()
+    pta[i].rbm= rbm;
+    pta[i].input= input_example;
+
+	// Set up the number inputs to be evaluated by the thread.
+    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
+	  
+    pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
+	
+    // Increment pointers for the next thread.
+    input_example+= pta[i].do_n_elements*rbm.n_inputs;
+  }
+
+  // Wait for threads to complete, and combine the data into a single vector.
+  delta_w_t *batch, *dw;
+  for(int i=0;i<n_threads;i++) {
+    void **return_val;
+    pthread_join(threads[i], return_val);
+    dw= (delta_w_t*)return_val;
+	
+    if(i==0) {
+      batch= dw;
+    }
+    else {
+      sum_delta_w(batch[0], dw[0]);
+      free_delta_w(dw[0]);
+      Free(dw);
+    }
+  }
+    
   // Take a step in teh direction of the gradient.
   if(rbm.use_momentum) { // Correct and update momentum term.
-    apply_momentum_correction(rbm, batch); 
+    apply_momentum_correction(rbm, batch[0]); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
-    apply_delta_w(rbm, batch);
+    apply_delta_w(rbm, batch[0]);
   }
   
   // Cleanup temporary variables ...  
-  free_delta_w(batch);
+  free_delta_w(batch[0]); 
+  Free(batch);
+}
+
+ 
+void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
+  // If using momentum Take a step BEFORE computing the local gradient.
+  if(rbm.use_momentum) { 
+    initial_momentum_step(rbm);
+  }
+
+  rbm_pthread_arg_t pta;
+  pta.rbm= rbm;
+  pta.input= input_example;
+  pta.do_n_elements= rbm.batch_size;
+  delta_w_t *batch= ((delta_w_t*)rbm_partial_minibatch((void*)pta));
+  
+  // Take a step in teh direction of the gradient.
+  if(rbm.use_momentum) { // Correct and update momentum term.
+    apply_momentum_correction(rbm, batch[0]); 
+  }
+  else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
+    apply_delta_w(rbm, batch[0]);
+  }
+  
+  // Cleanup temporary variables ...  
+  free_delta_w(batch[0]);
 }
 
 /*
@@ -346,14 +400,14 @@ void do_minibatch(rbm_t rbm, double *input_example) { // Use velocity?!; Use spa
  * Assumptions: 
  *   --> n_examples is a multiple of rbm.batch_size ... additional examples are ignored.
  */
-void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs) {
+void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs, int n_threads) {
   double *current_position;
   int n_training_iterations= floor(n_examples/rbm.batch_size); 
   
   for(int i=0;i<n_epocs;i++) {
     current_position= input_example; // Reset training pointer.
     for(int j=0;j<n_training_iterations;j++) {
-      do_minibatch(rbm, current_position);  // Do a minibatch using the current position of the training pointer.
+      do_minibatch_pthreads(rbm, current_position, n_threads);  // Do a minibatch using the current position of the training pointer.
       current_position+= rbm.batch_size*rbm.n_inputs; // Increment the input_example pointer batch_size # of columns.
 	}
   }
@@ -409,14 +463,15 @@ rbm_t rbm_r_to_c(SEXP rbm_r) {
 }
 
  
-SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r) {
+SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r) {
   rbm_t rbm= rbm_r_to_c(rbm_r); // Get values from R function.
 
   int n_examples= Rf_nrows(training_data_r)/rbm.n_inputs;
   int n_epocs= INTEGER(n_epocs_r)[0];
+  int n_threads= INTEGER(n_threads_r)[0];
   double *input_example= REAL(training_data_r);
 
-  rbm_train(rbm, input_example, n_examples, n_epocs);
+  rbm_train(rbm, input_example, n_examples, n_epocs, n_threads);
   
   return(rbm_r);
 }

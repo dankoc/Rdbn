@@ -8,7 +8,6 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
-#include <assert.h>
 #include <pthread.h>
 #include "dbn.h"
 #include "rbm.h"
@@ -156,7 +155,7 @@ delta_w_t *backpropagation(dbn_t dbn, double *input, double *expected_output) {
   return(weight_errors);
 }
 
-void *partial_minibatch(void *ptab) {
+void *dbn_backprop_partial_minibatch(void *ptab) {
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
 
   delta_w_t *dw, *partial_batch;
@@ -188,7 +187,7 @@ void backpropagation_minibatch(dbn_t dbn, double *input, double *expected_output
   pta.input= input;
   pta.expected_output= expected_output;
   pta.do_n_elements= dbn.batch_size;
-  delta_w_t *batch=(delta_w_t*)partial_minibatch(&pta);
+  delta_w_t *batch=(delta_w_t*)dbn_backprop_partial_minibatch(&pta);
   
   // Update the weights.
   for(int i=0;i<dbn.n_rbms;i++) {
@@ -217,7 +216,7 @@ void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expect
 	// Set up the number inputs to be evaluated by the thread.
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
 	  
-    pthread_create(threads+i, NULL, partial_minibatch, (void*)(pta+i));
+    pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
 	
 	// Increment pointers for the next thread.
 	input+= pta[i].do_n_elements*dbn.rbms[0].n_inputs;
@@ -228,14 +227,14 @@ void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expect
   delta_w_t *batch, *dw;
   for(int i=0;i<n_threads;i++) {
     void **return_val;
-    pthread_join(threads+i, return_val);
+    pthread_join(threads[i], return_val);
 	dw= (delta_w_t*)return_val;
 	
     if(i==0) {
       batch= dw;
     }
     else {
-      for(int j=0;j<pta[0].dbn.n_rbms;j++) {
+      for(int j=0;j<dbn.n_rbms;j++) {
         sum_delta_w(batch[j], dw[j]);
         free_delta_w(dw[j]);
       }
