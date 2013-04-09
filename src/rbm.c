@@ -379,7 +379,7 @@ void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velo
   pta.rbm= rbm;
   pta.input= input_example;
   pta.do_n_elements= rbm.batch_size;
-  delta_w_t *batch= ((delta_w_t*)rbm_partial_minibatch((void*)pta));
+  delta_w_t *batch= ((delta_w_t*)rbm_partial_minibatch(&pta));
   
   // Take a step in teh direction of the gradient.
   if(rbm.use_momentum) { // Correct and update momentum term.
