@@ -39,6 +39,10 @@ delta_w_t *alloc_dwt_from_dbn(dbn_t dbn) {
 
     batch[i].delta_w= alloc_matrix(n_outputs_cl, n_inputs_cl);
     batch[i].delta_output_bias= (double*)Calloc(n_outputs_cl, double);
+
+    init_matrix(batch[i].delta_w, 0);
+    init_vector(batch[i].delta_output_bias, n_outputs_cl, 0);
+
     batch[i].update_input_bias= 0;
     batch[i].batch_size= dbn.batch_size;
     batch[i].learning_rate= dbn.learning_rate;
@@ -200,15 +204,13 @@ void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expect
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
   int n_per_batch= floor(dbn.batch_size/n_threads);
-  int remainder= dbn.batch_size % n_threads;
+  int remainder= (dbn.batch_size%n_threads==0)?n_per_batch:(dbn.batch_size%n_threads);
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].dbn= dbn;
     pta[i].input= input;
     pta[i].expected_output= expected_output;
     pta[i].batch= alloc_dwt_from_dbn(dbn);
-
-	// Set up the number inputs to be evaluated by the thread.
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
 	  
     pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
