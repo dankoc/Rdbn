@@ -51,6 +51,7 @@ void sum_delta_w(delta_w_t batch, delta_w_t dw);
 void free_delta_w(delta_w_t dw);
 
 rbm_t rbm_r_to_c(SEXP rbm_r);
+rbm_t rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs);
 void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs);
 
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r);
