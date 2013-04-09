@@ -299,7 +299,7 @@ void *rbm_partial_minibatch(void *ptab) {
   init_vector(batch[0].delta_output_bias, rbm.n_outputs, 0);
   init_vector(batch[0].delta_input_bias, rbm.n_inputs, 0);
   batch[0].update_input_bias= 1;
-  batch[0].batch_size= rbm.batch_size;
+  batch[0].batch_size= rbm.batch_size;  // Used for updating weights.
   batch[0].learning_rate= rbm.learning_rate;
   }
   
@@ -327,10 +327,8 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
     // Set up data passed to partial_minibatch()
     pta[i].rbm= rbm;
     pta[i].input= input_example;
-
-	// Set up the number inputs to be evaluated by the thread.
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
-	  
+  
     pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
 	
     // Increment pointers for the next thread.
@@ -342,7 +340,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
   for(int i=0;i<n_threads;i++) {
     void **return_val;
     pthread_join(threads[i], return_val);
-    dw= (delta_w_t*)return_val;
+    dw= (delta_w_t*)return_val[0];
 	
     if(i==0) {
       batch= dw;
@@ -390,7 +388,8 @@ void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velo
   }
   
   // Cleanup temporary variables ...  
-  free_delta_w(batch[0]); Free(batch);
+  free_delta_w(batch[0]); 
+  Free(batch);
 }
 
 /*
