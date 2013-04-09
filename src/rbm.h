@@ -42,6 +42,8 @@ typedef struct {
   double *input;
   
   int do_n_elements;
+  
+  delta_w_t *batch;  // Return value...
 } rbm_pthread_arg_t;
 
 rbm_t alloc_rbm(int n_inputs, int n_outputs);

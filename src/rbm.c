@@ -74,14 +74,37 @@ rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double
  *  Convenience functions for a delta_w_t object.
  */
 
-/* delta_w_t alloc() {} */
-
+delta_w_t *alloc_dwt_from_rbm(rbm_t rbm) {
+  delta_w_t *batch= (delta_w_t*)Calloc(1, delta_w_t);
+  batch[0].delta_w= alloc_matrix(rbm.n_outputs, rbm.n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
+  batch[0].delta_output_bias= (double*)Calloc(rbm.n_outputs, double); // output_bias_batch
+  batch[0].delta_input_bias= (double*)Calloc(rbm.n_inputs, double); // input_bias_batch
+  init_matrix(batch[0].delta_w, 0.0f); // Init. to 1; later multiply each **data matrix.
+  init_vector(batch[0].delta_output_bias, rbm.n_outputs, 0);
+  init_vector(batch[0].delta_input_bias, rbm.n_inputs, 0);
+  batch[0].update_input_bias= 1;
+  batch[0].batch_size= rbm.batch_size;  // Used for updating weights.
+  batch[0].learning_rate= rbm.learning_rate;
+  
+  return(batch);
+}
+	
 void free_delta_w(delta_w_t dw) {
   free_matrix(dw.delta_w);
   Free(dw.delta_output_bias);
 
   if(dw.update_input_bias)
     Free(dw.delta_input_bias);
+}
+
+void free_delta_w_ptr(delta_w_t *dw) {
+  free_matrix(dw.delta_w);
+  Free(dw.delta_output_bias);
+
+  if(dw.update_input_bias)
+    Free(dw.delta_input_bias);
+
+  Free(dw);
 }
 
 
@@ -288,28 +311,14 @@ void *rbm_partial_minibatch(void *ptab) {
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)ptab;
   rbm_t rbm= pta[0].rbm;
   double *input_example= pta[0].input;
-  
-  // Thesse are for updating edge weights and biases...
-  delta_w_t *batch= (delta_w_t*)Calloc(1, delta_w_t);
-  { // TODO: Re-write this initialization for a single loop through n_outputs and n_inputs.
-  batch[0].delta_w= alloc_matrix(rbm.n_outputs, rbm.n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
-  batch[0].delta_output_bias= (double*)Calloc(rbm.n_outputs, double); // output_bias_batch
-  batch[0].delta_input_bias= (double*)Calloc(rbm.n_inputs, double); // input_bias_batch
-  init_matrix(batch[0].delta_w, 0.0f); // Init. to 1; later multiply each **data matrix.
-  init_vector(batch[0].delta_output_bias, rbm.n_outputs, 0);
-  init_vector(batch[0].delta_input_bias, rbm.n_inputs, 0);
-  batch[0].update_input_bias= 1;
-  batch[0].batch_size= rbm.batch_size;  // Used for updating weights.
-  batch[0].learning_rate= rbm.learning_rate;
-  }
-  
+    
   // Compute the \sum gradient over the mini-batch.
   for(int i=0;i<pta[0].do_n_elements;i++) { // Foreach item in the batch.
-    do_batch_member(rbm, input_example, batch[0]);
+    do_batch_member(rbm, input_example, pta.batch[0]);
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
   
-  return((void*)batch);
+  //return((void*)batch);
 }
 
 void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
@@ -328,7 +337,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
     pta[i].rbm= rbm;
     pta[i].input= input_example;
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
-  
+    pta[i].batch= alloc_dwt_from_rbm(rbm);
     pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
 	
     // Increment pointers for the next thread.
@@ -336,19 +345,16 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
   }
 
   // Wait for threads to complete, and combine the data into a single vector.
-  delta_w_t *batch, *dw;
+  delta_w_t *batch;
   for(int i=0;i<n_threads;i++) {
-    void **return_val;
-    pthread_join(threads[i], return_val);
-    dw= (delta_w_t*)return_val[0];
+    pthread_join(threads[i], NULL); // Wait for thread to finish.
 	
     if(i==0) {
-      batch= dw;
+      batch= pta[i].batch;
     }
     else {
-      sum_delta_w(batch[0], dw[0]);
-      free_delta_w(dw[0]);
-      Free(dw);
+      sum_delta_w(batch[0], pta[i].batch[0]);
+      free_delta_w_ptr(pta[i].batch);
     }
   }
   Free(pta); Free(threads);
@@ -362,8 +368,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
   }
   
   // Cleanup temporary variables ...  
-  free_delta_w(batch[0]); 
-  Free(batch);
+  free_delta_w_ptr(batch); 
 }
 
  
@@ -377,19 +382,19 @@ void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velo
   pta.rbm= rbm;
   pta.input= input_example;
   pta.do_n_elements= rbm.batch_size;
-  delta_w_t *batch= ((delta_w_t*)rbm_partial_minibatch(&pta));
+  pta.batch= alloc_dwt_from_rbm(rbm);
+  rbm_partial_minibatch(&pta));
   
   // Take a step in teh direction of the gradient.
   if(rbm.use_momentum) { // Correct and update momentum term.
-    apply_momentum_correction(rbm, batch[0]); 
+    apply_momentum_correction(rbm, pta.batch[0]); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
-    apply_delta_w(rbm, batch[0]);
+    apply_delta_w(rbm, pta.batch[0]);
   }
   
   // Cleanup temporary variables ...  
-  free_delta_w(batch[0]); 
-  Free(batch);
+  free_delta_w_ptr(pta.batch); 
 }
 
 /*
