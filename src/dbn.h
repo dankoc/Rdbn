@@ -22,10 +22,12 @@ typedef struct {
   double *expected_output;
   
   int do_n_elements;
+  
+  delta_w_t *batch;
 } dbn_pthread_arg_t;
 
-SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r);
-SEXP refine_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r);
+SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
+SEXP refine_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r);
 
 #endif
 

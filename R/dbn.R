@@ -46,15 +46,15 @@ dbn <- function(n_layers,
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("dbn.train", 
-  def=function(dbn, data, n_epocs= 1000) {
+  def=function(dbn, data, n_epocs= 1000, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.train")
 })
   
 setMethod("dbn.train", c(dbn="dbn"), 
-  function(dbn, data, n_epocs= 1000) {
+  function(dbn, data, n_epocs= 1000, n_threads=1) {
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
-    .Call("train_dbn_R", dbn, as.real(data), as.integer(n_epocs), package="Rdbn") 
+    .Call("train_dbn_R", dbn, as.real(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 
 
@@ -63,15 +63,15 @@ setMethod("dbn.train", c(dbn="dbn"),
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("dbn.refine", 
-  def=function(dbn, data, labels, n_epocs= 1000) {
+  def=function(dbn, data, labels, n_epocs= 1000, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.refine")
 })
   
 setMethod("dbn.refine", c(dbn="dbn"), 
-  function(dbn, data, labels, n_epocs= 1000) {
+  function(dbn, data, labels, n_epocs= 1000, n_threads=1) {
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
 	stopifnot(NROW(labels) == dbn@network[[NROW(dbn@network)]]@n_outputs)
-    .Call("refine_dbn_R", dbn, as.real(data), as.real(labels), as.integer(n_epocs), package="Rdbn") 
+    .Call("refine_dbn_R", dbn, as.real(data), as.real(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 

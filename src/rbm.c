@@ -88,14 +88,6 @@ delta_w_t *alloc_dwt_from_rbm(rbm_t rbm) {
   
   return(batch);
 }
-	
-void free_delta_w(delta_w_t dw) {
-  free_matrix(dw.delta_w);
-  Free(dw.delta_output_bias);
-
-  if(dw.update_input_bias)
-    Free(dw.delta_input_bias);
-}
 
 void free_delta_w_ptr(delta_w_t *dw, int n) {
   for(int i=0;i<n;i++) {
@@ -319,7 +311,6 @@ void *rbm_partial_minibatch(void *ptab) {
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
   
-  //return((void*)batch);
 }
 
 void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 

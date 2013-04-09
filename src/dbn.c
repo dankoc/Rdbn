@@ -26,6 +26,26 @@ void free_dbn(dbn_t dbn) {
   Free(dbn.layer_sizes);
 }
 
+
+/*
+ *  Allocates a delta_w_t object for each layer in a deep belief network ...
+ */
+delta_w_t *alloc_dwt_from_dbn(dbn_t dbn) {
+  delta_w_t *batch= (delta_w_t*)Calloc(dbn.n_rbms, delta_w_t);
+  
+  for(int i=0;i<dbn.n_rbms;i++) {
+    int n_outputs_cl= dbn.rbms[i].n_outputs;
+    int n_inputs_cl= dbn.rbms[i].n_inputs;
+
+    batch[l].delta_w= alloc_matrix(n_outputs_cl, n_inputs_cl);
+    batch[l].delta_output_bias= (double*)Calloc(n_outputs_cl, double);
+    batch[l].update_input_bias= 0;
+    batch[l].batch_size= dbn.batch_size;
+    batch[l].learning_rate= dbn.learning_rate;
+  }
+  return(batch);
+}
+
 /*
  * Clamps the input for a given layer.  Returns a new *double with the output of that layer.
  */
@@ -81,30 +101,22 @@ double **dbn_compute_store_layers(dbn_t dbn, double *input) {
  * (NOTE: May require Couresea account).
  */
 
-delta_w_t compute_layer_error(dbn_t dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error) {
+void compute_layer_error(dbn_t dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error, delta_w_t batch) {
   int n_outputs_cl= dbn.rbms[layer].n_outputs; // # outputs in current layer
   int n_inputs_cl= dbn.rbms[layer].n_inputs;   // # inputs in current layer
-	
-  delta_w_t weight_errors;
-  {
-  weight_errors.delta_w= alloc_matrix(n_outputs_cl, n_inputs_cl);
-  weight_errors.delta_output_bias= (double*)Calloc(n_outputs_cl, double);
-  weight_errors.update_input_bias= 0;
-  weight_errors.batch_size= dbn.batch_size;
-  weight_errors.learning_rate= dbn.learning_rate;
-  }
 
   // Compute error for this layer.
   for(int i=0;i<n_inputs_cl;i++) {
     if(layer>0) next_layer_neuron_error[i]= 0;
     for(int j=0;j<n_outputs_cl;j++) {
       // Compute error derivites for the weights ... (dE/w_{i,j}).
-      set_matrix_value(weight_errors.delta_w, j, i, observed_output[layer][i]*neuron_error[j]); 
+	  double previous_ij= get_matrix_value(batch.delta_w, j, i);
+      set_matrix_value(batch.delta_w, j, i, previous_ij+observed_output[layer][i]*neuron_error[j]); 
 
       // Compute error derivites for the biases.  Conceptually similar to a connection with a neuron of constant output (==1).
       // see: http://stackoverflow.com/questions/3775032/how-to-update-the-bias-in-neural-network-backpropagation
       // At this time, I am NOT updating input biases using backpropagation
-      if(i==0) weight_errors.delta_output_bias[j]= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
+      if(i==0) batch.delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
   
       // Compute error for neurons in an internal 'hidden' layer [dE/dy_{i}].
       // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
@@ -112,16 +124,13 @@ delta_w_t compute_layer_error(dbn_t dbn, int layer, double **observed_output, do
         next_layer_neuron_error[i]+= neuron_error[j]*get_matrix_value(dbn.rbms[layer].io_weights, j, i);
     }
   }
-
-  return(weight_errors);
 }
  
 /* Returns the error derivitives for a particular example.  Equilavent to do_batch_member in rbm.c. */
-delta_w_t *backpropagation(dbn_t dbn, double *input, double *expected_output) {
+void backpropagation(dbn_t dbn, double *input, double *expected_output, delta_w_t *batch) {
   double **observed_output= dbn_compute_store_layers(dbn, input); // Compute the output of the neural network.
 
   double *next_layer_neuron_error, *neuron_error; // Stores dE/dz.
-  delta_w_t *weight_errors= (delta_w_t*)Calloc(dbn.n_rbms, delta_w_t);
   
   // Compute last layer error term: dE/dz_j= y_j * (1-y_j) * dE/dy_j
   // Where dE/dy_j= (t_j-y_j) ==> t --> target output.  y--> observed output.
@@ -138,10 +147,9 @@ delta_w_t *backpropagation(dbn_t dbn, double *input, double *expected_output) {
   // Foreach layer, compute the layer's weight error derivitives (dE/dw) and the next neuron output error term (dE/dz).
   for(int layer=(dbn.n_rbms-1);layer>=0;layer--) {
     int n_inputs_cl= dbn.rbms[layer].n_inputs;   // # inputs in current layer
-    if(layer>0) next_layer_neuron_error= (double*)Calloc(n_inputs_cl, double);
 
-    // Shortcut, for code readability.  Computes the error term for the current layer.
-    weight_errors[layer]= compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error);
+    if(layer>0) next_layer_neuron_error= (double*)Calloc(n_inputs_cl, double);
+    compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, batch[layer]);     // Shortcut, for code readability.  Computes the error term for the current layer.
 
     Free(neuron_error);
     if(layer>0) neuron_error= next_layer_neuron_error;
@@ -151,31 +159,18 @@ delta_w_t *backpropagation(dbn_t dbn, double *input, double *expected_output) {
   for(int i=0;i<dbn.n_layers;i++)
     Free(observed_output[i]);
   Free(observed_output);
-  
-  return(weight_errors);
 }
 
 void *dbn_backprop_partial_minibatch(void *ptab) {
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
 
-  delta_w_t *dw, *partial_batch;
   for(int i=0;i<pta[0].do_n_elements;i++) {
-    dw= backpropagation(pta[0].dbn, pta[0].input, pta[0].expected_output);
-	
-    if(i==0) {
-      partial_batch= dw;
-    }
-    else {
-      for(int j=0;j<pta[0].dbn.n_rbms;j++) {
-        sum_delta_w(partial_batch[j], dw[j]);
-      }
-      free_delta_w_ptr(dw, pta[0].dbn.n_rbms);
-    }
+    backpropagation(pta[0].dbn, pta[0].input, pta[0].expected_output, pta[0].batch);
+
     // Increment pointers.
     pta[0].input+= pta[0].dbn.rbms[0].n_inputs;
     pta[0].expected_output+= pta[0].dbn.rbms[pta[0].dbn.n_rbms-1].n_outputs;
   }
-  return((void*)partial_batch);
 }
 
 /////////////IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
@@ -186,11 +181,12 @@ void backpropagation_minibatch(dbn_t dbn, double *input, double *expected_output
   pta.input= input;
   pta.expected_output= expected_output;
   pta.do_n_elements= dbn.batch_size;
-  delta_w_t *batch=(delta_w_t*)dbn_backprop_partial_minibatch(&pta);
+  pta.batch= alloc_dwt_from_dbn(dbn);
+  dbn_backprop_partial_minibatch(&pta);
   
   // Update the weights.
   for(int i=0;i<dbn.n_rbms;i++) {
-    apply_delta_w(dbn.rbms[i], batch[i]);
+    apply_delta_w(dbn.rbms[i], pta.batch[i]);
   }
   free_delta_w_ptr(batch, dbn.n_rbms);
 }
@@ -210,6 +206,7 @@ void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expect
     pta[i].dbn= dbn;
     pta[i].input= input;
     pta[i].expected_output= expected_output;
+    pta[i].batch= alloc_dwt_from_dbn(dbn);
 
 	// Set up the number inputs to be evaluated by the thread.
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
@@ -222,29 +219,27 @@ void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expect
   }
 
   // Wait for threads to complete, and combine the data into a single vector.
-  delta_w_t *batch, *dw;
+  delta_w_t *batch;
   for(int i=0;i<n_threads;i++) {
-    void **return_val;
-    pthread_join(threads[i], return_val);
-	dw= (delta_w_t*)return_val;
+    pthread_join(threads[i], NULL);
 	
     if(i==0) {
-      batch= dw;
+      batch= pta[i].batch;
     }
     else {
       for(int j=0;j<dbn.n_rbms;j++) {
-        sum_delta_w(batch[j], dw[j]);
+        sum_delta_w(batch[j], pta[i].batch[j]);
       }
-      free_delta_w_ptr(dw, dbn.n_rbms);
+      free_delta_w_ptr(pta[i].batch[j], dbn.n_rbms);
     }
   }
-  
+  Free(pta); Free(threads);
+ 
   // Update the weights.
   for(int i=0;i<dbn.n_rbms;i++) {
     apply_delta_w(dbn.rbms[i], batch[i]);
   }
   free_delta_w_ptr(batch, dbn.n_rbms);
-  Free(threads); Free(pta);
 }
 /////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
 
@@ -262,7 +257,7 @@ void backpropagation_minibatch_pthreads(dbn_t dbn, double *input, double *expect
  *   --> n_examples is a multiple of dbn.batch_size ... additional examples are ignored.
  */
 
-void dbn_refine(dbn_t dbn, double *input_example, double *output_example, int n_examples, int n_epocs) {
+void dbn_refine(dbn_t dbn, double *input_example, double *output_example, int n_examples, int n_epocs, int n_threads) {
   double *current_input, *current_output;
   int n_training_iterations= floor(n_examples/dbn.batch_size); 
   
@@ -270,7 +265,7 @@ void dbn_refine(dbn_t dbn, double *input_example, double *output_example, int n_
     current_input= input_example; // Reset training pointer.
     current_output= output_example;
     for(int j=0;j<n_training_iterations;j++) {
-      backpropagation_minibatch(dbn, current_input, current_output);  // Do a minibatch using the current position of the training pointer.
+      backpropagation_minibatch_pthreads(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
       current_input+= dbn.batch_size*dbn.rbms[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
       current_output+=dbn.batch_size*dbn.rbms[dbn.n_rbms-1].n_outputs; // Increment the input_example pointer batch_size # of columns.
 	}
@@ -291,16 +286,16 @@ void dbn_refine(dbn_t dbn, double *input_example, double *output_example, int n_
  *    n_examples --> Number of examples passed to the training.
  *    n_epocs    --> Number of times to iterate over the input examples during training.
  */
-void dbn_train(dbn_t dbn, double *examples, int n_examples, int n_epocs) {
+void dbn_train(dbn_t dbn, double *examples, int n_examples, int n_epocs, int n_threads) {
   // Trian the first layer.
-  rbm_train(dbn.rbms[0], examples, n_examples, n_epocs, 1);
+  rbm_train(dbn.rbms[0], examples, n_examples, n_epocs, n_threads);
 
   // train later layers.
   double *previous_layer_input, *next_layer_input;
   previous_layer_input= examples;
   for(int layer=1;layer<dbn.n_rbms;layer++) {
     next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
-    rbm_train(dbn.rbms[layer], next_layer_input, n_examples, n_epocs, 1); // Train the current layer.
+    rbm_train(dbn.rbms[layer], next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
   
     // Free the previous input layer (unless we're on the first pass and pointing to *examples.
 	if(layer>1) // DO NOT free *examples.
@@ -339,31 +334,33 @@ dbn_t dbn_r_to_c(SEXP dbn_r) {
 /*
  *  R interface to training a deep belief network ...
  */ 
-SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r) {
+SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r) {
   dbn_t dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
   int n_examples= Rf_nrows(training_data_r)/dbn.rbms[0].n_inputs;
   double *examples= REAL(training_data_r);
+  int n_threads= INTEGER(n_threads_r)[0];
 
   int n_epocs= INTEGER(n_epocs_r)[0];
   
-  dbn_train(dbn, examples, n_examples, n_epocs);
+  dbn_train(dbn, examples, n_examples, n_epocs, n_threads);
   return(dbn_r);
 }
 
 /*
  *  R interface to refining a deep belief network for discriminitive tasks using backpropagation ...
  */ 
-SEXP refine_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r) {
+SEXP refine_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r) {
   dbn_t dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
   int n_examples= Rf_nrows(training_data_r)/dbn.rbms[0].n_inputs;
+  int n_threads= INTEGER(n_threads_r)[0];
   double *input_examples= REAL(training_data_r);
   double *output_examples= REAL(training_labels_r);
 
   int n_epocs= INTEGER(n_epocs_r)[0];
 
-  dbn_refine(dbn, input_examples, output_examples, n_examples, n_epocs);
+  dbn_refine(dbn, input_examples, output_examples, n_examples, n_epocs, n_threads);
   
   return(dbn_r);
 }

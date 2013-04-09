@@ -23,7 +23,8 @@ void R_init_GROseq(DllInfo *info) {
      R_CallMethodDef callMethods[]  = {
        {"get_genomic_data_R", (DL_FUNC)&get_genomic_data_R, 5},
        {"train_rbm_R", (DL_FUNC)&train_rbm_R, 4},
-       {"train_dbn_R", (DL_FUNC)&train_dbn_R, 3},
+       {"train_dbn_R", (DL_FUNC)&train_dbn_R, 4},
+       {"refine_dbn_R", (DL_FUNC)&refine_dbn_R, 5},
        {NULL, NULL, 0}
      };
 
