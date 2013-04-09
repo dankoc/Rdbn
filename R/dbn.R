@@ -19,17 +19,20 @@ setClass("dbn",#"restricted_boltzman_machine",
 )
 
 # constructor.
-dbn <- function(n_layers, layer_sizes, batch_size=1, learning_rate=0.1, cd_n=1, momentum_decay= NA) {
+dbn <- function(n_layers, 
+                layer_sizes, 
+                batch_size=1, 
+                learning_rate=0.1, 
+                cd_n=1, 
+                momentum_decay= NA) 
+{
   rbm_network <- list()
   
   rbm_network[[1]] <- rbm(n_inputs= layer_sizes[1], n_outputs= layer_sizes[1+1], 
       batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
   for(i in 2:(n_layers-1)) {
-    rbm_network[[i]] <- rbm(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], 
-      batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay,
-
-      ## IDEALLY: these will actually be pointers to the same memory.  R might make a copy instead, though.
-      bias_inputs=rbm_network[[i-1]]@bias_outputs)
+    rbm_network[[i]] <- dbn_layer(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], 
+      batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
   }
   new("dbn", n_layers=as.integer(n_layers), layer_sizes=as.integer(layer_sizes), network= rbm_network, learning_rate= as.real(learning_rate), batch_size=as.integer(batch_size))
 }

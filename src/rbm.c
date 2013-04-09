@@ -202,7 +202,7 @@ void apply_delta_w(rbm_t rbm, delta_w_t dw) {
       double new_w_i_j= previous_w_i_j+dw.learning_rate*delta_w_i_j/(double)dw.batch_size;
       set_matrix_value(rbm.io_weights, i, j, new_w_i_j);
 	  
-      if(i==0 && rbm.update_input_biases && dw.update_input_bias) // Only update once... and if everything says to update.
+      if(i==0 && dw.update_input_bias) // Only update once... and if everything says to update.
         rbm.bias_inputs[j] += dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
     }
   }
@@ -246,7 +246,7 @@ void apply_momentum_correction(rbm_t rbm, delta_w_t dw) {
       double previous_momentum_i_j= get_matrix_value(rbm.momentum, i, j);
         set_matrix_value(rbm.momentum, i, j, previous_momentum_i_j+step);
 
-      if(i==0 && rbm.update_input_biases && dw.update_input_bias) // Only update once... and if everything says to update.
+      if(i==0 && dw.update_input_bias) // Only update once... and if everything says to update.
         rbm.bias_inputs[j]+= dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
     }
   }
@@ -365,13 +365,12 @@ void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs) {
  *  An R interface for RBM training ...
  */
 
-rbm_t rbm_r_to_c(SEXP rbm_r) {
+rbm_t common_rbm_r_type_to_c(SEXP rbm_r) {
   rbm_t rbm;//= (rbm_t*)R_alloc(1, sizeof(rbm_t));
 
   rbm.n_inputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_inputs")))[0];
   rbm.n_outputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_outputs")))[0];
 
-  rbm.bias_inputs= REAL(GET_SLOT(rbm_r,Rf_install("bias_inputs")));
   rbm.bias_outputs= REAL(GET_SLOT(rbm_r, Rf_install("bias_outputs")));
 
   rbm.io_weights = (matrix_t*)R_alloc(1, sizeof(matrix_t));
@@ -394,6 +393,18 @@ rbm_t rbm_r_to_c(SEXP rbm_r) {
     rbm.momentum[0].nrows= rbm.n_inputs;
   }
 
+  return(rbm);
+}
+
+rbm_t rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs) {
+  rbm_t rbm= common_rbm_r_type_to_c(rbm_r);
+  rbm.bias_inputs= points_to_bias_inputs;
+  return(rbm);
+}
+
+rbm_t rbm_r_to_c(SEXP rbm_r) {
+  rbm_t rbm= common_rbm_r_type_to_c(rbm_r);
+  rbm.bias_inputs= REAL(GET_SLOT(rbm_r,Rf_install("bias_inputs")));
   return(rbm);
 }
 

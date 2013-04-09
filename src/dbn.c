@@ -173,7 +173,7 @@ void backpropagation_minibatch(dbn_t dbn, double *input, double *expected_output
         free_delta_w(dw[j]);
       }
       Free(dw);
-	}
+    }
 	
     // Increment pointers.
     input+= dbn.rbms[0].n_inputs;
@@ -266,8 +266,11 @@ dbn_t dbn_r_to_c(SEXP dbn_r) {
 
   dbn.n_rbms= dbn.n_layers-1;
   dbn.rbms= (rbm_t*)R_alloc(dbn.n_rbms, sizeof(rbm_t));
-  for(int i=0;i<dbn.n_rbms;i++) {
-    dbn.rbms[i]= rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i)); // Apply rbm_r_to_c for network[[i]].
+  dbn.rbms[0]= rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), 0)); // Apply rbm_r_to_c for network[[i]].
+
+  for(int i=1;i<dbn.n_rbms;i++) {
+    // Force bias_input[i] = bias_output[i-1];
+    dbn.rbms[i]= rbm_layer_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i), dbn.rbms[i-1].bias_outputs);
   }
 
  return(dbn);
@@ -288,6 +291,9 @@ SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r) {
   return(dbn_r);
 }
 
+/*
+ *  R interface to refining a deep belief network for discriminitive tasks using backpropagation ...
+ */ 
 SEXP refine_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r) {
   dbn_t dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
