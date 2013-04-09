@@ -290,26 +290,26 @@ void *rbm_partial_minibatch(void *ptab) {
   double *input_example= pta[0].input;
   
   // Thesse are for updating edge weights and biases...
-  delta_w_t batch;
+  delta_w_t *batch= (delta_w_t*)Calloc(1, delta_w_t);
   { // TODO: Re-write this initialization for a single loop through n_outputs and n_inputs.
-  batch.delta_w= alloc_matrix(rbm.n_outputs, rbm.n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
-  batch.delta_output_bias= (double*)Calloc(rbm.n_outputs, double); // output_bias_batch
-  batch.delta_input_bias= (double*)Calloc(rbm.n_inputs, double); // input_bias_batch
-  init_matrix(batch.delta_w, 0.0f); // Init. to 1; later multiply each **data matrix.
-  init_vector(batch.delta_output_bias, rbm.n_outputs, 0);
-  init_vector(batch.delta_input_bias, rbm.n_inputs, 0);
-  batch.update_input_bias= 1;
-  batch.batch_size= rbm.batch_size;
-  batch.learning_rate= rbm.learning_rate;
+  batch[0].delta_w= alloc_matrix(rbm.n_outputs, rbm.n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
+  batch[0].delta_output_bias= (double*)Calloc(rbm.n_outputs, double); // output_bias_batch
+  batch[0].delta_input_bias= (double*)Calloc(rbm.n_inputs, double); // input_bias_batch
+  init_matrix(batch[0].delta_w, 0.0f); // Init. to 1; later multiply each **data matrix.
+  init_vector(batch[0].delta_output_bias, rbm.n_outputs, 0);
+  init_vector(batch[0].delta_input_bias, rbm.n_inputs, 0);
+  batch[0].update_input_bias= 1;
+  batch[0].batch_size= rbm.batch_size;
+  batch[0].learning_rate= rbm.learning_rate;
   }
   
   // Compute the \sum gradient over the mini-batch.
-  for(int i=0;i<pta[0].n_per_batch;i++) { // Foreach item in the batch.
-    do_batch_member(rbm, input_example, batch);
+  for(int i=0;i<pta[0].do_n_elements;i++) { // Foreach item in the batch.
+    do_batch_member(rbm, input_example, batch[0]);
     input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
   }
   
-  return((void*)&batch);
+  return((void*)batch);
 }
 
 void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
@@ -319,7 +319,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
   }
   
   // Activate each as a separate thread.
-  dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
+  rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
   int n_per_batch= floor(rbm.batch_size/n_threads);
   int remainder= rbm.batch_size % n_threads;
@@ -353,6 +353,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
       Free(dw);
     }
   }
+  Free(pta); Free(threads);
     
   // Take a step in teh direction of the gradient.
   if(rbm.use_momentum) { // Correct and update momentum term.
@@ -389,7 +390,7 @@ void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velo
   }
   
   // Cleanup temporary variables ...  
-  free_delta_w(batch[0]);
+  free_delta_w(batch[0]); Free(batch);
 }
 
 /*
