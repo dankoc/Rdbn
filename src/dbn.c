@@ -301,7 +301,7 @@ void dbn_train(dbn_t dbn, double *examples, int n_examples, int n_epocs, int n_t
     next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
    Rprintf("Training layer %d: ",layer);
    rbm_train(dbn.rbms[layer], next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
-   Rprintf("\n", i);
+   Rprintf("\n");
 
     // Free the previous input layer (unless we're on the first pass and pointing to *examples.
 	if(layer>1) // DO NOT free *examples.
