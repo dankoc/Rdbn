@@ -19,15 +19,15 @@
 /*
  *  Allocates memory for an RBM.
  */
-rbm_t alloc_rbm(int n_inputs, int n_outputs) {
-  rbm_t rbm;// =  (rbm_t*)malloc(sizeof(rbm_t));
+rbm_t *alloc_rbm(int n_inputs, int n_outputs) {
+  rbm_t *rbm=  (rbm_t*)Calloc(1, rbm_t);
   
-  rbm.n_inputs= n_inputs;
-  rbm.n_outputs= n_outputs;
-  rbm.bias_inputs= (double*)Calloc(n_inputs, double);
-  rbm.bias_outputs= (double*)Calloc(n_outputs, double);
+  rbm[0].n_inputs= n_inputs;
+  rbm[0].n_outputs= n_outputs;
+  rbm[0].bias_inputs= (double*)Calloc(n_inputs, double);
+  rbm[0].bias_outputs= (double*)Calloc(n_outputs, double);
 
-  rbm.io_weights= alloc_matrix(n_outputs, n_inputs);
+  rbm[0].io_weights= alloc_matrix(n_outputs, n_inputs);
 
   return(rbm);
 }
@@ -35,10 +35,11 @@ rbm_t alloc_rbm(int n_inputs, int n_outputs) {
 /*
  *  Frees an allocated rbm.
  */
-void free_rbm(rbm_t rbm) {
-  free_matrix(rbm.io_weights);
-  Free(rbm.bias_inputs);
-  Free(rbm.bias_outputs);
+void free_rbm(rbm_t *rbm) {
+  free_matrix(rbm[0].io_weights);
+  Free(rbm[0].bias_inputs);
+  Free(rbm[0].bias_outputs);
+  Free(rbm);
 }
 
 /*
@@ -54,37 +55,35 @@ void free_rbm(rbm_t rbm) {
  *    expected_frequency_on --> If possible, set to log[pi=(1pi)] where pi is the proportion of training vectors in which unit i is on.
  *
  */
-rbm_t init_rbm(rbm_t rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on) {
-  rbm.learning_rate= learning_rate;
-  rbm.batch_size= batch_size;
-  rbm.cd_n= cd_n;
+void init_rbm(rbm_t *rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on) {
+  rbm[0].learning_rate= learning_rate;
+  rbm[0].batch_size= batch_size;
+  rbm[0].cd_n= cd_n;
   
-  init_matrix_rnorm(rbm.io_weights, 0.0d, 0.01d);
+  init_matrix_rnorm(rbm[0].io_weights, 0.0d, 0.01d);
   
-  for(int i=0;i<rbm.n_outputs;i++)
-    rbm.bias_outputs[i]= 0.0d;
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    rbm[0].bias_outputs[i]= 0.0d;
 	
-  for(int j=0;j<rbm.n_inputs;j++)
-    rbm.bias_inputs[j]= expected_frequency_on;
-  
-  return(rbm);
+  for(int j=0;j<rbm[0].n_inputs;j++)
+    rbm[0].bias_inputs[j]= expected_frequency_on;
 }
 
 /*************************************************************************************
  *  Convenience functions for a delta_w_t object.
  */
 
-delta_w_t *alloc_dwt_from_rbm(rbm_t rbm) {
+delta_w_t *alloc_dwt_from_rbm(rbm_t *rbm) {
   delta_w_t *batch= (delta_w_t*)Calloc(1, delta_w_t);
-  batch[0].delta_w= alloc_matrix(rbm.n_outputs, rbm.n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
-  batch[0].delta_output_bias= (double*)Calloc(rbm.n_outputs, double); // output_bias_batch
-  batch[0].delta_input_bias= (double*)Calloc(rbm.n_inputs, double); // input_bias_batch
+  batch[0].delta_w= alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);// \prod_{batch} (<v_i h_j>_{data} - <v_i h_j>_{recon})
+  batch[0].delta_output_bias= (double*)Calloc(rbm[0].n_outputs, double); // output_bias_batch
+  batch[0].delta_input_bias= (double*)Calloc(rbm[0].n_inputs, double); // input_bias_batch
   init_matrix(batch[0].delta_w, 0.0f); // Init. to 1; later multiply each **data matrix.
-  init_vector(batch[0].delta_output_bias, rbm.n_outputs, 0);
-  init_vector(batch[0].delta_input_bias, rbm.n_inputs, 0);
+  init_vector(batch[0].delta_output_bias, rbm[0].n_outputs, 0);
+  init_vector(batch[0].delta_input_bias, rbm[0].n_inputs, 0);
   batch[0].update_input_bias= 1;
-  batch[0].batch_size= rbm.batch_size;  // Used for updating weights.
-  batch[0].learning_rate= rbm.learning_rate;
+  batch[0].batch_size= rbm[0].batch_size;  // Used for updating weights.
+  batch[0].learning_rate= rbm[0].learning_rate;
   
   return(batch);
 }
@@ -130,10 +129,10 @@ double logistic_function(double value) {
  *  Functions to fix the output nodes to and sample values at the input nodes
  *
  ************************************************************************************/
- double get_input_prob(rbm_t rbm, int input_index, double *output) {
-  double prob= rbm.bias_inputs[input_index];
-  for(int i=0;i<rbm.n_outputs;i++)
-    prob+= output[i]*get_matrix_value(rbm.io_weights, i, input_index);
+ double get_input_prob(rbm_t *rbm, int input_index, double *output) {
+  double prob= rbm[0].bias_inputs[input_index];
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    prob+= output[i]*get_matrix_value(rbm[0].io_weights, i, input_index);
   return(logistic_function(prob));
 }
  
@@ -144,8 +143,8 @@ double logistic_function(double value) {
  *    rbm    --> Information on the boltzman machine.
  *    output --> The value of all output nodes ... Assumed to be a probability (i.e. [0,1], inclusive).
  */
-void clamp_output(rbm_t rbm, double *output, double *resulting_input) {
-  for(int i=0;i<rbm.n_inputs;i++) // Get prob. of input node by summing over output states.
+void clamp_output(rbm_t *rbm, double *output, double *resulting_input) {
+  for(int i=0;i<rbm[0].n_inputs;i++) // Get prob. of input node by summing over output states.
 	resulting_input[i]= get_input_prob(rbm, i, output);
 }
 
@@ -154,10 +153,10 @@ void clamp_output(rbm_t rbm, double *output, double *resulting_input) {
  *  Functions to fix the output nodes to and sample values at the input nodes
  *
  ************************************************************************************/
- double get_output_prob(rbm_t rbm, int output_index, double *input) {
-  double prob= rbm.bias_outputs[output_index];
-  for(int i=0;i<rbm.n_inputs;i++)
-    prob+= input[i]*get_matrix_value(rbm.io_weights, output_index, i);
+ double get_output_prob(rbm_t *rbm, int output_index, double *input) {
+  double prob= rbm[0].bias_outputs[output_index];
+  for(int i=0;i<rbm[0].n_inputs;i++)
+    prob+= input[i]*get_matrix_value(rbm[0].io_weights, output_index, i);
   return(logistic_function(prob));
 }
  
@@ -168,8 +167,8 @@ void clamp_output(rbm_t rbm, double *output, double *resulting_input) {
  *    rbm    --> Information on the boltzman machine.
  *    input  --> The value of all input nodes ... Assumed to be a probability (i.e. [0,1], inclusive).
  */
-void clamp_input(rbm_t rbm, double *input, double *resulting_output) {
-  for(int i=0;i<rbm.n_outputs;i++) // Get prob. of input node by summing over output states.
+void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
+  for(int i=0;i<rbm[0].n_outputs;i++) // Get prob. of input node by summing over output states.
 	resulting_output[i]= get_output_prob(rbm, i, input);
 }
 
@@ -178,10 +177,10 @@ void clamp_input(rbm_t rbm, double *input, double *resulting_output) {
  Functions for getting/ updating during training. */
  
 /*Subtract each element of recon from data.  The result will be passed back in data.*/
-void compute_delta_w(rbm_t rbm, delta_w_t batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
-  for(int i=0;i<rbm.n_outputs;i++) {
+void compute_delta_w(rbm_t *rbm, delta_w_t batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
+  for(int i=0;i<rbm[0].n_outputs;i++) {
     batch.delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
-    for(int j=0;j<rbm.n_inputs;j++) {
+    for(int j=0;j<rbm[0].n_inputs;j++) {
       double delta_w_i_j= get_matrix_value(batch.delta_w, i, j)+
 			(sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
       set_matrix_value(batch.delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions.
@@ -197,17 +196,17 @@ void compute_delta_w(rbm_t rbm, delta_w_t batch, double *init_output_recon, doub
  *
  * Also includes 
  */
-void apply_delta_w(rbm_t rbm, delta_w_t dw) {
-  for(int i=0;i<rbm.n_outputs;i++) {
-    rbm.bias_outputs[i] += dw.learning_rate*dw.delta_output_bias[i]/(double)dw.batch_size; 
-    for(int j=0;j<rbm.n_inputs;j++) {
-      double previous_w_i_j= get_matrix_value(rbm.io_weights, i, j);
+void apply_delta_w(rbm_t *rbm, delta_w_t dw) {
+  for(int i=0;i<rbm[0].n_outputs;i++) {
+    rbm[0].bias_outputs[i] += dw.learning_rate*dw.delta_output_bias[i]/(double)dw.batch_size; 
+    for(int j=0;j<rbm[0].n_inputs;j++) {
+      double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
       double delta_w_i_j= get_matrix_value(dw.delta_w, i, j);
       double new_w_i_j= previous_w_i_j+dw.learning_rate*delta_w_i_j/(double)dw.batch_size;
-      set_matrix_value(rbm.io_weights, i, j, new_w_i_j);
+      set_matrix_value(rbm[0].io_weights, i, j, new_w_i_j);
 	  
       if(i==0 && dw.update_input_bias) // Only update once... and if everything says to update.
-        rbm.bias_inputs[j] += dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
+        rbm[0].bias_inputs[j] += dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
     }
   }
 }
@@ -222,36 +221,36 @@ void apply_delta_w(rbm_t rbm, delta_w_t dw) {
  *  Currently does NOT use momentum approach for updating biases, although that is straightforward to implement.
  */
 
-void initial_momentum_step(rbm_t rbm) {
-  for(int i=0;i<rbm.n_outputs;i++)
-    for(int j=0;j<rbm.n_inputs;j++) {
+void initial_momentum_step(rbm_t *rbm) {
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    for(int j=0;j<rbm[0].n_inputs;j++) {
       // Computes(eq 7.11, 1st half): v_t=\mu_{t-1}v_{t-1}.
-      double momentum_i_j= rbm.momentum_decay*get_matrix_value(rbm.momentum, i, j); 
-      set_matrix_value(rbm.momentum, i, j, momentum_i_j); // Updates momentum matrix.
+      double momentum_i_j= rbm[0].momentum_decay*get_matrix_value(rbm[0].momentum, i, j); 
+      set_matrix_value(rbm[0].momentum, i, j, momentum_i_j); // Updates momentum matrix.
 
       // Computes(eq 7.10, 1st half): \theta_t = \theta_{t-1} + \mu_{t-11}v_{t-1}.
-      set_matrix_value(rbm.io_weights, i, j, get_matrix_value(rbm.io_weights, i, j)+momentum_i_j);
+      set_matrix_value(rbm[0].io_weights, i, j, get_matrix_value(rbm[0].io_weights, i, j)+momentum_i_j);
     }
 }
  
-void apply_momentum_correction(rbm_t rbm, delta_w_t dw) {
-  for(int i=0;i<rbm.n_outputs;i++) {
-    rbm.bias_outputs[i]+= dw.learning_rate*dw.delta_output_bias[i]/(double)dw.batch_size; 
-    for(int j=0;j<rbm.n_inputs;j++) {
+void apply_momentum_correction(rbm_t *rbm, delta_w_t dw) {
+  for(int i=0;i<rbm[0].n_outputs;i++) {
+    rbm[0].bias_outputs[i]+= dw.learning_rate*dw.delta_output_bias[i]/(double)dw.batch_size; 
+    for(int j=0;j<rbm[0].n_inputs;j++) {
       double step= dw.learning_rate*get_matrix_value(dw.delta_w, i, j)/(double)dw.batch_size; // For the momentum method ... do I still scale by the batch size?!
 
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
       // \theta_t' was applied before taking the step.
-      double previous_w_i_j= get_matrix_value(rbm.io_weights, i, j);
-      set_matrix_value(rbm.io_weights, i, j, previous_w_i_j+step);  //  
+      double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
+      set_matrix_value(rbm[0].io_weights, i, j, previous_w_i_j+step);  //  
 	  
       // Update velocities.  v_t = v_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.11, 2nd half).
       // v_t' was applied before taking the step.
-      double previous_momentum_i_j= get_matrix_value(rbm.momentum, i, j);
-        set_matrix_value(rbm.momentum, i, j, previous_momentum_i_j+step);
+      double previous_momentum_i_j= get_matrix_value(rbm[0].momentum, i, j);
+        set_matrix_value(rbm[0].momentum, i, j, previous_momentum_i_j+step);
 
       if(i==0 && dw.update_input_bias) // Only update once... and if everything says to update.
-        rbm.bias_inputs[j]+= dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
+        rbm[0].bias_inputs[j]+= dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
     }
   }
 }
@@ -266,14 +265,14 @@ void apply_momentum_correction(rbm_t rbm, delta_w_t dw) {
  *    
  *
  */
-void do_batch_member(rbm_t rbm,  double *input_example, delta_w_t batch) {
+void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t batch) {
  
   // Run Gibbs sampling for CDn steps.
-  double *init_output_recon= (double*)Calloc(rbm.n_outputs, double);
-  double *input_recon= (double*)Calloc(rbm.n_inputs, double);
+  double *init_output_recon= (double*)Calloc(rbm[0].n_outputs, double);
+  double *input_recon= (double*)Calloc(rbm[0].n_inputs, double);
   clamp_input(rbm, input_example, init_output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
-  double *output_recon= vector_copy(init_output_recon, rbm.n_outputs);  
-  for(int cd=0;cd<rbm.cd_n;cd++) {
+  double *output_recon= vector_copy(init_output_recon, rbm[0].n_outputs);  
+  for(int cd=0;cd<rbm[0].cd_n;cd++) {
     clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
     clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
   }
@@ -302,28 +301,28 @@ void do_batch_member(rbm_t rbm,  double *input_example, delta_w_t batch) {
  */
 void *rbm_partial_minibatch(void *ptab) {
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)ptab;
-  rbm_t rbm= pta[0].rbm;
+  rbm_t *rbm= pta[0].rbm;
   double *input_example= pta[0].input;
     
   // Compute the \sum gradient over the mini-batch.
   for(int i=0;i<pta[0].do_n_elements;i++) { // Foreach item in the batch.
     do_batch_member(rbm, input_example, pta[0].batch[0]);
-    input_example+= rbm.n_inputs; // Update the input_example pointer to the next input sample.
+    input_example+= rbm[0].n_inputs; // Update the input_example pointer to the next input sample.
   }
   
 }
 
-void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
+void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
   // If using momentum Take a step BEFORE computing the local gradient.
-  if(rbm.use_momentum) { 
+  if(rbm[0].use_momentum) { 
     initial_momentum_step(rbm);
   }
   
   // Activate each as a separate thread.
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-  int n_per_batch= floor(rbm.batch_size/n_threads);
-  int remainder= (rbm.batch_size%n_threads==0)?n_per_batch:(rbm.batch_size%n_threads);
+  int n_per_batch= floor(rbm[0].batch_size/n_threads);
+  int remainder= (rbm[0].batch_size%n_threads==0)?n_per_batch:(rbm[0].batch_size%n_threads);
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].rbm= rbm;
@@ -333,7 +332,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
     pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
 	
     // Increment pointers for the next thread.
-    input_example+= pta[i].do_n_elements*rbm.n_inputs;
+    input_example+= pta[i].do_n_elements*rbm[0].n_inputs;
   }
 
   // Wait for threads to complete, and combine the data into a single vector.
@@ -352,7 +351,7 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
   Free(pta); Free(threads);
     
   // Take a step in teh direction of the gradient.
-  if(rbm.use_momentum) { // Correct and update momentum term.
+  if(rbm[0].use_momentum) { // Correct and update momentum term.
     apply_momentum_correction(rbm, batch[0]); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
@@ -364,21 +363,21 @@ void do_minibatch_pthreads(rbm_t rbm, double *input_example, int n_threads) { //
 }
 
  
-void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
+void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
   // If using momentum Take a step BEFORE computing the local gradient.
-  if(rbm.use_momentum) { 
+  if(rbm[0].use_momentum) { 
     initial_momentum_step(rbm);
   }
 
   rbm_pthread_arg_t pta;
   pta.rbm= rbm;
   pta.input= input_example;
-  pta.do_n_elements= rbm.batch_size;
+  pta.do_n_elements= rbm[0].batch_size;
   pta.batch= alloc_dwt_from_rbm(rbm);
   rbm_partial_minibatch(&pta);
   
   // Take a step in teh direction of the gradient.
-  if(rbm.use_momentum) { // Correct and update momentum term.
+  if(rbm[0].use_momentum) { // Correct and update momentum term.
     apply_momentum_correction(rbm, pta.batch[0]); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
@@ -401,10 +400,10 @@ void do_minibatch(rbm_t rbm, double *input_example, int n_threads) { // Use velo
  * Assumptions: 
  *   --> n_examples is a multiple of rbm.batch_size ... additional examples are ignored.
  */
-void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs, int n_threads) {
+void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, int n_threads) {
   double *current_position;
   int n_training_iterations= floor(n_examples/rbm.batch_size); 
-  
+
   for(int i=0;i<n_epocs;i++) {
     if(i%(100)) Rprintf(".");
     current_position= input_example; // Reset training pointer.
@@ -413,7 +412,7 @@ void rbm_train(rbm_t rbm, double *input_example, int n_examples, int n_epocs, in
         do_minibatch_pthreads(rbm, current_position, n_threads);  // Do a minibatch using the current position of the training pointer.
       else 
         do_minibatch(rbm, current_position, n_threads);
-      current_position+= rbm.batch_size*rbm.n_inputs; // Increment the input_example pointer batch_size # of columns.
+      current_position+= rbm[0].batch_size*rbm[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
 	}
   }
 
@@ -468,7 +467,7 @@ rbm_t rbm_r_to_c(SEXP rbm_r) {
 }
 
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r) {
-  rbm_t rbm= rbm_r_to_c(rbm_r); // Get values from R function.
+  rbm_t *rbm= &rbm_r_to_c(rbm_r); // Get values from R function.
 
   int n_examples= Rf_nrows(training_data_r)/rbm.n_inputs;
   int n_epocs= INTEGER(n_epocs_r)[0];

@@ -38,7 +38,7 @@ typedef struct { // Used for information storage/ passing during training.
 } delta_w_t;
 
 typedef struct {
-  rbm_t rbm;
+  rbm_t *rbm;
   double *input;
   
   int do_n_elements;

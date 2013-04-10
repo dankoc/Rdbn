@@ -17,7 +17,7 @@ typedef struct {
 } dbn_t;
 
 typedef struct {
-  dbn_t dbn;
+  dbn_t *dbn;
   double *input;
   double *expected_output;
   
