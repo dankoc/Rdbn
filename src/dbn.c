@@ -90,6 +90,9 @@ dbn_t *dbn_r_to_c(SEXP dbn_r) {
   dbn[0].rbms= (rbm_t*)R_alloc(dbn[0].n_rbms, sizeof(rbm_t));
   dbn[0].rbms[0]= (rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), 0)))[0]; // Apply rbm_r_to_c for network[[i]].
 
+  dbn[0].n_outputs= dbn[0].rbms[dbn[0].n_rbms-1].n_outputs;
+  dbn[0].n_inputs= dbn[0].rbms[0].n_inputs;
+  
   for(int i=1;i<dbn[0].n_rbms;i++) {
     // Force bias_input[i] = bias_output[i-1];
     dbn[0].rbms[i]= (rbm_layer_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i), dbn[0].rbms[i-1].bias_outputs))[0];
@@ -123,7 +126,7 @@ void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_
   previous_layer_input= examples;
   for(int layer=1;layer<dbn[0].n_rbms;layer++) {
     next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
-   Rprintf("Training layer %d: ",layer);
+   Rprintf("Training layer %d: ",layer+1);
    rbm_train(&(dbn[0].rbms[layer]), next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
    Rprintf("\n");
 
@@ -142,7 +145,7 @@ void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r) {
   dbn_t *dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
-  int n_examples= Rf_nrows(training_data_r)/dbn[0].rbms[0].n_inputs;
+  int n_examples= Rf_nrows(training_data_r)/dbn[0].n_inputs;
   double *examples= REAL(training_data_r);
   int n_threads= INTEGER(n_threads_r)[0];
 

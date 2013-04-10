@@ -247,7 +247,7 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
   int n_training_iterations= floor(n_examples/rbm[0].batch_size); 
 
   for(int i=0;i<n_epocs;i++) {
-    if(i%(100)) Rprintf(".");
+    //if(i%(100)) Rprintf(".");
     current_position= input_example; // Reset training pointer.
     for(int j=0;j<n_training_iterations;j++) {
       if(n_threads >0)

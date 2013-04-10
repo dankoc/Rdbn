@@ -85,8 +85,30 @@ setMethod("dbn.refine", c(dbn="dbn"),
     ## Deterimeines which neuron to assign each level for the training factor.
     label <- as.factor(label)
     dbn@class_levels= levels(label)
-	
+    .Call("predict_dbn_R", dbn, as.real(data), as.integer(n_threads), package="Rdbn")
 	
     .Call("refine_dbn_R", dbn, as.real(data), as.real(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 
+
+ # require(Rdbn)
+ # rr <- rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
+ # train(rr, matrix(c(1:10), ncol=5))
+
+#` Method to train a boltzman machine (stored in rbm).
+#` @param dbn The layered network of RBMs.
+#` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
+#` @export
+setGeneric("dbn.predict", 
+  def=function(dbn, data, n_threads=1) {
+	stopifnot(class(dbn) == "dbn")
+	standardGeneric("dbn.predict")
+})
+  
+setMethod("dbn.predict", c(dbn="dbn"), 
+  function(dbn, data, n_threads=1) {
+  	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
+    .Call("predict_dbn_R", dbn, as.real(data), as.integer(n_threads), package="Rdbn") 
+	
+	## TODO: Return a vector here, rather than a matrix.
+})

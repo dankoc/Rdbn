@@ -1,4 +1,9 @@
-#include <R.h>
+/*
+ * dbn.backpropagation.c -- This file implements the backpropagation algorithm
+ *                          to refine deep belief networks.
+ *
+ */
+ #include <R.h>
 #include <Rdefines.h>
 #include <Rmath.h>
 #include <Rinternals.h>
@@ -9,25 +14,6 @@
 #include "dbn.backpropagation.h"
 #include "rbm.h"
 #include "matrix_functions.h"
-
-
-/****************************************************************************
- *
- * Compute.
- * 
- * For a given input, computes the output layer.
- */
-
- // This version stores intermediate layers, and returns a double**.  
-// Perfect for use with backpropagation!
-double **dbn_compute_store_layers(dbn_t *dbn, double *input) {
-  double **layer_output= (double**)Calloc(dbn[0].n_layers, double*);
-  layer_output[0]= vector_copy(input, dbn[0].rbms[0].n_inputs);
-  for(int i=0;i<dbn[0].n_rbms;i++) {
-    layer_output[i+1]= get_layer_outputs(dbn, i, layer_output[i], 1);
-  }
-  return(layer_output);
-}
 
 
 /****************************************************************************
@@ -75,7 +61,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
   
   // Compute last layer error term: dE/dz_j= y_j * (1-y_j) * dE/dy_j
   // Where dE/dy_j= (t_j-y_j) ==> t --> target output.  y--> observed output.
-  int n_outputs_ll= dbn[0].rbms[dbn[0].n_rbms-1].n_outputs; // n_outputs in the last layer.
+  int n_outputs_ll= dbn[0].n_outputs; // n_outputs in the last layer.
   int layer_index= dbn[0].n_layers-1; // Index of the layer in the double **.
   neuron_error= (double*)Calloc(n_outputs_ll, double);
 //  neuron_errors[layer_index]= (double*)Calloc(n_outputs_ll, double);
@@ -109,7 +95,7 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
     backpropagation(pta[0].dbn, pta[0].input, pta[0].expected_output, pta[0].batch);
 
     // Increment pointers.
-    pta[0].input+= pta[0].dbn[0].rbms[0].n_inputs;
+    pta[0].input+= pta[0].dbn[0].n_inputs;
     pta[0].expected_output+= pta[0].dbn[0].rbms[pta[0].dbn[0].n_rbms-1].n_outputs;
   }
 }
@@ -153,8 +139,8 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
     pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
 	
 	// Increment pointers for the next thread.
-	input+= pta[i].do_n_elements*dbn[0].rbms[0].n_inputs;
-	expected_output+= pta[i].do_n_elements*dbn[0].rbms[dbn[0].n_rbms-1].n_outputs;
+	input+= pta[i].do_n_elements*dbn[0].n_inputs;
+	expected_output+= pta[i].do_n_elements*dbn[0].n_outputs;
   }
 
   // Wait for threads to complete, and combine the data into a single vector.
@@ -205,8 +191,8 @@ void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n
     current_output= output_example;
     for(int j=0;j<n_training_iterations;j++) {
       backpropagation_minibatch_pthreads(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
-      current_input+= dbn[0].batch_size*dbn[0].rbms[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
-      current_output+=dbn[0].batch_size*dbn[0].rbms[dbn[0].n_rbms-1].n_outputs; // Increment the input_example pointer batch_size # of columns.
+      current_input+= dbn[0].batch_size*dbn[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
+      current_output+=dbn[0].batch_size*dbn[0].n_outputs; // Increment the input_example pointer batch_size # of columns.
 	}
   }
 }
@@ -216,7 +202,7 @@ void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n
 SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r) {
   dbn_t *dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
-  int n_examples= Rf_nrows(training_data_r)/dbn[0].rbms[0].n_inputs;
+  int n_examples= Rf_nrows(training_data_r)/dbn[0].n_inputs;
   int n_threads= INTEGER(n_threads_r)[0];
   double *input_examples= REAL(training_data_r);
   double *output_examples= REAL(training_labels_r);
