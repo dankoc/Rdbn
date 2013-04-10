@@ -113,7 +113,7 @@ void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_outpu
   
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
-    apply_delta_w(&(dbn[0].rbms[i]), pta.batch[i]);
+    apply_delta_w(&(dbn[0].rbms[i]), &(pta.batch[i]));
   }
   free_delta_w_ptr(pta.batch, dbn[0].n_rbms);
 }
@@ -162,7 +162,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
  
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
-    apply_delta_w(&(dbn[0].rbms[i]), batch[i]);
+    apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
 }

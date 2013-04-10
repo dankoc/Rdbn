@@ -44,7 +44,7 @@ void init_rbm(rbm_t *rbm, double learning_rate, int batch_size, int cd_n, double
 void clamp_input(rbm_t *rbm, double *input, double *resulting_output);
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input);
 
-void apply_delta_w(rbm_t *rbm, delta_w_t dw);
+void apply_delta_w(rbm_t *rbm, delta_w_t *dw);
 void sum_delta_w(delta_w_t *batch, delta_w_t *dw);
 void free_delta_w_ptr(delta_w_t *dw, int n);
 

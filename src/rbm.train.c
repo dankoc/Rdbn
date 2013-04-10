@@ -19,16 +19,16 @@
  Functions for getting/ updating during training. */
  
 /*Subtract each element of recon from data.  The result will be passed back in data.*/
-void compute_delta_w(rbm_t *rbm, delta_w_t batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
+void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
-    batch.delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
+    batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
-      double delta_w_i_j= get_matrix_value(batch.delta_w, i, j)+
+      double delta_w_i_j= get_matrix_value(batch[0].delta_w, i, j)+
 			(sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
-      set_matrix_value(batch.delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions.
+      set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions.
 	  
       if(i==0) // Only 
-        batch.delta_input_bias[j]+= input_example[j]-input_recon[j]; 
+        batch[0].delta_input_bias[j]+= input_example[j]-input_recon[j]; 
     }
   }
 }
@@ -38,17 +38,17 @@ void compute_delta_w(rbm_t *rbm, delta_w_t batch, double *init_output_recon, dou
  *
  * Also includes 
  */
-void apply_delta_w(rbm_t *rbm, delta_w_t dw) {
+void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
-    rbm[0].bias_outputs[i] += dw.learning_rate*dw.delta_output_bias[i]/(double)dw.batch_size; 
+    rbm[0].bias_outputs[i] += dw[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
-      double delta_w_i_j= get_matrix_value(dw.delta_w, i, j);
-      double new_w_i_j= previous_w_i_j+dw.learning_rate*delta_w_i_j/(double)dw.batch_size;
+      double delta_w_i_j= get_matrix_value(dw[0].delta_w, i, j);
+      double new_w_i_j= previous_w_i_j+dw[0].learning_rate*delta_w_i_j/(double)dw[0].batch_size;
       set_matrix_value(rbm[0].io_weights, i, j, new_w_i_j);
 	  
-      if(i==0 && dw.update_input_bias) // Only update once... and if everything says to update.
-        rbm[0].bias_inputs[j] += dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
+      if(i==0 && dw[0].update_input_bias) // Only update once... and if everything says to update.
+        rbm[0].bias_inputs[j] += dw[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
     }
   }
 }
@@ -75,11 +75,11 @@ void initial_momentum_step(rbm_t *rbm) {
     }
 }
  
-void apply_momentum_correction(rbm_t *rbm, delta_w_t dw) {
+void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
-    rbm[0].bias_outputs[i]+= dw.learning_rate*dw.delta_output_bias[i]/(double)dw.batch_size; 
+    rbm[0].bias_outputs[i]+= dw[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
     for(int j=0;j<rbm[0].n_inputs;j++) {
-      double step= dw.learning_rate*get_matrix_value(dw.delta_w, i, j)/(double)dw.batch_size; // For the momentum method ... do I still scale by the batch size?!
+      double step= dw[0].learning_rate*get_matrix_value(dw[0].delta_w, i, j)/(double)dw[0].batch_size; // For the momentum method ... do I still scale by the batch size?!
 
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
       // \theta_t' was applied before taking the step.
@@ -91,8 +91,8 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t dw) {
       double previous_momentum_i_j= get_matrix_value(rbm[0].momentum, i, j);
         set_matrix_value(rbm[0].momentum, i, j, previous_momentum_i_j+step);
 
-      if(i==0 && dw.update_input_bias) // Only update once... and if everything says to update.
-        rbm[0].bias_inputs[j]+= dw.learning_rate*dw.delta_input_bias[j]/(double)dw.batch_size;
+      if(i==0 && dw[0].update_input_bias) // Only update once... and if everything says to update.
+        rbm[0].bias_inputs[j]+= dw[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
     }
   }
 }
@@ -107,7 +107,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t dw) {
  *    
  *
  */
-void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t batch) {
+void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t *batch) {
  
   // Run Gibbs sampling for CDn steps.
   double *init_output_recon= (double*)Calloc(rbm[0].n_outputs, double);
@@ -148,7 +148,7 @@ void *rbm_partial_minibatch(void *ptab) {
     
   // Compute the \sum gradient over the mini-batch.
   for(int i=0;i<pta[0].do_n_elements;i++) { // Foreach item in the batch.
-    do_batch_member(rbm, input_example, pta[0].batch[0]);
+    do_batch_member(rbm, input_example, pta[0].batch);
     input_example+= rbm[0].n_inputs; // Update the input_example pointer to the next input sample.
   }
   
@@ -194,10 +194,10 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
     
   // Take a step in teh direction of the gradient.
   if(rbm[0].use_momentum) { // Correct and update momentum term.
-    apply_momentum_correction(rbm, batch[0]); 
+    apply_momentum_correction(rbm, batch); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
-    apply_delta_w(rbm, batch[0]);
+    apply_delta_w(rbm, batch);
   }
   
   // Cleanup temporary variables ...  
@@ -220,10 +220,10 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
   
   // Take a step in teh direction of the gradient.
   if(rbm[0].use_momentum) { // Correct and update momentum term.
-    apply_momentum_correction(rbm, pta.batch[0]); 
+    apply_momentum_correction(rbm, pta.batch); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
-    apply_delta_w(rbm, pta.batch[0]);
+    apply_delta_w(rbm, pta.batch);
   }
   
   // Cleanup temporary variables ...  
