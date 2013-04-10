@@ -1,9 +1,14 @@
 /*
+ * dbn.c -- Fast code to learn and use deep belief networks in R/C.
+ * 
  * Contains common functions for deep belief networks...  
+ * Also functions to pre-train the network by contrastive divergence.
  *
  * Additional spcific functions are divided into spearate files, including: 
- *  dbn.backprop.c --> Implements the backpropagation algorithm for refining deep belief networks.
+ * 
+ *  dbn.backpropagation.c --> Implements the backpropagation algorithm for refining deep belief networks.
  *  dbn.compute.c  --> Functions for computing network output from a particular input.
+ *
  */
 #include <R.h>
 #include <Rdefines.h>
@@ -68,6 +73,31 @@ double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs) {
   return(layer_output);
 }
 
+
+/*
+ *  Converts R S4 object to our C struct ...
+ */ 
+dbn_t *dbn_r_to_c(SEXP dbn_r) {
+  dbn_t *dbn= (dbn_t*)R_alloc(1, sizeof(dbn_t));
+
+  dbn[0].learning_rate= REAL(GET_SLOT(dbn_r, Rf_install("learning_rate")))[0];;
+  dbn[0].batch_size= INTEGER(GET_SLOT(dbn_r, Rf_install("batch_size")))[0];
+ 
+  dbn[0].n_layers= INTEGER(GET_SLOT(dbn_r,Rf_install("n_layers")))[0];
+  dbn[0].n_rbms= dbn[0].n_layers-1;
+  dbn[0].layer_sizes= INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
+
+  dbn[0].n_rbms= dbn[0].n_layers-1;
+  dbn[0].rbms= (rbm_t*)R_alloc(dbn[0].n_rbms, sizeof(rbm_t));
+  dbn[0].rbms[0]= (rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), 0)))[0]; // Apply rbm_r_to_c for network[[i]].
+
+  for(int i=1;i<dbn[0].n_rbms;i++) {
+    // Force bias_input[i] = bias_output[i-1];
+    dbn[0].rbms[i]= (rbm_layer_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i), dbn[0].rbms[i-1].bias_outputs))[0];
+  }
+
+ return(dbn);
+}
  
 /************************************************************************************
  * 
@@ -105,31 +135,6 @@ void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_
   }
   if(dbn[0].n_rbms>1) // Clean up allocated memory ... iff it's not still set to *examples.
     Free(previous_layer_input); 
-}
-
-/*
- *  Converts R S4 object to our C struct ...
- */ 
-dbn_t *dbn_r_to_c(SEXP dbn_r) {
-  dbn_t *dbn= (dbn_t*)R_alloc(1, sizeof(dbn_t));
-
-  dbn[0].learning_rate= REAL(GET_SLOT(dbn_r, Rf_install("learning_rate")))[0];;
-  dbn[0].batch_size= INTEGER(GET_SLOT(dbn_r, Rf_install("batch_size")))[0];
- 
-  dbn[0].n_layers= INTEGER(GET_SLOT(dbn_r,Rf_install("n_layers")))[0];
-  dbn[0].n_rbms= dbn[0].n_layers-1;
-  dbn[0].layer_sizes= INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
-
-  dbn[0].n_rbms= dbn[0].n_layers-1;
-  dbn[0].rbms= (rbm_t*)R_alloc(dbn[0].n_rbms, sizeof(rbm_t));
-  dbn[0].rbms[0]= (rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), 0)))[0]; // Apply rbm_r_to_c for network[[i]].
-
-  for(int i=1;i<dbn[0].n_rbms;i++) {
-    // Force bias_input[i] = bias_output[i-1];
-    dbn[0].rbms[i]= (rbm_layer_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i), dbn[0].rbms[i-1].bias_outputs))[0];
-  }
-
- return(dbn);
 }
 
 /*
