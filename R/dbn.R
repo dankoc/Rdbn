@@ -14,7 +14,10 @@ setClass("dbn",#"restricted_boltzman_machine",
     network="list",           ## A list comprised of RBMs.  Indexed from the input to output layer.
 	
     class_levels="character", ## Levels of a factor passed as training data.
-    neuron_order="integer",   ## Maps neurons in the last layer to class_levels.
+#    neuron_order="integer",   ## Maps neurons in the last layer to class_levels. ## Assume it's in the proper order.
+
+#    momentum_decay="numeric", ## Momentum_decay
+#    use_momentum="logical",   ## Use momentum during fitting.
 
     learning_rate="numeric",  ## Learning rate for the deep belief network; used during backpropagation.
     batch_size="integer"      ## Size of the mini-batch to use during backpropagation.
@@ -43,8 +46,8 @@ dbn <- function(n_layers,
     network= rbm_network, 
     learning_rate= as.real(learning_rate), 
     batch_size=as.integer(batch_size), 
-    class_levels=character(0), 
-    neuron_order=integer(0))
+	momentum_decay= as.real(momentum_decay),
+    class_levels=character(0)
 }
 
  # require(Rdbn)
@@ -79,15 +82,43 @@ setGeneric("dbn.refine",
 })
   
 setMethod("dbn.refine", c(dbn="dbn"), 
-  function(dbn, data, labels, n_epocs= 1000, n_threads=1) {
+  function(dbn, data, labels, n_epocs= 1000, n_approx= 500, n_threads=1) {
     stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
 
-    ## Deterimeines which neuron to assign each level for the training factor.
-    label <- as.factor(label)
-    dbn@class_levels= levels(label)
-    .Call("predict_dbn_R", dbn, as.real(data), as.integer(n_threads), package="Rdbn")
+	print("Adding discriminitive layer.")
+    ## Add an extra layer, as mentioned here: http://www.scholarpedia.org/article/Deep_belief_nets
+    ## Hinton says: "Discriminative fine-tuning can be performed by adding a final layer of variables that represent the desired outputs and backpropagating error derivatives"
+	## For this task, initialize weights to something reasonable ... i.e. (P(neuron_is_on|example_output_is_on)-0.5)/(#_neurons_in_previous_layer)
+	## See notebook 4-10-12 ...
+    labels <- as.factor(labels)
+    dbn@class_levels<- levels(labels)
+    n_outputs= NROW(dbn@class_levels)
+
+    mm<- matrix(unlist(lapply(dbn@class_levels, function(x) {
+      .Call("predict_dbn_R", dbn, as.real(data[,which(labels==x)[c(1:n_approx)]]), as.integer(n_threads), package="Rdbn")
+    })), ncol=NROW(dbn@class_levels))
+	mm<- (mm-0.5)/dbn@layer_sizes[dbn@n_layers]
+    dbn@network[[dbn@n_layers]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
+	                                         n_outputs= n_outputs, 
+	                                         batch_size=dbn@batch_size, 
+	                                         learning_rate=dbn@learning_rate,
+	                                         io_weights= mm)
 	
-    .Call("refine_dbn_R", dbn, as.real(data), as.real(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
+	## Increment these variables.
+    dbn@layer_sizes <- c(dbn@layer_sizes, n_outputs)
+	dbn@n_layers <- dbn@n_layers+1
+	
+    ## Alternative idea: It may be possible to take a final layer pre-trained using the generative approach (i.e. contrastive divergence)
+    ## and choose which 'feature' each output neuron represents through dynamic programming (i.e. a little like Viterbi, but subject to 
+    ## a few additional constraints ... See notebook 4-10-13)
+    
+	## Construct expected output vector.
+	label_matrix <- matrix(0, ncol=NROW(labels), nrow=n_outputs)
+	label_matrix
+	## MAY BE EASIER IN C?!
+	
+    print("Fine tuning weights using backpropragation.")
+    .Call("backpropagation_dbn_R", dbn, as.real(data), as.integer(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 
 

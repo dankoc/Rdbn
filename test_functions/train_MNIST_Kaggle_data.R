@@ -34,4 +34,26 @@ q("yes")
  rr <- rbm(n_inputs= 784, n_outputs= 200, batch_size=100, cd_n=1, momentum_decay= 0.9) #NA
  rr2 <- rbm.train(rr, data= data[,c(1:1000)], n_epocs= 1, n_threads=2)
 
- dbn.predict(db2, data[,1])
+ require(Rdbn)
+ pred <- dbn.predict(db2, data[,which(label==1)[c(1:100)]])
+
+ label <- as.factor(label)
+ lablist <- lapply(levels(label), function(x) {rowMeans(dbn.predict(db2, data[,which(label==x)[c(1:100)]]))})
+ mm <- matrix(unlist(lablist), ncol=10)
+ colnames(mm) <- levels(label)
+
+ mv_i1 <- sapply(lablist, which.max)
+ mv_v1 <- sapply(lablist, max)
+ 
+ lablist <- lapply(c(1:NROW(levels(label))), function(i) {tv <- lablist[[i]]; tv[ mv_i1[i] ] <- -1; return(tv)})
+ 
+ mv_i2 <- sapply(lablist, which.max)
+ mv_v2 <- sapply(lablist, max)
+
+ 
+ lablist <- lapply(c(1:NROW(levels(label))), function(i) {tv <- lablist[[i]]; tv[ mv_i2[i] ] <- -1; return(tv)})
+ 
+ mv_i3 <- sapply(lablist, which.max)
+ mv_v3 <- sapply(lablist, max)
+
+ NROW(unique(c(mv_i1, mv_i2, mv_i3)))

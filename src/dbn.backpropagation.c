@@ -196,6 +196,27 @@ void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n
 	}
   }
 }
+
+/* labels_to_matrix --> Converts an R factor type into a double* matrix.
+ *
+ * training_labels_r --> SEXP Integers, from a factor... assumed to be \set: [1,N_outputs], inclusive.
+ * n_outputs --> Number of output nodes.  (i.e. # rows in output).
+ * 
+ * #columns in return double* ==> n_samples
+ */
+double *labels_to_matrix(SEXP training_labels_r, int n_outputs) {
+  int *tlr= INTEGER(training_labels_r);
+  int n_samples= Rf_nrows(training_labels_r);
+  double *matrix= (double*)R_alloc(n_samples*n_outputs, sizeof(double));
+  
+  // Make a matrix a 1 in the appropriate place in each column.
+  for(int i=0;i<n_samples;i++) { // Columns.
+    for(int j=0;j<n_outputs;j++) { // Rows.
+	  matrix[i*n_outputs+j]= ((j+1)==tlr[i])?1:0;
+	}
+  }
+}
+
 /*
  *  R interface to refining a deep belief network for discriminitive tasks using backpropagation ...
  */ 
@@ -205,7 +226,7 @@ SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_label
   int n_examples= Rf_nrows(training_data_r)/dbn[0].n_inputs;
   int n_threads= INTEGER(n_threads_r)[0];
   double *input_examples= REAL(training_data_r);
-  double *output_examples= REAL(training_labels_r);
+  double *output_examples= labels_to_matrix(training_labels_r, dbn[0].n_outputs);
 
   int n_epocs= INTEGER(n_epocs_r)[0];
 
