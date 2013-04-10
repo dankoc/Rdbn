@@ -56,5 +56,8 @@ delta_w_t *alloc_dwt_from_rbm(rbm_t *rbm);
 
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 
+double rbm_sample_state(double prob);
+double logistic_function(double value);
+
 #endif
 

@@ -13,7 +13,8 @@
 #include <R_ext/Applic.h>
 #include "rbm.h"
 #include "matrix_functions.h"
-
+#include <pthread.h>
+#include "rbm.train.h"
 /*************************************************************************************
  *  Functions of initiatlizing, allocating, and free-ing rbm_t.
  */
@@ -118,7 +119,7 @@ void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
 /*
  *  Changes prob to 0 || 1 by sampling over a uniform.
  */
-double sample_state(double prob) {
+double rbm_sample_state(double prob) {
   return(prob>runif(0.0d, 1.0d)?1:0);
 }
 
@@ -222,3 +223,4 @@ rbm_t *rbm_r_to_c(SEXP rbm_r) {
   rbm[0].bias_inputs= REAL(GET_SLOT(rbm_r,Rf_install("bias_inputs")));
   return(rbm);
 }
+

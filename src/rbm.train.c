@@ -15,6 +15,7 @@
 #include "rbm.train.h"
 #include "matrix_functions.h"
 
+
 /**********************************************************************
  Functions for getting/ updating during training. */
  
@@ -24,7 +25,7 @@ void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, do
     batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double delta_w_i_j= get_matrix_value(batch[0].delta_w, i, j)+
-			(sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
+			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
       set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions.
 	  
       if(i==0) // Only 
@@ -32,6 +33,7 @@ void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, do
     }
   }
 }
+
 
 /*
  * Add matricies io_weights and delta_w.  The result will be in io_weights.
@@ -98,6 +100,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
 }
 
 
+
 /*  
  * Processes a single batch element, and increments the delta_w, delta_bias_input, and delta_bias_output
  *  weights accordingly.
@@ -126,6 +129,7 @@ void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t *batch) {
 
   Free(init_output_recon); Free(output_recon); Free(input_recon);
 }
+
 
 /************************************************************************************
  *
@@ -230,6 +234,7 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
   free_delta_w_ptr(pta.batch, 1); 
 }
 
+
 /*
  * Shortcut to loop over examples for a given number of epocs.
  *
@@ -279,3 +284,4 @@ SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_thread
   
   return(rbm_r);
 }
+
