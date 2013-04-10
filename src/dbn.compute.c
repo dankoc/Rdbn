@@ -56,8 +56,8 @@ void *batch_compute(void* compute) {
 	
 	// Clean up and increment pointers for the next pass.
 	Free(output);
-	pta[0].output += dbn[0].n_outputs;
-	pta[0].input += dbn[0].n_inputs;
+	pta[0].output += pta[0].dbn[0].n_outputs;
+	pta[0].input += pta[0].dbn[0].n_inputs;
   }
 }
 
