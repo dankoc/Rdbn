@@ -94,7 +94,7 @@ setMethod("dbn.refine", c(dbn="dbn"),
     dbn@class_levels<- levels(labels)
     n_outputs= NROW(dbn@class_levels)
 
-    mm<- lapply(levels(labels), function(x) {rowMeans(dbn.predict(db2, data[,which(labels==x)[c(1:100)]]))})
+    lablist<- lapply(levels(labels), function(x) {rowMeans(dbn.predict(dbn, data[,which(labels==x)[c(1:n_approx)]]))})
 	mm<- matrix(unlist(lablist), nrow=n_outputs)
 	mm<- (mm-0.5)/dbn@layer_sizes[dbn@n_layers]
     dbn@network[[dbn@n_layers]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
