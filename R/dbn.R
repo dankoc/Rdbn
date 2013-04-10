@@ -47,7 +47,7 @@ dbn <- function(n_layers,
     learning_rate= as.real(learning_rate), 
     batch_size=as.integer(batch_size), 
 	momentum_decay= as.real(momentum_decay),
-    class_levels=character(0)
+    class_levels=character(0))
 }
 
  # require(Rdbn)
@@ -76,7 +76,7 @@ setMethod("dbn.train", c(dbn="dbn"),
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("dbn.refine", 
-  def=function(dbn, data, labels, n_epocs= 1000, n_threads=1) {
+  def=function(dbn, data, labels, n_epocs= 1000, n_approx=500, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.refine")
 })
