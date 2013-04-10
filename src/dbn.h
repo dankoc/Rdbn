@@ -16,21 +16,13 @@ typedef struct {
   // Should I implement using momentum method here too?! 
 } dbn_t;
 
-typedef struct {
-  dbn_t *dbn;
-  double *input;
-  double *expected_output;
-  
-  int do_n_elements;
-  
-  delta_w_t *batch;
-} dbn_pthread_arg_t;
-
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r);
 SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r);
 
 double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs);
+delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn);
+dbn_t *dbn_r_to_c(SEXP dbn_r);
 
 #endif
 
