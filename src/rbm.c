@@ -101,11 +101,11 @@ void free_delta_w_ptr(delta_w_t *dw, int n) {
 
 
 /* Takes the sum of two delta_w_t variables, batch and dw.  Sum returned in batch. */
-void sum_delta_w(delta_w_t batch, delta_w_t dw) {
-  matrix_sum(batch.delta_w, dw.delta_w);
-  vector_sum(batch.delta_output_bias, dw.delta_output_bias, batch.delta_w[0].ncols);
-  if(batch.update_input_bias && dw.update_input_bias)
-    vector_sum(batch.delta_input_bias, dw.delta_input_bias, batch.delta_w[0].nrows);
+void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
+  matrix_sum(batch[0].delta_w, dw[0].delta_w);
+  vector_sum(batch[0].delta_output_bias, dw[0].delta_output_bias, batch[0].delta_w[0].ncols);
+  if(batch[0].update_input_bias && dw[0].update_input_bias)
+    vector_sum(batch[0].delta_input_bias, dw[0].delta_input_bias, batch[0].delta_w[0].nrows);
 }
 
 
@@ -344,7 +344,7 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
       batch= pta[i].batch;
     }
     else {
-      sum_delta_w(batch[0], pta[i].batch[0]);
+      sum_delta_w(batch, pta[i].batch);
       free_delta_w_ptr(pta[i].batch, 1);
     }
   }
@@ -423,53 +423,53 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
  *  An R interface for RBM training ...
  */
 
-rbm_t common_rbm_r_type_to_c(SEXP rbm_r) {
-  rbm_t rbm;//= (rbm_t*)R_alloc(1, sizeof(rbm_t));
+rbm_t *common_rbm_r_type_to_c(SEXP rbm_r) {
+  rbm_t *rbm= (rbm_t*)R_alloc(1, sizeof(rbm_t));
 
-  rbm.n_inputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_inputs")))[0];
-  rbm.n_outputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_outputs")))[0];
+  rbm[0].n_inputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_inputs")))[0];
+  rbm[0].n_outputs= INTEGER(GET_SLOT(rbm_r,Rf_install("n_outputs")))[0];
 
-  rbm.bias_outputs= REAL(GET_SLOT(rbm_r, Rf_install("bias_outputs")));
+  rbm[0].bias_outputs= REAL(GET_SLOT(rbm_r, Rf_install("bias_outputs")));
 
-  rbm.io_weights = (matrix_t*)R_alloc(1, sizeof(matrix_t));
-  rbm.io_weights[0].matrix= REAL(GET_SLOT(rbm_r, Rf_install("io_weights")));
-  rbm.io_weights[0].ncols= rbm.n_outputs;
-  rbm.io_weights[0].nrows= rbm.n_inputs;
+  rbm[0].io_weights = (matrix_t*)R_alloc(1, sizeof(matrix_t));
+  rbm[0].io_weights[0].matrix= REAL(GET_SLOT(rbm_r, Rf_install("io_weights")));
+  rbm[0].io_weights[0].ncols= rbm[0].n_outputs;
+  rbm[0].io_weights[0].nrows= rbm[0].n_inputs;
 
-  rbm.learning_rate= REAL(GET_SLOT(rbm_r,Rf_install("learning_rate")))[0];
-  rbm.batch_size= INTEGER(GET_SLOT(rbm_r, Rf_install("batch_size")))[0];
-  rbm.cd_n= INTEGER(GET_SLOT(rbm_r, Rf_install("cd_n")))[0];
+  rbm[0].learning_rate= REAL(GET_SLOT(rbm_r,Rf_install("learning_rate")))[0];
+  rbm[0].batch_size= INTEGER(GET_SLOT(rbm_r, Rf_install("batch_size")))[0];
+  rbm[0].cd_n= INTEGER(GET_SLOT(rbm_r, Rf_install("cd_n")))[0];
 
   rbm.use_momentum= INTEGER(GET_SLOT(rbm_r, Rf_install("use_momentum")))[0];
   
-  if(rbm.use_momentum) {
-    rbm.momentum_decay= REAL(GET_SLOT(rbm_r, Rf_install("momentum_decay")))[0];
-    rbm.momentum= (matrix_t*)R_alloc(1, sizeof(matrix_t));
+  if(rbm[0].use_momentum) {
+    rbm[0].momentum_decay= REAL(GET_SLOT(rbm_r, Rf_install("momentum_decay")))[0];
+    rbm[0].momentum= (matrix_t*)R_alloc(1, sizeof(matrix_t));
 	
-    rbm.momentum[0].matrix= REAL(GET_SLOT(rbm_r, Rf_install("momentum")));
-    rbm.momentum[0].ncols= rbm.n_outputs;
-    rbm.momentum[0].nrows= rbm.n_inputs;
+    rbm[0].momentum[0].matrix= REAL(GET_SLOT(rbm_r, Rf_install("momentum")));
+    rbm[0].momentum[0].ncols= rbm[0].n_outputs;
+    rbm[0].momentum[0].nrows= rbm[0].n_inputs;
   }
 
   return(rbm);
 }
 
-rbm_t rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs) {
-  rbm_t rbm= common_rbm_r_type_to_c(rbm_r);
-  rbm.bias_inputs= points_to_bias_inputs;
+rbm_t *rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs) {
+  rbm_t *rbm= common_rbm_r_type_to_c(rbm_r);
+  rbm[0].bias_inputs= points_to_bias_inputs;
   return(rbm);
 }
 
-rbm_t rbm_r_to_c(SEXP rbm_r) {
-  rbm_t rbm= common_rbm_r_type_to_c(rbm_r);
-  rbm.bias_inputs= REAL(GET_SLOT(rbm_r,Rf_install("bias_inputs")));
+rbm_t *rbm_r_to_c(SEXP rbm_r) {
+  rbm_t *rbm= common_rbm_r_type_to_c(rbm_r);
+  rbm[0].bias_inputs= REAL(GET_SLOT(rbm_r,Rf_install("bias_inputs")));
   return(rbm);
 }
 
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r) {
-  rbm_t *rbm= &rbm_r_to_c(rbm_r); // Get values from R function.
+  rbm_t *rbm= rbm_r_to_c(rbm_r); // Get values from R function.
 
-  int n_examples= Rf_nrows(training_data_r)/rbm.n_inputs;
+  int n_examples= Rf_nrows(training_data_r)/rbm[0].n_inputs;
   int n_epocs= INTEGER(n_epocs_r)[0];
   int n_threads= INTEGER(n_threads_r)[0];
   double *input_example= REAL(training_data_r);
