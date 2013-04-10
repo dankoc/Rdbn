@@ -94,9 +94,8 @@ setMethod("dbn.refine", c(dbn="dbn"),
     dbn@class_levels<- levels(labels)
     n_outputs= NROW(dbn@class_levels)
 
-    mm<- matrix(unlist(lapply(dbn@class_levels, function(x) {
-      .Call("predict_dbn_R", dbn, as.real(data[,which(labels==x)[c(1:n_approx)]]), as.integer(n_threads), package="Rdbn")
-    })), ncol=NROW(dbn@class_levels))
+    mm<- lapply(levels(labels), function(x) {rowMeans(dbn.predict(db2, data[,which(labels==x)[c(1:100)]]))})
+	mm<- matrix(unlist(lablist), nrow=n_outputs)
 	mm<- (mm-0.5)/dbn@layer_sizes[dbn@n_layers]
     dbn@network[[dbn@n_layers]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
 	                                         n_outputs= n_outputs, 
@@ -105,17 +104,12 @@ setMethod("dbn.refine", c(dbn="dbn"),
 	                                         io_weights= mm)
 	
 	## Increment these variables.
-    dbn@layer_sizes <- c(dbn@layer_sizes, n_outputs)
-	dbn@n_layers <- dbn@n_layers+1
+    dbn@layer_sizes <- as.integer(c(dbn@layer_sizes, n_outputs))
+	dbn@n_layers <- as.integer(dbn@n_layers+1)
 	
     ## Alternative idea: It may be possible to take a final layer pre-trained using the generative approach (i.e. contrastive divergence)
     ## and choose which 'feature' each output neuron represents through dynamic programming (i.e. a little like Viterbi, but subject to 
     ## a few additional constraints ... See notebook 4-10-13)
-    
-	## Construct expected output vector.
-	label_matrix <- matrix(0, ncol=NROW(labels), nrow=n_outputs)
-	label_matrix
-	## MAY BE EASIER IN C?!
 	
     print("Fine tuning weights using backpropragation.")
     .Call("backpropagation_dbn_R", dbn, as.real(data), as.integer(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
