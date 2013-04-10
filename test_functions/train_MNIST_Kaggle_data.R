@@ -27,6 +27,7 @@ label <- train[,1]
 require(Rdbn)
 db <- dbn(n_layers= 5, layer_sizes= c(784,500,500,250,10), batch_size=100, cd_n=1, momentum_decay= 0.9)
 db2 <- dbn.train(db, data= data, n_epocs= 1, n_threads=5)
+db3 <- dbn.refine(db2, data=data, labels=label, n_epocs=2, n_threads=4)
 
 q("yes")
 
@@ -37,23 +38,16 @@ q("yes")
  require(Rdbn)
  pred <- dbn.predict(db2, data[,which(label==1)[c(1:100)]])
 
+ 
+ labels= label
+ dbn <- db2
+ n_epocs= 1000
+ n_approx= 500
+ n_threads=3
+ 
+ 
  label <- as.factor(label)
  lablist <- lapply(levels(label), function(x) {rowMeans(dbn.predict(db2, data[,which(label==x)[c(1:100)]]))})
- mm <- matrix(unlist(lablist), ncol=10)
- colnames(mm) <- levels(label)
-
- mv_i1 <- sapply(lablist, which.max)
- mv_v1 <- sapply(lablist, max)
+ matrix(unlist(lablist), ncol=10)
  
- lablist <- lapply(c(1:NROW(levels(label))), function(i) {tv <- lablist[[i]]; tv[ mv_i1[i] ] <- -1; return(tv)})
  
- mv_i2 <- sapply(lablist, which.max)
- mv_v2 <- sapply(lablist, max)
-
- 
- lablist <- lapply(c(1:NROW(levels(label))), function(i) {tv <- lablist[[i]]; tv[ mv_i2[i] ] <- -1; return(tv)})
- 
- mv_i3 <- sapply(lablist, which.max)
- mv_v3 <- sapply(lablist, max)
-
- NROW(unique(c(mv_i1, mv_i2, mv_i3)))
