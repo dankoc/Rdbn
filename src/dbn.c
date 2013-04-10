@@ -90,15 +90,15 @@ dbn_t *dbn_r_to_c(SEXP dbn_r) {
   dbn[0].rbms= (rbm_t*)R_alloc(dbn[0].n_rbms, sizeof(rbm_t));
   dbn[0].rbms[0]= (rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), 0)))[0]; // Apply rbm_r_to_c for network[[i]].
 
-  dbn[0].n_outputs= dbn[0].rbms[dbn[0].n_rbms-1].n_outputs;
-  dbn[0].n_inputs= dbn[0].rbms[0].n_inputs;
-  
   for(int i=1;i<dbn[0].n_rbms;i++) {
     // Force bias_input[i] = bias_output[i-1];
     dbn[0].rbms[i]= (rbm_layer_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i), dbn[0].rbms[i-1].bias_outputs))[0];
   }
 
- return(dbn);
+  dbn[0].n_outputs= dbn[0].rbms[dbn[0].n_rbms-1].n_outputs;
+  dbn[0].n_inputs= dbn[0].rbms[0].n_inputs;
+  
+  return(dbn);
 }
  
 /************************************************************************************

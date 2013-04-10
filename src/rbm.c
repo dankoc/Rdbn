@@ -13,8 +13,7 @@
 #include <R_ext/Applic.h>
 #include "rbm.h"
 #include "matrix_functions.h"
-#include <pthread.h>
-#include "rbm.train.h"
+
 /*************************************************************************************
  *  Functions of initiatlizing, allocating, and free-ing rbm_t.
  */
