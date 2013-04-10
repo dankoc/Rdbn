@@ -15,7 +15,6 @@
 #include "rbm.train.h"
 #include "matrix_functions.h"
 
-
 /**********************************************************************
  Functions for getting/ updating during training. */
  
@@ -33,7 +32,6 @@ void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, do
     }
   }
 }
-
 
 /*
  * Add matricies io_weights and delta_w.  The result will be in io_weights.
@@ -99,8 +97,6 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   }
 }
 
-
-
 /*  
  * Processes a single batch element, and increments the delta_w, delta_bias_input, and delta_bias_output
  *  weights accordingly.
@@ -129,7 +125,6 @@ void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t *batch) {
 
   Free(init_output_recon); Free(output_recon); Free(input_recon);
 }
-
 
 /************************************************************************************
  *
@@ -207,7 +202,6 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
   // Cleanup temporary variables ...  
   free_delta_w_ptr(batch, 1); 
 }
-
  
 void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
   // If using momentum Take a step BEFORE computing the local gradient.
@@ -233,7 +227,6 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
   // Cleanup temporary variables ...  
   free_delta_w_ptr(pta.batch, 1); 
 }
-
 
 /*
  * Shortcut to loop over examples for a given number of epocs.
@@ -264,8 +257,6 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
   }
 
 }
-
-
 
 /************************************************************************************
  *

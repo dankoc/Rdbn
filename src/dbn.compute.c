@@ -61,12 +61,12 @@ void *batch_compute(void* compute) {
   }
 }
 
-void batch_compute_pthreads(dbn_t *dbn, double *input, int n_inputs, int n_threads, double *output) {
+void batch_compute_pthreads(dbn_t *dbn, double *input, int n_examples, int n_threads, double *output) {
   // Activate each as a separate thread.
   dbn_pthread_predict_arg_t *pta= (dbn_pthread_predict_arg_t*)Calloc(n_threads, dbn_pthread_predict_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-  int n_per_batch= floor(n_inputs/n_threads);
-  int remainder= (n_inputs%n_threads==0)?n_per_batch:(n_inputs%n_threads); // If 0, should have passed.
+  int n_per_batch= floor(n_examples/n_threads);
+  int remainder= (n_examples%n_threads==0)?n_per_batch:(n_examples%n_threads); // If 0, should have passed.
 
   // Start n_threads separate processes to .
   for(int i=0;i<n_threads;i++) {
@@ -93,6 +93,15 @@ void batch_compute_pthreads(dbn_t *dbn, double *input, int n_inputs, int n_threa
   Free(threads);
 }
 
+void batch_compute(dbn_t *dbn, double *input, int n_examples, int n_threads, double *output) {
+  dbn_pthread_predict_arg_t pta
+  pta.dbn= dbn;
+  pta.input= input;
+  pta.output= output;
+  pta.do_n_elements= n_examples; 
+  batch_compute(&pta);
+}
+
 
 /*
  *  Sets the input, and returns the output ...
@@ -102,13 +111,16 @@ SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r) {
   
   int n_threads= INTEGER(n_threads_r)[0];
   double *input= REAL(input_r);
-  int n_inputs= Rf_nrows(input_r)/dbn[0].n_inputs;
+  int n_examples= Rf_nrows(input_r)/dbn[0].n_inputs;
   
   SEXP output_r;
-  protect(output_r= allocMatrix(REALSXP, n_inputs, dbn[0].n_outputs));
+  protect(output_r= allocMatrix(REALSXP, n_examples, dbn[0].n_outputs));
   double *output= REAL(output_r);
   
-  batch_compute_pthreads(dbn, input, n_inputs, n_threads, output);
+  if(n_threads > 1)
+    batch_compute_pthreads(dbn, input, n_examples, n_threads, output);
+  else 
+    batch_compute(dbn, input, n_examples, n_threads, output);
   
   return(output_r);
 }
