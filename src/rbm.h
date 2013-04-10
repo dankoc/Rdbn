@@ -37,15 +37,6 @@ typedef struct { // Used for information storage/ passing during training.
   double learning_rate;
 } delta_w_t;
 
-typedef struct {
-  rbm_t *rbm;
-  double *input;
-  
-  int do_n_elements;
-  
-  delta_w_t *batch;  // Return value...
-} rbm_pthread_arg_t;
-
 rbm_t *alloc_rbm(int n_inputs, int n_outputs);
 void free_rbm(rbm_t *rbm);
 void init_rbm(rbm_t *rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on);
@@ -60,6 +51,8 @@ void free_delta_w_ptr(delta_w_t *dw, int n);
 rbm_t *rbm_r_to_c(SEXP rbm_r);
 rbm_t *rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs);
 void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, int n_threads);
+
+delta_w_t *alloc_dwt_from_rbm(rbm_t *rbm);
 
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 

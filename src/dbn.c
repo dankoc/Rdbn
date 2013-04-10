@@ -16,7 +16,6 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
-#include <pthread.h>
 #include "dbn.h"
 #include "rbm.h"
 #include "matrix_functions.h"
