@@ -12,6 +12,9 @@ setClass("dbn",#"restricted_boltzman_machine",
     n_layers="integer",       ## Number of network layers, including input and output.
     layer_sizes="integer",    ## Integer vector, representing the number of nodes in layers 1 (input/ visible) .. n (output/ hidden).
     network="list",           ## A list comprised of RBMs.  Indexed from the input to output layer.
+	
+    class_levels="character", ## Levels of a factor passed as training data.
+    neuron_order="integer",   ## Maps neurons in the last layer to class_levels.
 
     learning_rate="numeric",  ## Learning rate for the deep belief network; used during backpropagation.
     batch_size="integer"      ## Size of the mini-batch to use during backpropagation.
@@ -34,7 +37,14 @@ dbn <- function(n_layers,
     rbm_network[[i]] <- dbn_layer(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], 
       batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
   }
-  new("dbn", n_layers=as.integer(n_layers), layer_sizes=as.integer(layer_sizes), network= rbm_network, learning_rate= as.real(learning_rate), batch_size=as.integer(batch_size))
+  new("dbn", 
+    n_layers=as.integer(n_layers), 
+    layer_sizes=as.integer(layer_sizes), 
+    network= rbm_network, 
+    learning_rate= as.real(learning_rate), 
+    batch_size=as.integer(batch_size), 
+    class_levels=character(0), 
+    neuron_order=integer(0))
 }
 
  # require(Rdbn)
@@ -70,8 +80,13 @@ setGeneric("dbn.refine",
   
 setMethod("dbn.refine", c(dbn="dbn"), 
   function(dbn, data, labels, n_epocs= 1000, n_threads=1) {
-  	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
-	stopifnot(NROW(labels) == dbn@network[[NROW(dbn@network)]]@n_outputs)
+    stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
+
+    ## Deterimeines which neuron to assign each level for the training factor.
+    label <- as.factor(label)
+    dbn@class_levels= levels(label)
+	
+	
     .Call("refine_dbn_R", dbn, as.real(data), as.real(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 

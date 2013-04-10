@@ -24,10 +24,10 @@ void R_init_GROseq(DllInfo *info) {
        {"get_genomic_data_R", (DL_FUNC)&get_genomic_data_R, 5},
        {"train_rbm_R", (DL_FUNC)&train_rbm_R, 4},
        {"train_dbn_R", (DL_FUNC)&train_dbn_R, 4},
-       {"refine_dbn_R", (DL_FUNC)&refine_dbn_R, 5},
+       {"backpropagation_dbn_R", (DL_FUNC)&backpropagation_dbn_R, 5},
+       {"predict_dbn_R", (DL_FUNC)&predict_dbn_R, 3},
        {NULL, NULL, 0}
      };
 
         R_registerRoutines(info, NULL, callMethods, NULL, NULL);
 }
-
