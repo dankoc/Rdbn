@@ -22,7 +22,7 @@
  */
 void free_dbn(dbn_t *dbn) {
   for(int l=0;l<dbn[0].n_rbms;l++)
-    free_rbm(dbn[0].rbms[l]);
+    free_rbm(dbn[0].rbms);
   Free(dbn[0].layer_sizes);
   Free(dbn);
 }
@@ -58,7 +58,7 @@ double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs) {
   double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs*n_inputs, double);
   double *layer_output_ptr= layer_output;
   for(int i=0;i<n_inputs;i++) { // One-by-one fill in the outputs.
-    clamp_input(dbn[0].rbms[layer], input, layer_output_ptr);
+    clamp_input(&(dbn[0].rbms[layer]), input, layer_output_ptr);
 	input+= dbn[0].rbms[layer].n_inputs; // Increment pointers.
 	layer_output_ptr+= dbn[0].rbms[layer].n_outputs;
   }
@@ -186,12 +186,12 @@ void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_outpu
   pta.input= input;
   pta.expected_output= expected_output;
   pta.do_n_elements= dbn[0].batch_size;
-  pta.batch= alloc_dwt_from_dbn(dbn[0]);
+  pta.batch= alloc_dwt_from_dbn(dbn);
   dbn_backprop_partial_minibatch(&pta);
   
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
-    apply_delta_w(dbn[0].rbms[i], pta.batch[i]);
+    apply_delta_w(&(dbn[0].rbms[i]), pta.batch[i]);
   }
   free_delta_w_ptr(pta.batch, dbn[0].n_rbms);
 }
@@ -208,10 +208,10 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   int remainder= (dbn[0].batch_size%n_threads==0)?n_per_batch:(dbn[0].batch_size%n_threads);
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
-    pta[i].dbn= dbn[0];
+    pta[i].dbn= dbn;
     pta[i].input= input;
     pta[i].expected_output= expected_output;
-    pta[i].batch= alloc_dwt_from_dbn(dbn[0]);
+    pta[i].batch= alloc_dwt_from_dbn(dbn);
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
 	  
     pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
@@ -240,7 +240,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
  
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
-    apply_delta_w(dbn[0].rbms[i], batch[i]);
+    apply_delta_w(&(dbn[0].rbms[i]), batch[i]);
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
 }
@@ -292,16 +292,16 @@ void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n
 void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_threads) {
   // Trian the first layer.
   Rprintf("Training layer 1: ");
-  rbm_train(dbn[0].rbms[0], examples, n_examples, n_epocs, n_threads);
+  rbm_train(&(dbn[0].rbms[0]), examples, n_examples, n_epocs, n_threads);
   Rprintf("\n");
   
   // train later layers.
   double *previous_layer_input, *next_layer_input;
   previous_layer_input= examples;
   for(int layer=1;layer<dbn[0].n_rbms;layer++) {
-    next_layer_input= get_layer_outputs(dbn[0], layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
+    next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
    Rprintf("Training layer %d: ",layer);
-   rbm_train(dbn[0].rbms[layer], next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
+   rbm_train(&(dbn[0].rbms[layer]), next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
    Rprintf("\n");
 
     // Free the previous input layer (unless we're on the first pass and pointing to *examples.
