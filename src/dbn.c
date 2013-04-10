@@ -317,7 +317,7 @@ void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_
  *  Converts R S4 object to our C struct ...
  */ 
 dbn_t *dbn_r_to_c(SEXP dbn_r) {
-  dbn_t *dbn;//= (dbn_t*)R_alloc(1, sizeof(dbn_t));
+  dbn_t *dbn= (dbn_t*)R_alloc(1, sizeof(dbn_t));
 
   dbn[0].learning_rate= REAL(GET_SLOT(dbn_r, Rf_install("learning_rate")))[0];;
   dbn[0].batch_size= INTEGER(GET_SLOT(dbn_r, Rf_install("batch_size")))[0];
