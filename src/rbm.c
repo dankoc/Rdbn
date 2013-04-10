@@ -402,7 +402,7 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
  */
 void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, int n_threads) {
   double *current_position;
-  int n_training_iterations= floor(n_examples/rbm.batch_size); 
+  int n_training_iterations= floor(n_examples/rbm[0].batch_size); 
 
   for(int i=0;i<n_epocs;i++) {
     if(i%(100)) Rprintf(".");
@@ -440,7 +440,7 @@ rbm_t *common_rbm_r_type_to_c(SEXP rbm_r) {
   rbm[0].batch_size= INTEGER(GET_SLOT(rbm_r, Rf_install("batch_size")))[0];
   rbm[0].cd_n= INTEGER(GET_SLOT(rbm_r, Rf_install("cd_n")))[0];
 
-  rbm.use_momentum= INTEGER(GET_SLOT(rbm_r, Rf_install("use_momentum")))[0];
+  rbm[0].use_momentum= INTEGER(GET_SLOT(rbm_r, Rf_install("use_momentum")))[0];
   
   if(rbm[0].use_momentum) {
     rbm[0].momentum_decay= REAL(GET_SLOT(rbm_r, Rf_install("momentum_decay")))[0];
