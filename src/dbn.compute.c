@@ -109,7 +109,8 @@ SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r) {
   double *output= REAL(output_r);
   
   batch_compute_pthreads(dbn, input, n_inputs, n_threads, output);
-  
+ 
+  unprotect(1); 
   return(output_r);
 }
 
