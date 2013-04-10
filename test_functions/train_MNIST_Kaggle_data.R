@@ -33,3 +33,5 @@ q("yes")
 
  rr <- rbm(n_inputs= 784, n_outputs= 200, batch_size=100, cd_n=1, momentum_decay= 0.9) #NA
  rr2 <- rbm.train(rr, data= data[,c(1:1000)], n_epocs= 1, n_threads=2)
+
+ dbn.predict(db2, data[,1])
