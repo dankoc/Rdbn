@@ -41,8 +41,6 @@ SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r) {
   int n_threads= INTEGER(n_threads_r)[0];
   double *input= REAL(input_r);
 
-  int n_epocs= INTEGER(n_epocs_r)[0];
-
   dbn_compute(dbn, input);
   
   return(dbn_r);

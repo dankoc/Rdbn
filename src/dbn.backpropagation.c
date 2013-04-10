@@ -6,7 +6,7 @@
 #include <R_ext/Applic.h>
 #include <pthread.h>
 #include "dbn.h"
-#include "dbn.backprop.h"
+#include "dbn.backpropagation.h"
 #include "rbm.h"
 #include "matrix_functions.h"
 
