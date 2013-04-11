@@ -46,7 +46,7 @@ dbn <- function(n_layers,
     network= rbm_network, 
     learning_rate= as.real(learning_rate), 
     batch_size=as.integer(batch_size), 
-	momentum_decay= as.real(momentum_decay),
+#	momentum_decay= as.real(momentum_decay),
     class_levels=character(0))
 }
 
