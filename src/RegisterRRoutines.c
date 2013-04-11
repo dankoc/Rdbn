@@ -19,10 +19,10 @@
  **************************************************************/
 void R_init_Rdbn(DllInfo *info) {
      R_CallMethodDef callMethods[]  = {
-       {"train_rbm_R", (DL_FUNC)&train_rbm_R, 4},
-       {"train_dbn_R", (DL_FUNC)&train_dbn_R, 4},
-       {"backpropagation_dbn_R", (DL_FUNC)&backpropagation_dbn_R, 5},
-       {"predict_dbn_R", (DL_FUNC)&predict_dbn_R, 3},
+       {"train_rbm_R", (DL_FUNC)&train_rbm_R, 5},
+       {"train_dbn_R", (DL_FUNC)&train_dbn_R, 5},
+       {"backpropagation_dbn_R", (DL_FUNC)&backpropagation_dbn_R, 6},
+       {"predict_dbn_R", (DL_FUNC)&predict_dbn_R, 4},
        {NULL, NULL, 0}
      };
 

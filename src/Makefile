@@ -15,7 +15,7 @@ OBJECTS=$(SOURCES:.c=.o)
 # define a space
 empty:=
 space:= $(empty) $(empty)
-MFLGSESC := $(subst $(space),\$(space))
+MFLGSESC := $(subst $(space),\$(space),\$(space))
 
 Rdbn.so:  
 	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${SOURCES} ${LIBS}
