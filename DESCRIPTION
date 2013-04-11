@@ -9,6 +9,6 @@ LinkingTo:
 Suggests:
 Description: This package is an analysis pipeline for the analysis of GRO-seq data.
 License: GPL version 3 or newer
-Collate: rbm.R dbn.R read_genomic_data.R zzz.R
+Collate: rbm.R dbn.R zzz.R
 biocViews: Sequencing, Analysis
 LazyLoad: yes
