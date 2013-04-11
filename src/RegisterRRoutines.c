@@ -9,8 +9,6 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 
-#include "read_genomic_data.h"
-
 #include "rbm.h"
 #include "dbn.h"
 
@@ -19,9 +17,8 @@
  *      Register entry points...
  *
  **************************************************************/
-void R_init_GROseq(DllInfo *info) {
+void R_init_Rdbn(DllInfo *info) {
      R_CallMethodDef callMethods[]  = {
-       {"get_genomic_data_R", (DL_FUNC)&get_genomic_data_R, 5},
        {"train_rbm_R", (DL_FUNC)&train_rbm_R, 4},
        {"train_dbn_R", (DL_FUNC)&train_dbn_R, 4},
        {"backpropagation_dbn_R", (DL_FUNC)&backpropagation_dbn_R, 5},

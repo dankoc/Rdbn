@@ -96,7 +96,7 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
 
     // Increment pointers.
     pta[0].input+= pta[0].dbn[0].n_inputs;
-    pta[0].expected_output+= pta[0].dbn[0].rbms[pta[0].dbn[0].n_rbms-1].n_outputs;
+    pta[0].expected_output+= pta[0].dbn[0].n_outputs;
   }
 }
 
@@ -215,6 +215,8 @@ double *labels_to_matrix(SEXP training_labels_r, int n_outputs) {
 	  matrix[i*n_outputs+j]= ((j+1)==tlr[i])?1:0;
 	}
   }
+  
+  return(matrix);
 }
 
 /*

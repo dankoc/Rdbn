@@ -27,7 +27,7 @@ label <- train[,1]
 require(Rdbn)
 db <- dbn(n_layers= 5, layer_sizes= c(784,500,500,250,10), batch_size=100, cd_n=1, momentum_decay= 0.9)
 db2 <- dbn.train(db, data= data, n_epocs= 1, n_threads=5)
-db3 <- dbn.refine(db2, data=data, labels=label, n_epocs=2, n_threads=4)
+db3 <- dbn.refine(db2, data=data, labels=label, n_epocs=2, n_threads=1)
 
 q("yes")
 
