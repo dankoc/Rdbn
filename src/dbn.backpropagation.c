@@ -28,7 +28,7 @@
  * (NOTE: May require Couresea account).
  */
 
-void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error, delta_w_t batch) {
+void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error, delta_w_t *batch) {
   int n_outputs_cl= dbn[0].rbms[layer].n_outputs; // # outputs in current layer
   int n_inputs_cl= dbn[0].rbms[layer].n_inputs;   // # inputs in current layer
 
@@ -37,13 +37,13 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
     if(layer>0) next_layer_neuron_error[i]= 0;
     for(int j=0;j<n_outputs_cl;j++) {
       // Compute error derivites for the weights ... (dE/w_{i,j}).
-	  double previous_ij= get_matrix_value(batch.delta_w, j, i);
-      set_matrix_value(batch.delta_w, j, i, previous_ij+observed_output[layer][i]*neuron_error[j]); 
+	  double previous_ij= get_matrix_value(batch[0].delta_w, j, i);
+      set_matrix_value(batch[0].delta_w, j, i, previous_ij+observed_output[layer][i]*neuron_error[j]); 
 
       // Compute error derivites for the biases.  Conceptually similar to a connection with a neuron of constant output (==1).
       // see: http://stackoverflow.com/questions/3775032/how-to-update-the-bias-in-neural-network-backpropagation
       // At this time, I am NOT updating input biases using backpropagation
-      if(i==0) batch.delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
+      if(i==0) batch[0].delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
   
       // Compute error for neurons in an internal 'hidden' layer [dE/dy_{i}].
       // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
@@ -76,7 +76,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
     int n_inputs_cl= dbn[0].rbms[layer].n_inputs;   // # inputs in current layer
 
     if(layer>0) next_layer_neuron_error= (double*)Calloc(n_inputs_cl, double);
-    compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, batch[layer]);     // Shortcut, for code readability.  Computes the error term for the current layer.
+    compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer]));     // Shortcut, for code readability.  Computes the error term for the current layer.
 
     Free(neuron_error);
     if(layer>0) neuron_error= next_layer_neuron_error;

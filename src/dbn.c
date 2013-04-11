@@ -48,8 +48,8 @@ delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn) {
     batch[i].delta_w= alloc_matrix(n_outputs_cl, n_inputs_cl);
     batch[i].delta_output_bias= (double*)Calloc(n_outputs_cl, double);
 
-    init_matrix(batch[i].delta_w, 0);
-    init_vector(batch[i].delta_output_bias, n_outputs_cl, 0);
+    init_matrix(batch[i].delta_w, 0.0);
+    init_vector(batch[i].delta_output_bias, n_outputs_cl, 0.0);
 
     batch[i].update_input_bias= 0;
     batch[i].batch_size= dbn[0].batch_size;
