@@ -25,15 +25,17 @@ label <- train[,1]
 
 ## Train a deep belief network.
 require(Rdbn)
-db <- dbn(n_layers= 5, layer_sizes= c(784,500,500,250,10), batch_size=100, cd_n=1, momentum_decay= 0.9)
-db2 <- dbn.train(db, data= data, n_epocs= 1, n_threads=5)
-db3 <- dbn.refine(db2, data=data, labels=label, n_epocs=2, n_threads=3)
+db <- dbn(n_layers= 4, layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.9)
+db2 <- dbn.train(db, data= data, n_epocs= 2, n_threads=8)
+db3 <- dbn.refine(db2, data=data, labels=label, n_epocs=5, n_threads=3)
+
+save.image("network.RData")
 
 q("yes")
 
-
+############## Scratch...  ####################################################
  rr <- rbm(n_inputs= 784, n_outputs= 200, batch_size=100, cd_n=1, momentum_decay= 0.9) #NA
- rr2 <- rbm.train(rr, data= data[,c(1:1000)], n_epocs= 1, n_threads=2)
+ rr2 <- rbm.train(rr, data= data[,c(1:1000)], n_epocs= 1, n_threads=8)
 
  require(Rdbn)
  pred <- dbn.predict(db2, data[,which(label==1)[c(1:100)]])

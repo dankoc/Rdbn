@@ -62,10 +62,10 @@ void init_rbm(rbm_t *rbm, double learning_rate, int batch_size, int cd_n, double
   rbm[0].batch_size= batch_size;
   rbm[0].cd_n= cd_n;
   
-  init_matrix_rnorm(rbm[0].io_weights, 0.0d, 0.01d);
+  init_matrix_rnorm(rbm[0].io_weights, 0.0, 0.01);
   
   for(int i=0;i<rbm[0].n_outputs;i++)
-    rbm[0].bias_outputs[i]= 0.0d;
+    rbm[0].bias_outputs[i]= 0.0;
 	
   for(int j=0;j<rbm[0].n_inputs;j++)
     rbm[0].bias_inputs[j]= expected_frequency_on;
@@ -119,7 +119,7 @@ void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
  *  Changes prob to 0 || 1 by sampling over a uniform.
  */
 double rbm_sample_state(double prob) {
-  return(prob>runif(0.0d, 1.0d)?1:0);
+  return(prob>runif(0.0, 1.0)?1:0);
 }
 
 double logistic_function(double value) {
