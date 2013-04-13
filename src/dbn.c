@@ -53,7 +53,7 @@ delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn) {
 
     batch[i].update_input_bias= 0;
     batch[i].batch_size= dbn[0].batch_size;
-    batch[i].learning_rate= dbn[0].learning_rate;
+//    batch[i].learning_rate= dbn[0].learning_rate;
   }
   return(batch);
 }
