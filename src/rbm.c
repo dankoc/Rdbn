@@ -208,6 +208,11 @@ rbm_t *common_rbm_r_type_to_c(SEXP rbm_r) {
     init_matrix(rbm[0].momentum, 0);
   }
 
+  rbm[0].use_l2_penalty= INTEGER(GET_SLOT(rbm_r, Rf_install("use_l2_penalty")))[0];
+  if(rbm[0].use_l2_penalty) {
+    rbm[0].weight_cost= REAL(GET_SLOT(rbm_r, Rf_install("weight_cost")))[0];
+  }
+
   return(rbm);
 }
 

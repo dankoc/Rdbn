@@ -21,21 +21,28 @@ setClass("dbn_layer",#"restricted_boltzman_machine",
 	cd_n="integer",                ## Number of steps of Gibbs sampling when doing contrastive divergence.
 	batch_size="integer",          ## Number of input examples to use in a 'mini-batch'.
 #	update_input_biases="logical", ## Whether or not to update the biases of the input layer.
-	
+		
 	## Special learning options.  These are NOT guaranteed to be set.
+
+	## Using L2 regularization, a.k.a weight-decay.
+    ## Note that this is ONLY applied to weights, NOT to biases...  per: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
+    use_l2_penalty="logical",      ## Whether (or not) to apply L2 regularization.
+	weight_cost="numeric",         ## Numeric.  If used, set between 1e-2 and 1e-5.
+	
+    ## 'Momentum method' for updating weights.
 	## See in: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf; pp. 75; also see: pp.5(background),73(Adapting Nesterov methods).
 	use_momentum="logical",        ## Use momentum during fitting.
-#	momentum="matrix"   # CGD: Use ONLY in C ... Why pass this back!?           ## Momentum term; serves as memory for other mini-batch members.  Speeds the rate of convergence.
 	momentum_decay="numeric"       ## \Mu; Rate at which old gradients are discarded.
   ),
 )
 
 dbn_layer <- function(n_inputs, 
                       n_outputs, 
-                      batch_size=1, 
                       learning_rate=0.1, 
-                      cd_n=1, 
+                      batch_size=1, 
                       momentum_decay= NA, 
+                      weight_cost= NA,					  
+                      cd_n=1, 
                       io_weights=NULL, 
                       bias_outputs=NULL) 
 {
@@ -58,12 +65,17 @@ dbn_layer <- function(n_inputs,
 
   if(is.na(momentum_decay)) {
     use_momentum=FALSE
- #   momentum <- matrix(integer(0))
   }
   else {
     stopifnot(momentum_decay <= 1 & momentum_decay >= 0) ## Momentum decay between 0 and 1.
     use_momentum=TRUE
- #   momentum <- matrix(0, nrow=n_inputs, ncol=n_outputs)
+  }
+  
+  if(is.na(weight_cost)) {
+    use_l2_penalty=FALSE
+  }
+  else {
+    use_l2_penalty=TRUE
   }
 
   new("dbn_layer", 
@@ -74,8 +86,9 @@ dbn_layer <- function(n_inputs,
     learning_rate=as.real(learning_rate), 
     cd_n=as.integer(cd_n), 
     batch_size=as.integer(batch_size),
+	use_l2_penalty=as.logical(use_l2_penalty),
+	weight_cost=weight_cost,
     use_momentum= as.logical(use_momentum), 
- #   momentum= momentum,
     momentum_decay= as.real(momentum_decay))
 }
 

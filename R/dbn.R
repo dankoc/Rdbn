@@ -20,7 +20,6 @@ setClass("dbn",#"restricted_boltzman_machine",
     use_momentum="logical",   ## Use momentum during fitting.
 
     learning_rate="numeric",  ## Learning rate for the deep belief network; used during backpropagation.
- #   rate_mult="numberic",     ## Multiplies the learning rate for the last lyaer by this amount during backprop (default= 1).
     batch_size="integer"      ## Size of the mini-batch to use during backpropagation.
   ),
 )
@@ -30,7 +29,6 @@ dbn <- function(n_layers,
                 layer_sizes, 
                 batch_size=1, 
                 learning_rate=0.1, 
-#                rate_mult= 1,
                 cd_n=1, 
                 momentum_decay= NA,
                 pretraining_momentum_decay= momentum_decay) 
@@ -60,7 +58,6 @@ dbn <- function(n_layers,
 	momentum_decay= as.real(momentum_decay),
     use_momentum= as.logical(use_momentum),
     learning_rate= as.real(learning_rate), 
-#    rate_mult= as.real(rate_mult),	
     batch_size=as.integer(batch_size))
 }
 
@@ -203,3 +200,25 @@ setMethod("dbn.set_momentum_decay", c(dbn="dbn"),
     return(dbn)
 })
 
+
+#` Method to train a boltzman machine (stored in rbm).
+#` @param dbn The layered network of RBMs.
+#` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
+#` @export
+#` NTOE: learning_rate can either be a vector w/ n_elemtns= n_rbms, or a single value.
+setGeneric("dbn.set_weight_cost", 
+  def=function(dbn, weight_cost) {
+	standardGeneric("dbn.set_weight_cost")
+})
+  
+setMethod("dbn.set_weight_cost", c(dbn="dbn"), 
+  function(dbn, weight_cost) {
+  	stopifnot(NROW(weight_cost) == 1 | NROW(weight_cost) == (dbn@n_layers-1)) ## Check assumptions on number of elements.
+
+    if(NROW(weight_cost)== 1) weight_cost <- rep(weight_cost, dbn@n_layers-1) ## Force to a vector.
+    for(i in c(1:n_layers-1)) { ## Set learning rate at each DBN!
+      network[[i]]@use_l2_penalty= TRUE
+      network[[i]]@weight_cost= weight_cost[i]
+	}
+    return(dbn)
+})

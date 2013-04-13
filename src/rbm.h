@@ -21,7 +21,10 @@ typedef struct {
   int use_momentum;       // Use momentum during fitting.
   double momentum_decay;  // \Mu; Rate at which old gradients are discarded.
   matrix_t *momentum;     // Momentum term; serves as memory for other mini-batch members.  Speeds the rate of convergence.
-  
+
+  int use_l2_penalty;     // Usees L2 regularization to constrain weight updates.
+  double weight_cost;     // Alpha term in the L2 regularization function.
+
   // Also implement sparsity controls(?!).
 } rbm_t;
 

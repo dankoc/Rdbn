@@ -44,7 +44,13 @@ void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
       double delta_w_i_j= get_matrix_value(dw[0].delta_w, i, j);
+	  
+      // If using L2 penalty (a.k.a "weight decay"), apply that here.
+      if(rbm[0].use_l2_penalty) 
+        delta_w_i_j+= rbm[0].weight_cost*previous_w_i_j; // Is this the right sign!?
+		
       double new_w_i_j= previous_w_i_j+rbm[0].learning_rate*delta_w_i_j/(double)dw[0].batch_size;
+
       set_matrix_value(rbm[0].io_weights, i, j, new_w_i_j);
 	  
       if(i==0 && dw[0].update_input_bias) // Only update once... and if everything says to update.
@@ -79,11 +85,17 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].bias_outputs[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
     for(int j=0;j<rbm[0].n_inputs;j++) {
-      double step= rbm[0].learning_rate*get_matrix_value(dw[0].delta_w, i, j)/(double)dw[0].batch_size; // For the momentum method ... do I still scale by the batch size?!
+      double step= get_matrix_value(dw[0].delta_w, i, j); // delta_w_i_j
+      double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
+
+      // If using L2 penalty (a.k.a "weight decay"), apply that here.
+      if(rbm[0].use_l2_penalty) 
+        step+= rbm[0].weight_cost*previous_w_i_j; // Do I apply this to the momentum term as well, or just the correction?!
+      step*= rbm[0].learning_rate/(double)dw[0].batch_size; // For the momentum method ... do I still scale by the batch size?!
+
 
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
       // \theta_t' was applied before taking the step.
-      double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
       set_matrix_value(rbm[0].io_weights, i, j, previous_w_i_j+step);  //  
 	  
       // Update velocities.  v_t = v_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.11, 2nd half).
