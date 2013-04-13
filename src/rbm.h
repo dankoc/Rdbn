@@ -34,7 +34,7 @@ typedef struct { // Used for information storage/ passing during training.
   
   // Applying delta_w uses the parameters specified here.
   int batch_size;
-  double learning_rate;
+//  double learning_rate; // Currently ignored.
 } delta_w_t;
 
 rbm_t *alloc_rbm(int n_inputs, int n_outputs);
@@ -45,6 +45,9 @@ void clamp_input(rbm_t *rbm, double *input, double *resulting_output);
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input);
 
 void apply_delta_w(rbm_t *rbm, delta_w_t *dw);
+void initial_momentum_step(rbm_t *rbm);
+void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw);
+
 void sum_delta_w(delta_w_t *batch, delta_w_t *dw);
 void free_delta_w_ptr(delta_w_t *dw, int n);
 

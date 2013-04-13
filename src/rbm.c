@@ -41,6 +41,9 @@ void free_rbm(rbm_t *rbm) {
   free_matrix(rbm[0].io_weights);
   Free(rbm[0].bias_inputs);
   Free(rbm[0].bias_outputs);
+  if(rbm[0].use_momentum)
+    free_matrix(rbm[0].momentum);
+
   Free(rbm);
 }
 
@@ -85,7 +88,7 @@ delta_w_t *alloc_dwt_from_rbm(rbm_t *rbm) {
   init_vector(batch[0].delta_input_bias, rbm[0].n_inputs, 0);
   batch[0].update_input_bias= 1;
   batch[0].batch_size= rbm[0].batch_size;  // Used for updating weights.
-  batch[0].learning_rate= rbm[0].learning_rate;
+//  batch[0].learning_rate= rbm[0].learning_rate;
   
   return(batch);
 }
@@ -201,11 +204,8 @@ rbm_t *common_rbm_r_type_to_c(SEXP rbm_r) {
   
   if(rbm[0].use_momentum) {
     rbm[0].momentum_decay= REAL(GET_SLOT(rbm_r, Rf_install("momentum_decay")))[0];
-    rbm[0].momentum= (matrix_t*)R_alloc(1, sizeof(matrix_t));
-	
-    rbm[0].momentum[0].matrix= REAL(GET_SLOT(rbm_r, Rf_install("momentum")));
-    rbm[0].momentum[0].ncols= rbm[0].n_outputs;
-    rbm[0].momentum[0].nrows= rbm[0].n_inputs;
+    rbm[0].momentum= R_alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);
+    init_matrix(rbm[0].momentum, 0);
   }
 
   return(rbm);

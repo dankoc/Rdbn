@@ -16,6 +16,16 @@ matrix_t *alloc_matrix(int ncols, int nrows) {
   return(m);
 }
 
+/* Use this version for R_alloc function ... R's memory handler will free upon return to R envrioment. */
+matrix_t *R_alloc_matrix(int ncols, int nrows) {
+  matrix_t *m= (matrix_t*)R_alloc(1, sizeof(matrix_t));
+  m[0].matrix= (double*)R_alloc(ncols*nrows, sizeof(double));
+  m[0].ncols= ncols;
+  m[0].nrows= nrows;
+  return(m);
+}
+
+
 void init_matrix(matrix_t *m, double init_value) {
   for(int i=0;i<(m[0].ncols*m[0].nrows);i++)
 	  m[0].matrix[i]= init_value;

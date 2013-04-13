@@ -25,8 +25,8 @@ setClass("dbn_layer",#"restricted_boltzman_machine",
 	## Special learning options.  These are NOT guaranteed to be set.
 	## See in: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf; pp. 75; also see: pp.5(background),73(Adapting Nesterov methods).
 	use_momentum="logical",        ## Use momentum during fitting.
-	momentum_decay="numeric",      ## \Mu; Rate at which old gradients are discarded.
-	momentum="matrix"              ## Momentum term; serves as memory for other mini-batch members.  Speeds the rate of convergence.
+#	momentum="matrix"   # CGD: Use ONLY in C ... Why pass this back!?           ## Momentum term; serves as memory for other mini-batch members.  Speeds the rate of convergence.
+	momentum_decay="numeric"       ## \Mu; Rate at which old gradients are discarded.
   ),
 )
 
@@ -58,24 +58,24 @@ dbn_layer <- function(n_inputs,
 
   if(is.na(momentum_decay)) {
     use_momentum=FALSE
-    momentum <- matrix(integer(0))
+ #   momentum <- matrix(integer(0))
   }
   else {
     stopifnot(momentum_decay <= 1 & momentum_decay >= 0) ## Momentum decay between 0 and 1.
     use_momentum=TRUE
-    momentum <- matrix(0, nrow=n_inputs, ncol=n_outputs)
+ #   momentum <- matrix(0, nrow=n_inputs, ncol=n_outputs)
   }
 
   new("dbn_layer", 
     n_inputs=as.integer(n_inputs), 
     n_outputs=as.integer(n_outputs), 
-    cd_n=as.integer(cd_n), 
-    batch_size=as.integer(batch_size),
-    learning_rate=as.real(learning_rate), 
     io_weights=io_weights, 
     bias_outputs= bias_outputs,
+    learning_rate=as.real(learning_rate), 
+    cd_n=as.integer(cd_n), 
+    batch_size=as.integer(batch_size),
     use_momentum= as.logical(use_momentum), 
-    momentum= momentum,
+ #   momentum= momentum,
     momentum_decay= as.real(momentum_decay))
 }
 
@@ -119,11 +119,13 @@ rbm <- function(n_inputs,
     dbn_layer(
       n_inputs=as.integer(n_inputs), 
       n_outputs=as.integer(n_outputs), 
-      cd_n=as.integer(cd_n), 
-      batch_size=as.integer(batch_size),
-      learning_rate=as.real(learning_rate), 
       io_weights=io_weights, 
       bias_outputs= bias_outputs,
+      learning_rate=as.real(learning_rate), 
+      cd_n=as.integer(cd_n), 
+      batch_size=as.integer(batch_size),
+      use_momentum= as.logical(use_momentum), 
+#      momentum= momentum,
       momentum_decay= as.real(momentum_decay)),
     bias_inputs= as.real(bias_inputs))
 }

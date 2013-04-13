@@ -24,12 +24,19 @@ data <- t(train[,c(2:NCOL(train))])/255
 label <- train[,1]
 
 ## Train a deep belief network.
-require(Rdbn)
-db <- dbn(n_layers= 4, layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.9)
-db2 <- dbn.train(db, data= data, n_epocs= 2, n_threads=8)
-db3 <- dbn.refine(db2, data=data, labels=label, n_epocs=1000, n_threads=8)
+require(Rdbn)                                   #Hinton's Science paper used --> momentum_decay= 0.9
+db <- dbn(n_layers= 4, layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.99, learning_rate=0.1)
+db <- dbn.train(db, data= data, n_epocs= 10, n_threads=8) ## Hilton's Science paper used 100.
 
-save.image("network.RData")
+save.image("pretrained.RData")
+
+## Update learning parameters.
+db <- dbn.set_momentum_decay(db, 0.8)
+db <- dbn.set_learning_rate(db, 0.03)
+
+db_refine <- dbn.refine(db, data=data, labels=label, n_epocs=100, rate_mult=5, n_threads=8)
+
+save.image("refined.RData")
 
 q("yes")
 

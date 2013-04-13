@@ -122,6 +122,11 @@ void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_outpu
 /////////////IF PTREADS, USE THIS. ///////////////////////////////////////////////
 /* Runs the backpropagation algorithm over each element of a mini-batch. */
 void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expected_output, int n_threads) {
+  // If using a momentum, take a step first.
+  if(dbn[0].use_momentum) // Check dbn[0].use_momentum, or rbms[i].use_momentum?!  
+    for(int i=0;i<dbn[0].n_rbms;i++)
+      if(dbn[0].rbms[i].use_momentum) // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
+        initial_momentum_step(&(dbn[0].rbms[i]));
 
   // Activate each as a separate thread.
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
@@ -162,7 +167,19 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
  
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
-    apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
+    if(dbn[0].use_momentum) {// Check dbn[0].use_momentum, or rbms[i].use_momentum?!  
+      for(int i=0;i<dbn[0].n_rbms;i++) {
+        if(dbn[0].rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
+          apply_momentum_correction(&(dbn[0].rbms[i]), &(batch[i]));
+        }
+        else {
+         apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
+        }
+      }
+    }
+    else {
+     apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
+    }
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
 }

@@ -9,6 +9,7 @@ typedef struct {
 } matrix_t;
 
 matrix_t *alloc_matrix(int ncols, int nrows);
+matrix_t *R_alloc_matrix(int ncols, int nrows);
 void init_matrix(matrix_t *m, double init_value);
 void init_matrix_rnorm(matrix_t *m, double mean, double varience);
 void free_matrix(matrix_t *m);
