@@ -28,7 +28,8 @@ typedef struct {
   // Also implement sparsity controls(?!).
 } rbm_t;
 
-typedef struct { // Used for information storage/ passing during training.
+typedef struct { 
+  // Abstraction used to store the graident at a point in both RMBs and DBNs.
   matrix_t *delta_w;
   double *delta_output_bias;
   
@@ -37,7 +38,6 @@ typedef struct { // Used for information storage/ passing during training.
   
   // Applying delta_w uses the parameters specified here.
   int batch_size;
-//  double learning_rate; // Currently ignored.
 } delta_w_t;
 
 rbm_t *alloc_rbm(int n_inputs, int n_outputs);

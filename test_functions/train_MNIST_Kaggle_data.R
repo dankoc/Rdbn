@@ -34,6 +34,7 @@ save.image("pretrained.RData")
 db <- dbn.set_momentum_decay(db, 0.8)
 db <- dbn.set_learning_rate(db, 0.03)
 
+## refine model with new learning parameters.
 db_refine <- dbn.refine(db, data=data, labels=label, n_epocs=100, rate_mult=5, n_threads=8)
 
 save.image("refined.RData")

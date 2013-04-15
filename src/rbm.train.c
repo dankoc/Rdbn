@@ -18,7 +18,6 @@
 /**********************************************************************
  Functions for getting/ updating during training. */
  
-/*Subtract each element of recon from data.  The result will be passed back in data.*/
 void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
     batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
@@ -92,7 +91,6 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
       if(rbm[0].use_l2_penalty) 
         step+= rbm[0].weight_cost*previous_w_i_j; // Do I apply this to the momentum term as well, or just the correction?!
       step*= rbm[0].learning_rate/(double)dw[0].batch_size; // For the momentum method ... do I still scale by the batch size?!
-
 
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
       // \theta_t' was applied before taking the step.
