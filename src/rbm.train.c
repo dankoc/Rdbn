@@ -68,7 +68,7 @@ void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
  */
 
 void initial_momentum_step(rbm_t *rbm) {
-  for(int i=0;i<rbm[0].n_outputs;i++)
+  for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].output_momentum[i]*= rbm[0].momentum_decay;
     rbm[0].bias_outputs[i]+= rbm[0].output_momentum[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
@@ -84,6 +84,7 @@ void initial_momentum_step(rbm_t *rbm) {
         rbm[0].bias_inputs[j]+= rbm[0].input_momentum[j];
       }
     }
+  }
 }
  
 void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
