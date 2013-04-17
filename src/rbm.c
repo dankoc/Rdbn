@@ -225,14 +225,14 @@ rbm_t *common_rbm_r_type_to_c(SEXP rbm_r) {
 rbm_t *rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs) {
   rbm_t *rbm= common_rbm_r_type_to_c(rbm_r);
   rbm[0].bias_inputs= points_to_bias_inputs;
-  rbm[0].update_input_bias= 1;
+  rbm[0].update_input_bias= 0;
   return(rbm);
 }
 
 rbm_t *rbm_r_to_c(SEXP rbm_r) {
   rbm_t *rbm= common_rbm_r_type_to_c(rbm_r);
   rbm[0].bias_inputs= REAL(GET_SLOT(rbm_r,Rf_install("bias_inputs")));
-  rbm[0].update_input_bias= 0;
+  rbm[0].update_input_bias= 1;
   return(rbm);
 }
 
