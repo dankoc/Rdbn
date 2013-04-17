@@ -87,7 +87,7 @@ dbn_layer <- function(n_inputs,
     cd_n=as.integer(cd_n), 
     batch_size=as.integer(batch_size),
 	use_l2_penalty=as.logical(use_l2_penalty),
-	weight_cost=weight_cost,
+	weight_cost=as.real(weight_cost),
     use_momentum= as.logical(use_momentum), 
     momentum_decay= as.real(momentum_decay))
 }
