@@ -65,11 +65,12 @@ void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
  *  Described here: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf.
  *  See pp. 75 of the Sutskever thesis, and in particular equations 7.10-7.11.
  *
- *  Currently does NOT use momentum approach for updating biases, although that is straightforward to implement.
  */
 
 void initial_momentum_step(rbm_t *rbm) {
   for(int i=0;i<rbm[0].n_outputs;i++)
+    rbm[0].output_momentum[i]*= rbm[0].momentum_decay;
+    rbm[0].bias_outputs[i]+= output_momentum[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
       // Computes(eq 7.11, 1st half): v_t=\mu_{t-1}v_{t-1}.
       double momentum_i_j= rbm[0].momentum_decay*get_matrix_value(rbm[0].momentum, i, j); 
@@ -77,12 +78,18 @@ void initial_momentum_step(rbm_t *rbm) {
 
       // Computes(eq 7.10, 1st half): \theta_t = \theta_{t-1} + \mu_{t-11}v_{t-1}.
       set_matrix_value(rbm[0].io_weights, i, j, get_matrix_value(rbm[0].io_weights, i, j)+momentum_i_j);
+	  
+      if(i==0 && dw[0].update_input_bias) {
+		rbm[0].input_momentum[j]*= rbm[0].momentum_decay;
+        rbm[0].bias_inputs[j]+= rbm[0].input_momentum[j];
+      }
     }
 }
  
 void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].bias_outputs[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
+    rbm[0].output_momentum[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double step= get_matrix_value(dw[0].delta_w, i, j); // delta_w_i_j
       double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
@@ -99,10 +106,12 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
       // Update velocities.  v_t = v_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.11, 2nd half).
       // v_t' was applied before taking the step.
       double previous_momentum_i_j= get_matrix_value(rbm[0].momentum, i, j);
-        set_matrix_value(rbm[0].momentum, i, j, previous_momentum_i_j+step);
+      set_matrix_value(rbm[0].momentum, i, j, previous_momentum_i_j+step);
 
-      if(i==0 && dw[0].update_input_bias) // Only update once... and if everything says to update.
+      if(i==0 && dw[0].update_input_bias) { // Only update once... and if everything says to update.
         rbm[0].bias_inputs[j]+= rbm[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
+        rbm[0].input_momentum[j]+= rbm[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
+      }
     }
   }
 }

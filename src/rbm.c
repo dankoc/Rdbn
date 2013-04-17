@@ -206,6 +206,12 @@ rbm_t *common_rbm_r_type_to_c(SEXP rbm_r) {
     rbm[0].momentum_decay= REAL(GET_SLOT(rbm_r, Rf_install("momentum_decay")))[0];
     rbm[0].momentum= R_alloc_matrix(rbm[0].n_outputs, rbm[0].n_inputs);
     init_matrix(rbm[0].momentum, 0);
+	
+    rbm[0].output_momentum= (double*)R_alloc(rbm[0].n_outputs, sizeof(double));
+    init_vector(rbm[0].output_momentum, rbm[0].n_outputs, 0);
+
+    rbm[0].input_momentum= (double*)R_alloc(rbm[0].n_inputs, sizeof(double));
+    init_vector(rbm[0].input_momentum, rbm[0].n_inputs, 0);
   }
 
   rbm[0].use_l2_penalty= INTEGER(GET_SLOT(rbm_r, Rf_install("use_l2_penalty")))[0];
