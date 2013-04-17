@@ -137,7 +137,6 @@ rbm <- function(n_inputs,
       learning_rate=as.real(learning_rate), 
       cd_n=as.integer(cd_n), 
       batch_size=as.integer(batch_size),
-      use_momentum= as.logical(use_momentum), 
 #      momentum= momentum,
       momentum_decay= as.real(momentum_decay)),
     bias_inputs= as.real(bias_inputs))
