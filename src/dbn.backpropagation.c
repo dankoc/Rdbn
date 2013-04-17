@@ -241,7 +241,8 @@ double *labels_to_matrix(SEXP training_labels_r, int n_outputs) {
  */ 
 SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r) {
   dbn_t *dbn= dbn_r_to_c(dbn_r); // Get values from R function.
-  
+  dbn[0].rbms[0].update_input_bias=0; // Prevent updating input biases during backprop.
+
   int n_examples= Rf_nrows(training_data_r)/dbn[0].n_inputs;
   int n_threads= INTEGER(n_threads_r)[0];
   double *input_examples= REAL(training_data_r);
