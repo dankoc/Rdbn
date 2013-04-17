@@ -51,7 +51,7 @@ delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn) {
     init_matrix(batch[i].delta_w, 0.0);
     init_vector(batch[i].delta_output_bias, n_outputs_cl, 0.0);
 
-    batch[i].update_input_bias= 0;
+    batch[i].input_bias_allocated= 0;
     batch[i].batch_size= dbn[0].batch_size;
 //    batch[i].learning_rate= dbn[0].learning_rate;
   }

@@ -15,6 +15,7 @@ typedef struct {
   double learning_rate;   // Rate at which the model learns.
   int cd_n;               // Specifies the number of Gibbs sampling steps used for contrastive divergence during training.
   int batch_size;         // Specifies the batch size for training.
+  int update_input_bias;  // Specifies whether input biases are updated during learning, or fixed (e.g. from a previous layer).
   
   // Special learning options.  These are NOT guaranteed to be set.
   // See in: http://www.cs.utoronto.ca/~ilya/pubs/ilya_sutskever_phd_thesis.pdf; pp. 75; also see: pp.5(background),73(Adapting Nesterov methods).
@@ -35,7 +36,7 @@ typedef struct {
   matrix_t *delta_w;
   double *delta_output_bias;
   
-  int update_input_bias; // Logical; determines whether or not to update input biases.  Prevents input_biases from being updated by a dbn during backpropagation.
+  int input_bias_allocated; // Logical; determines whether or not to update input biases.  Prevents input_biases from being updated by a dbn during backpropagation.
   double *delta_input_bias;
   
   // Applying delta_w uses the parameters specified here.

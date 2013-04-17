@@ -86,7 +86,7 @@ delta_w_t *alloc_dwt_from_rbm(rbm_t *rbm) {
   init_matrix(batch[0].delta_w, 0.0f); // Init. to 1; later multiply each **data matrix.
   init_vector(batch[0].delta_output_bias, rbm[0].n_outputs, 0);
   init_vector(batch[0].delta_input_bias, rbm[0].n_inputs, 0);
-  batch[0].update_input_bias= 1;
+  batch[0].input_bias_allocated= 1;
   batch[0].batch_size= rbm[0].batch_size;  // Used for updating weights.
 //  batch[0].learning_rate= rbm[0].learning_rate;
   
@@ -98,7 +98,7 @@ void free_delta_w_ptr(delta_w_t *dw, int n) {
     free_matrix(dw[i].delta_w);
     Free(dw[i].delta_output_bias);
 
-    if(dw[i].update_input_bias)
+    if(dw[i].input_bias_allocated)
       Free(dw[i].delta_input_bias);
   }
   Free(dw);
@@ -109,7 +109,7 @@ void free_delta_w_ptr(delta_w_t *dw, int n) {
 void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
   matrix_sum(batch[0].delta_w, dw[0].delta_w);
   vector_sum(batch[0].delta_output_bias, dw[0].delta_output_bias, batch[0].delta_w[0].ncols);
-  if(batch[0].update_input_bias && dw[0].update_input_bias)
+  if(batch[0].input_bias_allocated && dw[0].input_bias_allocated)
     vector_sum(batch[0].delta_input_bias, dw[0].delta_input_bias, batch[0].delta_w[0].nrows);
 }
 
