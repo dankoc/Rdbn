@@ -67,7 +67,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
 //  neuron_errors[layer_index]= (double*)Calloc(n_outputs_ll, double);
   for(int j=0;j<n_outputs_ll;j++) {// Foreach neuron in the output layer.
     double oo= observed_output[layer_index][j];
-    neuron_error[j]= oo*(1-oo)*(oo-expected_output[j]); // Compute dE/dz_j
+    neuron_error[j]= oo*(1-oo)*(-1)*(oo-expected_output[j]); // Compute dE/dz_j
   }
   
   // Makes a single pass over the entire deep belief network.
