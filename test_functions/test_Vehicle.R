@@ -1,12 +1,17 @@
 require(mlbench)
 data(Vehicle)
+require(Rdbn)
 
 ## Scale all variables to [0,1].
 x <- t(Vehicle[,c(1:18)])
 y <- Vehicle[,19]
 for(i in c(1:(NCOL(Vehicle)-1))) {
-  x[i,] <- (Vehicle[,i]-min(Vehicle[,i]))/(max(Vehicle[,i])-min(Vehicle[,i]))
+  #x[i,] <- (Vehicle[,i]-min(Vehicle[,i]))/(max(Vehicle[,i])-min(Vehicle[,i]))
+  x[i,] <- logistic_function(scale(Vehicle[,i])*5) ## 5 is an arbitrarily chosen value... 
 }
+#hist(x[1,])
+rowMeans(x[,y=="bus"])
+rowMeans(x[,y=="opel"])
 
 ## Train a deep belief network.
 require(Rdbn)
