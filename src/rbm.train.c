@@ -24,7 +24,7 @@ void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, do
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double delta_w_i_j= get_matrix_value(batch[0].delta_w, i, j)+
 			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
-      set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions.
+      set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions... But against C99.
 	  
       if(i==0) // Only 
         batch[0].delta_input_bias[j]+= input_example[j]-input_recon[j]; 

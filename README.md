@@ -12,7 +12,7 @@ Rdbn supports:
 
 
 Installing
-==========
+----------
 In a UNIX based OS with R and dev tools installed, one can simply type: 
 
   R CMD install Rdbn/
@@ -21,8 +21,8 @@ R should take care of the rest.  Note that on OS X developer tools must be insta
 
 
 Using the package
-=================
-See the examples in the Rdbn/test/ folder how to interact with the package in R.  Vignette and reference manual coming soon!
+-----------------
+See the examples in the Rdbn/test_functions/ folder for insight on how to interact with the package in R.  Vignette and reference manual coming soon!
 
 
 Copyright/ Licence
