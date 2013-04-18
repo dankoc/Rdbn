@@ -150,11 +150,10 @@ setMethod("dbn.predict", c(dbn="dbn"),
     if(raw_matrix) 
       return(pred_matrix)
     else 
-      pred_classes <- .Call("convert_to_max_R", dbn, as.real(data), as.integer(n_threads), package="Rdbn") 
+      pred_classes <- .Call("convert_to_max_R", dbn, as.real(pred_matrix), package="Rdbn") 
 	
-    pred_classes <- as.factor(pred_classes)
-    levels(pred_classes) <- dbn@class_levels
-	return(pred_classes)
+    pred_classes <- as.factor(sapply(pred_classes, function(x) {dbn@class_levels[x]}))
+    return(pred_classes)
 })
 
 

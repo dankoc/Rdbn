@@ -125,7 +125,7 @@ void convert_to_max(dbn_t *dbn, double *matrix, double *vector, int n_observatio
 SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r) {
   dbn_t *dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   double *matrix= REAL(matrix_r);
-  int n_obs= Rf_nrows(matrix_r)/dbn[0].n_inputs;
+  int n_obs= Rf_nrows(matrix_r)/dbn[0].n_outputs;
   
   SEXP output_r;
   protect(output_r= allocVector(REALSXP, n_obs));
@@ -133,6 +133,7 @@ SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r) {
   
   convert_to_max(dbn, matrix, output, n_obs);
   
+  unprotect(1);
   return(output_r);
 }
 
