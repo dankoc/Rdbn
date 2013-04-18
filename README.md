@@ -5,10 +5,10 @@ Fast code to learn deep belief networks in R.
 Rdbn was written to allow training and classification using restricted Boltzman machines (RBMs) and deep belief networks (DBNs) in an R enviroment.  
 
 Rdbn supports:
--- Pre-training a deep belief network using ideas from 'contrastive divergence'.
--- Fine-tuning the network for classification tasks using the backpropagation algorithm.
--- Advanced training features such as momentum-accellerated learning, and L2 regularization.
--- Parallel processing on UNIX-based systems using pthreads.
+* Pre-training a deep belief network using ideas from 'contrastive divergence'.
+* Fine-tuning the network for classification tasks using the backpropagation algorithm.
+* Advanced training features such as momentum-accellerated learning, and L2 regularization.
+* Parallel processing on UNIX-based systems using pthreads.
 
 
 Installing
@@ -17,9 +17,7 @@ In a UNIX based OS with R and dev tools installed, one can simply type:
 
   R CMD install Rdbn/
 
-R should take care of the rest.  Note that on OS X developer tools must be installed in order to have a C compiler.  
-
-Windows is not supported at present.  This package is intended for eventual submission to CRAN.
+R should take care of the rest.  Note that on OS X developer tools must be installed in order to have a C compiler.  Windows is not supported at present.  This package is intended for eventual submission to CRAN.
 
 
 Using the package
