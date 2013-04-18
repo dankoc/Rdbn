@@ -17,7 +17,7 @@ In a UNIX based OS with R and dev tools installed, one can simply type:
 
   R CMD install Rdbn/
 
-R should take care of the rest.  Note that on OS X developer tools must be installed in order to have a C compiler.  Windows is not supported at present.  This package is intended for eventual submission to CRAN.
+R should take care of the rest.  Note that on OS X developer tools must be installed in order to have a C compiler.  Windows is not supported at present.  This package is intended for eventual submission to CRAN, and Windows support will most likely be added at that time.
 
 
 Using the package
