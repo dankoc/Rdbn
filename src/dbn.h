@@ -22,6 +22,7 @@ typedef struct {
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r);
 SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r);
+SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r);
 
 double **dbn_compute_store_layers(dbn_t *dbn, double *input);
 double *dbn_compute(dbn_t *dbn, double *input);

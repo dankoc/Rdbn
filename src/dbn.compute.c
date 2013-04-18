@@ -105,6 +105,37 @@ void run_batch_compute(dbn_t *dbn, double *input, int n_examples, int n_threads,
 }
 
 
+void convert_to_max(dbn_t *dbn, double *matrix, double *vector, int n_observations) {
+  int maxVal, maxIndx;
+  for(int o=0;o<n_observations;o++) {
+    maxVal= -1; maxIndx= 0;
+    for(int i=0;i<dbn[0].n_outputs;i++) {
+      if(matrix[o*dbn[0].n_outputs+i]> maxVal) {
+	    maxVal= matrix[o*dbn[0].n_outputs+i];
+		maxIndx= i+1;
+      }
+    }
+    vector[o]= maxIndx;
+  }
+}
+
+/*
+ *  Takes in a matrix of predictions, and converts to a vector of the most likely class for each occurence ...
+ */ 
+SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r) {
+  dbn_t *dbn= dbn_r_to_c(dbn_r); // Get values from R function.
+  double *matrix= REAL(matrix_r);
+  int n_obs= Rf_nrows(matrix_r)/dbn[0].n_inputs;
+  
+  SEXP output_r;
+  protect(output_r= allocVector(REALSXP, n_obs));
+  double *output= REAL(output_r);
+  
+  convert_to_max(dbn, matrix, output, n_obs);
+  
+  return(output_r);
+}
+
 /*
  *  Sets the input, and returns the output ...
  */ 

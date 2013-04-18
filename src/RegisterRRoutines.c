@@ -23,6 +23,7 @@ void R_init_Rdbn(DllInfo *info) {
        {"train_dbn_R", (DL_FUNC)&train_dbn_R, 5},
        {"backpropagation_dbn_R", (DL_FUNC)&backpropagation_dbn_R, 6},
        {"predict_dbn_R", (DL_FUNC)&predict_dbn_R, 4},
+       {"convert_to_max_R", (DL_FUNC)&convert_to_max_R, 3},
        {NULL, NULL, 0}
      };
 

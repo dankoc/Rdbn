@@ -138,17 +138,23 @@ setMethod("dbn.refine", c(dbn="dbn"),
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("dbn.predict", 
-  def=function(dbn, data, n_threads=1) {
+  def=function(dbn, data, raw_matrix=FALSE, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.predict")
 })
   
 setMethod("dbn.predict", c(dbn="dbn"), 
-  function(dbn, data, n_threads=1) {
+  function(dbn, data, raw_matrix=FALSE, n_threads=1) {
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
-    .Call("predict_dbn_R", dbn, as.real(data), as.integer(n_threads), package="Rdbn") 
+    pred_matrix <- .Call("predict_dbn_R", dbn, as.real(data), as.integer(n_threads), package="Rdbn") 
+    if(raw_matrix) 
+      return(pred_matrix)
+    else 
+      pred_classes <- .Call("convert_to_max_R", dbn, as.real(data), as.integer(n_threads), package="Rdbn") 
 	
-	## TODO: Return a vector here, rather than a matrix.
+    pred_classes <- as.factor(pred_classes)
+    levels(pred_classes) <- dbn@class_levels
+	return(pred_classes)
 })
 
 
