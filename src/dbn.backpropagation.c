@@ -43,7 +43,7 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
       // Compute error derivites for the biases.  Conceptually similar to a connection with a neuron of constant output (==1).
       // see: http://stackoverflow.com/questions/3775032/how-to-update-the-bias-in-neural-network-backpropagation
       // At this time, I am NOT updating input biases using backpropagation
-//TEMP COMMENTED.  DEBUGGING NaN.      if(i==0) batch[0].delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
+      if(i==0) batch[0].delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
   
       // Compute error for neurons in an internal 'hidden' layer [dE/dy_{i}].
       // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
