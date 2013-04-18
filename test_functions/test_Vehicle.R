@@ -25,3 +25,6 @@ db <- dbn.set_learning_rate(db, 0.03)
 ## refine model with new learning parameters.
 db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=100, rate_mult=5, n_threads=1)
 
+val <- dbn.predict(db_refine, data=x, raw_matrix=FALSE)
+mat <- dbn.predict(db_refine, data=x, raw_matrix=TRUE)
+
