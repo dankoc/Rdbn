@@ -37,10 +37,12 @@ dbn <- function(n_layers,
   
   rbm_network[[1]] <- rbm(n_inputs= layer_sizes[1], n_outputs= layer_sizes[1+1], 
       batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
-  for(i in 2:(n_layers-1)) {
-    rbm_network[[i]] <- dbn_layer(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], 
+
+  if(n_layers>2) 
+    for(i in 2:(n_layers-1)) {
+      rbm_network[[i]] <- dbn_layer(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], 
       batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
-  }
+    }
   
   if(is.na(momentum_decay)) {
     use_momentum=FALSE
@@ -69,13 +71,13 @@ dbn <- function(n_layers,
 #` @param dbn The layered network of RBMs.
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
-setGeneric("dbn.train", 
+setGeneric("dbn.pretrain", 
   def=function(dbn, data, n_epocs= 1000, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
-	standardGeneric("dbn.train")
+	standardGeneric("dbn.pretrain")
 })
   
-setMethod("dbn.train", c(dbn="dbn"), 
+setMethod("dbn.pretrain", c(dbn="dbn"), 
   function(dbn, data, n_epocs= 1000, n_threads=1) {
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
     .Call("train_dbn_R", dbn, as.real(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
