@@ -179,11 +179,13 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
     initial_momentum_step(rbm);
   }
   
-  // Activate each as a separate thread.
+  // If more threads than batch members, just assign each batch member to a spearate thread.
+  n_threads= (dbn[0].batch_size<n_threads)?dbn[0].batch_size:n_threads;
+  int n_per_batch= floor(dbn[0].batch_size/n_threads);
+  int remainder= (dbn[0].batch_size%n_threads==0)?n_per_batch:(dbn[0].batch_size%n_threads);
+  	  
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-  int n_per_batch= floor(rbm[0].batch_size/n_threads);
-  int remainder= (rbm[0].batch_size%n_threads==0)?n_per_batch:(rbm[0].batch_size%n_threads);
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].rbm= rbm;
