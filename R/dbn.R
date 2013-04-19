@@ -27,17 +27,18 @@ dbn <- function(n_layers,
                 batch_size=1, 
                 learning_rate=0.1, 
                 cd_n=1, 
-                momentum_decay= NA) 
+                momentum_decay= NA,
+                weight_cost=NA) 
 {
   rbm_network <- list()
   
   rbm_network[[1]] <- rbm(n_inputs= layer_sizes[1], n_outputs= layer_sizes[1+1], 
-      batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
+      batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay, weight_cost=weight_cost)
 
   if(n_layers>2) 
     for(i in 2:(n_layers-1)) {
       rbm_network[[i]] <- dbn_layer(n_inputs= layer_sizes[i], n_outputs= layer_sizes[i+1], 
-      batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
+      batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay, weight_cost=weight_cost)
     }
   
   new("dbn", 
