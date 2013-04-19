@@ -16,9 +16,6 @@ setClass("dbn",#"restricted_boltzman_machine",
     class_levels="character", ## Levels of a factor passed as training data.
 #    neuron_order="integer",   ## Maps neurons in the last layer to class_levels. ## Assume it's in the proper order.
 
-    momentum_decay="numeric", ## Momentum_decay
-    use_momentum="logical",   ## Use momentum during fitting.
-
     learning_rate="numeric",  ## Learning rate for the deep belief network; used during backpropagation.
     batch_size="integer"      ## Size of the mini-batch to use during backpropagation.
   ),
@@ -30,8 +27,7 @@ dbn <- function(n_layers,
                 batch_size=1, 
                 learning_rate=0.1, 
                 cd_n=1, 
-                momentum_decay= NA,
-                pretraining_momentum_decay= momentum_decay) 
+                momentum_decay= NA) 
 {
   rbm_network <- list()
   
@@ -44,21 +40,11 @@ dbn <- function(n_layers,
       batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay)
     }
   
-  if(is.na(momentum_decay)) {
-    use_momentum=FALSE
-  }
-  else {
-    stopifnot(momentum_decay <= 1 & momentum_decay >= 0) ## Momentum decay between 0 and 1.
-    use_momentum=TRUE
-  }
-
   new("dbn", 
     n_layers=as.integer(n_layers), 
     layer_sizes=as.integer(layer_sizes), 
     network= rbm_network, 
     class_levels=character(0),
-	momentum_decay= as.real(momentum_decay),
-    use_momentum= as.logical(use_momentum),
     learning_rate= as.real(learning_rate), 
     batch_size=as.integer(batch_size))
 }
@@ -198,10 +184,9 @@ setMethod("dbn.set_momentum_decay", c(dbn="dbn"),
   function(dbn, momentum_decay) {
   	stopifnot(NROW(momentum_decay) == 1 | NROW(momentum_decay) == (dbn@n_layers-1)) ## Check assumptions on number of elements.
 
-    dbn@momentum_decay<- momentum_decay
     if(NROW(momentum_decay)== 1) momentum_decay <- rep(momentum_decay, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
-      dbn@network[[i]]@use_momentum= TRUE
+      dbn@network[[i]]@use_momentum= !is.na(momentum_decay[i])#TRUE if specified.
       dbn@network[[i]]@momentum_decay= momentum_decay[i]
     }
     return(dbn)

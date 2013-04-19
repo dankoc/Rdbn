@@ -263,6 +263,7 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
 void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, int n_threads) {
   double *current_position;
   int n_training_iterations= floor(n_examples/rbm[0].batch_size); 
+  int left_over_iterations= n_examples%rbm[0].batch_size; 
 
   for(int i=0;i<n_epocs;i++) {
     //if(i%(100)) Rprintf(".");
@@ -274,6 +275,12 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
         do_minibatch(rbm, current_position, n_threads);
       current_position+= rbm[0].batch_size*rbm[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
 	}
+	if(left_over_iterations>0) {
+      int prev_batch_size = rbm[0].batch_size;
+      rbm[0].batch_size= left_over_iterations;
+      do_minibatch_pthreads(rbm,current_position,n_threads);
+      rbm[0].batch_size= prev_batch_size;
+    }
   }
 
 }

@@ -24,7 +24,7 @@ rowMeans(x[,y=="D"])
 ## Train a deep belief network.
 require(Rdbn)
 db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=100, cd_n=1, momentum_decay= 0.99, learning_rate=0.1)
-db <- dbn.pretrain(db, data= x, n_epocs= 100, n_threads=8)
+db <- dbn.pretrain(db, data= x, n_epocs= 10, n_threads=8)
 
 save.image("~/test_Simulate.RData")
 
@@ -36,7 +36,7 @@ db <- dbn.set_momentum_decay(db, 0.8)
 db <- dbn.set_learning_rate(db, 0.03)
 
 ## refine model with new learning parameters.
-db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=10, rate_mult=5, n_threads=1)
+db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=100, rate_mult=5, n_threads=8)
 
 val <- dbn.predict(db_refine, data=x, raw_matrix=FALSE)
 mat <- dbn.predict(db_refine, data=x, raw_matrix=TRUE)

@@ -13,10 +13,7 @@ typedef struct {
   int n_inputs;      // Number of input nodes in the network.  Again, for convenience.
   
   // Learning functions ... for use with refining network weights by backpropagation.
-  double learning_rate;
   int batch_size;         // Specifies the batch size for training during backprop.
-
-  int use_momentum;
 } dbn_t;
 
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);

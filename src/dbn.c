@@ -53,7 +53,6 @@ delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn) {
 
     batch[i].input_bias_allocated= 0;
     batch[i].batch_size= dbn[0].batch_size;
-//    batch[i].learning_rate= dbn[0].learning_rate;
   }
   return(batch);
 }
@@ -117,9 +116,7 @@ void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_
 dbn_t *dbn_r_to_c(SEXP dbn_r) {
   dbn_t *dbn= (dbn_t*)R_alloc(1, sizeof(dbn_t));
 
-  dbn[0].learning_rate= REAL(GET_SLOT(dbn_r, Rf_install("learning_rate")))[0];;
   dbn[0].batch_size= INTEGER(GET_SLOT(dbn_r, Rf_install("batch_size")))[0];
- 
   dbn[0].n_layers= INTEGER(GET_SLOT(dbn_r,Rf_install("n_layers")))[0];
   dbn[0].n_rbms= dbn[0].n_layers-1;
   dbn[0].layer_sizes= INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
@@ -127,8 +124,6 @@ dbn_t *dbn_r_to_c(SEXP dbn_r) {
   dbn[0].n_rbms= dbn[0].n_layers-1;
   dbn[0].rbms= (rbm_t*)R_alloc(dbn[0].n_rbms, sizeof(rbm_t));
   dbn[0].rbms[0]= (rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), 0)))[0]; // Apply rbm_r_to_c for network[[i]].
-
-  dbn[0].use_momentum= INTEGER(GET_SLOT(dbn_r, Rf_install("use_momentum")))[0];
 
   for(int i=1;i<dbn[0].n_rbms;i++) {
     // Force bias_input[i] = bias_output[i-1];
