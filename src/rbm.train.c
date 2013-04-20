@@ -190,7 +190,7 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
     // Set up data passed to partial_minibatch()
     pta[i].rbm= rbm;
     pta[i].input= input_example;
-    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
+    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(remainder); // For the last thread, only run remaining elements.
     pta[i].batch= alloc_dwt_from_rbm(rbm);
     pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
 	

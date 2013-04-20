@@ -77,7 +77,7 @@ void run_batch_compute_pthreads(dbn_t *dbn, double *input, int n_examples, int n
     pta[i].dbn= dbn;
     pta[i].input= input;
     pta[i].output= output;
-    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
+    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(remainder); // For the last thread, only run remaining elements.
 	  
     pthread_create(threads+i, NULL, batch_compute, (void*)(pta+i));
 	
