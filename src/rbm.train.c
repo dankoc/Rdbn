@@ -182,7 +182,6 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
   // If more threads than batch members, just assign each batch member to a spearate thread.
   n_threads= (rbm[0].batch_size<n_threads)?rbm[0].batch_size:n_threads;
   int n_per_batch= floor(rbm[0].batch_size/n_threads);
-  //int remainder= (rbm[0].batch_size%n_threads==0)?n_per_batch:(rbm[0].batch_size%n_threads);
   int remainder= (rbm[0].batch_size%n_threads);
   	  
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);

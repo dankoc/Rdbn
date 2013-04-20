@@ -129,7 +129,6 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   // If more threads than batch members, just assign each batch member to a spearate thread.
   n_threads= (dbn[0].batch_size<n_threads)?dbn[0].batch_size:n_threads;
   int n_per_batch= floor(dbn[0].batch_size/n_threads);
-  //int remainder= (dbn[0].batch_size%n_threads==0)?n_per_batch:(dbn[0].batch_size%n_threads);
   int remainder= (dbn[0].batch_size%n_threads);
 	  
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
@@ -208,12 +207,12 @@ void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n
       current_input+= dbn[0].batch_size*dbn[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
       current_output+=dbn[0].batch_size*dbn[0].n_outputs; // Increment the input_example pointer batch_size # of columns.
 	}
-	if(left_over>0) { // Do remaining training examples.
+/*	if(left_over>0) { // Do remaining training examples.
       int old_batch_size= dbn[0].batch_size;
       dbn[0].batch_size= left_over;
       backpropagation_minibatch_pthreads(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
 	  dbn[0].batch_size= old_batch_size;
-    }
+    }*/
   }
 }
 
