@@ -1,6 +1,6 @@
 useDynLib(Rdbn)
 export(rbm, dbn)
 exportClasses("rbm", "dbn")
-exportMethods(rbm.train, clamp_input, clamp_output)
-exportMethods(dbn.train, dbn.refine, dbn.predict, dbn.set_learning_rate, dbn.set_momentum_decay)
+exportMethods(rbm.train)
+exportMethods(dbn.pretrain, dbn.refine, dbn.predict, dbn.set_learning_rate, dbn.set_momentum_decay)
 export(logistic_function)
