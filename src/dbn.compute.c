@@ -78,11 +78,11 @@ void run_batch_compute_pthreads(dbn_t *dbn, double *input, int n_examples, int n
     pta[i].input= input;
     pta[i].output= output;
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(remainder); // For the last thread, only run remaining elements.
-	  
+    Rprintf("nelem: %d\n", pta[i].do_n_elements);
     pthread_create(threads+i, NULL, batch_compute, (void*)(pta+i));
 	
 	// Increment pointers for the next thread.
-	input+= pta[i].do_n_elements*dbn[0].n_inputs;
+    input+= pta[i].do_n_elements*dbn[0].n_inputs;
     output+= pta[i].do_n_elements*dbn[0].n_outputs;
   }
   
