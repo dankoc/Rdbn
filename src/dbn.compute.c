@@ -65,18 +65,19 @@ void *batch_compute(void* compute) {
 
 void run_batch_compute_pthreads(dbn_t *dbn, double *input, int n_examples, int n_threads, double *output) {
   // Activate each as a separate thread.
+ // If more threads than batch members, just assign each batch member to a spearate thread.
+  n_threads= (dbn[0].batch_size<n_threads)?dbn[0].batch_size:n_threads;
+  int n_per_batch= floor(dbn[0].batch_size/n_threads);
+  int remainder= (dbn[0].batch_size%n_threads==0)?n_per_batch:(dbn[0].batch_size%n_threads);
+  	  
   dbn_pthread_predict_arg_t *pta= (dbn_pthread_predict_arg_t*)Calloc(n_threads, dbn_pthread_predict_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-  int n_per_batch= floor(n_examples/n_threads);
-  int remainder= (n_examples%n_threads==0)?n_per_batch:(n_examples%n_threads); // If 0, should have passed.
-
-  // Start n_threads separate processes to .
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].dbn= dbn;
     pta[i].input= input;
     pta[i].output= output;
-    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
+    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
 	  
     pthread_create(threads+i, NULL, batch_compute, (void*)(pta+i));
 	
