@@ -24,11 +24,13 @@ setClass("dbn",#"restricted_boltzman_machine",
 # constructor.
 dbn <- function(n_layers, 
                 layer_sizes, 
+                x= NULL,				
+                y= NULL,				
                 batch_size=1, 
                 learning_rate=0.1, 
                 cd_n=1, 
                 momentum_decay= NA,
-                weight_cost=NA) 
+                weight_cost=NA, ...) 
 {
   rbm_network <- list()
   
@@ -41,13 +43,22 @@ dbn <- function(n_layers,
       batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay, weight_cost=weight_cost)
     }
   
-  new("dbn", 
+  dbn <- new("dbn", 
     n_layers=as.integer(n_layers), 
     layer_sizes=as.integer(layer_sizes), 
     network= rbm_network, 
     class_levels=character(0),
     learning_rate= as.real(learning_rate), 
     batch_size=as.integer(batch_size))
+
+  if(!is.null(x)) {
+    dbn <- dbn.pretrain(dbn, data= x, ...)
+    if(!is.null(y)) {
+	  dbn <- dbn.refine(dbn, data= x, labels= y, ...)
+    }
+  }
+
+  return(dbn)
 }
 
  # require(Rdbn)

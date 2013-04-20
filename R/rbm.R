@@ -108,6 +108,7 @@ setClass("rbm",#"restricted_boltzman_machine",
 # Initial weights set using S8.1 in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
 rbm <- function(n_inputs, 
                 n_outputs, 
+                x= NULL,				
                 batch_size=1,
                 learning_rate=0.1, 
                 cd_n=1, 
@@ -115,7 +116,7 @@ rbm <- function(n_inputs,
                 weight_cost= NA,
                 io_weights=NULL, 
                 bias_inputs=NULL, 
-                bias_outputs=NULL) 
+                bias_outputs=NULL, ...) 
 {
 
   ## Initialize bias vectors for inputs.
@@ -126,7 +127,7 @@ rbm <- function(n_inputs,
     stopifnot(n_inputs == NROW(bias_inputs))
   }
 
-  new("rbm", 
+  rbm <- new("rbm", 
     dbn_layer(
       n_inputs=as.integer(n_inputs), 
       n_outputs=as.integer(n_outputs), 
@@ -138,6 +139,12 @@ rbm <- function(n_inputs,
       batch_size=as.integer(batch_size),
       momentum_decay= as.real(momentum_decay)),
     bias_inputs= as.real(bias_inputs))
+  
+  if(!is.null(x)) {
+    rbm <- rbm.train(rbm, data= x, ...)
+  }
+  
+  return(rbm)
 }
 
  # require(Rdbn)

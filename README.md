@@ -25,6 +25,23 @@ Using the package
 See the examples in the Rdbn/test_functions/ folder for insight on how to interact with the package in R.  Vignette and reference manual coming soon!
 
 
+Useful References
+-----------------
+Nice Science paper demonstrating some useful applications:
+http://www.cs.toronto.edu/~hinton/science.pdf
+
+General overview on Scholarpedia (by Hinton):
+http://www.scholarpedia.org/article/Boltzmann_machine
+http://www.scholarpedia.org/article/Deep_belief_networks
+
+Some excellent, abridged notes on the 'dark art' parts of the method:
+http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
+
+Hinton's Coursea course on neural networks:
+https://class.coursera.org/neuralnets-2012-001/lecture/index
+
+Several additional references listed in specific sections of the source code.
+
 Copyright/ Licence
 ==================
 
