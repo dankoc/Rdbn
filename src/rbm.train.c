@@ -182,7 +182,8 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
   // If more threads than batch members, just assign each batch member to a spearate thread.
   n_threads= (rbm[0].batch_size<n_threads)?rbm[0].batch_size:n_threads;
   int n_per_batch= floor(rbm[0].batch_size/n_threads);
-  int remainder= (rbm[0].batch_size%n_threads==0)?n_per_batch:(rbm[0].batch_size%n_threads);
+  //int remainder= (rbm[0].batch_size%n_threads==0)?n_per_batch:(rbm[0].batch_size%n_threads);
+  int remainder= (rbm[0].batch_size%n_threads);
   	  
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
@@ -190,7 +191,7 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
     // Set up data passed to partial_minibatch()
     pta[i].rbm= rbm;
     pta[i].input= input_example;
-    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(remainder); // For the last thread, only run remaining elements.
+    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
     pta[i].batch= alloc_dwt_from_rbm(rbm);
     pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
 	
