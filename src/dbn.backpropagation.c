@@ -140,14 +140,14 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
     pta[i].expected_output= expected_output;
     pta[i].batch= alloc_dwt_from_dbn(dbn);
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
-	Rprintf("%d ",pta[i].do_n_elements);
+
     pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
 	
 	// Increment pointers for the next thread.
 	input+= pta[i].do_n_elements*dbn[0].n_inputs;
 	expected_output+= pta[i].do_n_elements*dbn[0].n_outputs;
   }
-  Rprintf("\n");
+
   // Wait for threads to complete, and combine the data into a single vector.
   delta_w_t *batch;
   for(int i=0;i<n_threads;i++) {
@@ -167,13 +167,11 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
  
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
-    for(int i=0;i<dbn[0].n_rbms;i++) {
-      if(dbn[0].rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
-        apply_momentum_correction(&(dbn[0].rbms[i]), &(batch[i]));
-      }
-      else {
-       apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
-      }
+    if(dbn[0].rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
+      apply_momentum_correction(&(dbn[0].rbms[i]), &(batch[i]));
+    }
+    else {
+     apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
     }
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
