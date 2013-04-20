@@ -139,7 +139,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
     pta[i].input= input;
     pta[i].expected_output= expected_output;
     pta[i].batch= alloc_dwt_from_dbn(dbn);
-    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:remainder; // For the last thread, only run remaining elements.
+    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
 	  
     pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
 	
