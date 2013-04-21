@@ -1,6 +1,5 @@
-##
 ## test_rbm.R -- Test the C implementation of restricted boltzman machines.
-##
+## 
 
  require(Rdbn)
  
@@ -16,16 +15,3 @@
  
  rr <- rbm(n_inputs= 6, n_outputs= 2, batch_size=100, cd_n=1, momentum_decay=0.9, weight_cost= 5e-5) #NA
  rbm.train(rr, data= data_matrix, n_epocs= 10000, n_threads=3)
-
- #clamp_output(rr, c(0,1)) ## Currently dosen't work...
- 
- ## NOTES: 
- # (1) My batch size is affecting my weights.  I don't think that should be so!
- # (2) 
- 
- ## Train DBN...
- db <- dbn(n_layers= 3, layer_sizes= c(6,2,2), batch_size=10, cd_n=1, momentum_decay= 0.9)
- dbn.train(db, data= data_matrix, n_epocs= 10000)
-
- # db <- dbn(n_layers= 5, layer_sizes= c(784,500,500,2000,10))
- 

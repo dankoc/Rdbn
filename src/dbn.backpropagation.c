@@ -121,6 +121,8 @@ void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_outpu
 /////////////IF PTREADS, USE THIS. ///////////////////////////////////////////////
 /* Runs the backpropagation algorithm over each element of a mini-batch. */
 void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expected_output, int n_threads) {
+  n_threads=1; // Testing.
+  
   // If using a momentum, take a step first.
   for(int i=0;i<dbn[0].n_rbms;i++)
     if(dbn[0].rbms[i].use_momentum) // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
@@ -171,7 +173,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
       apply_momentum_correction(&(dbn[0].rbms[i]), &(batch[i]));
     }
     else {
-     apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
+      apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
     }
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
