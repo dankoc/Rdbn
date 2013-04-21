@@ -147,7 +147,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
 	input+= pta[i].do_n_elements*dbn[0].n_inputs;
 	expected_output+= pta[i].do_n_elements*dbn[0].n_outputs;
   }
-
+// break dbn.backpropagation.c:150
   // Wait for threads to complete, and combine the data into a single vector.
   delta_w_t *batch;
   for(int i=0;i<n_threads;i++) {
@@ -163,8 +163,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
       free_delta_w_ptr(pta[i].batch, dbn[0].n_rbms);
     }
   }
-  Free(pta); Free(threads);
- 
+// break dbn.backpropagation.c:167
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
     if(dbn[0].rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
@@ -175,6 +174,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
     }
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
+  Free(pta); Free(threads);
 }
 /////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
 
