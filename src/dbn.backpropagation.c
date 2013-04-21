@@ -63,7 +63,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
   // Where dE/dy_j= (t_j-y_j) ==> t --> target output.  y--> observed output.
   int n_outputs_ll= dbn[0].n_outputs; // n_outputs in the last layer.
   int layer_index= dbn[0].n_layers-1; // Index of the layer in the double **.
-  neuron_error= (double*)Calloc(n_outputs_ll, double);
+  neuron_error= (double*)malloc(n_outputs_ll*sizeof(double));
 //  neuron_errors[layer_index]= (double*)Calloc(n_outputs_ll, double);
   for(int j=0;j<n_outputs_ll;j++) {// Foreach neuron in the output layer.
     double oo= observed_output[layer_index][j];
@@ -75,17 +75,17 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
   for(int layer=(dbn[0].n_rbms-1);layer>=0;layer--) {
     int n_inputs_cl= dbn[0].rbms[layer].n_inputs;   // # inputs in current layer
 
-    if(layer>0) next_layer_neuron_error= (double*)Calloc(n_inputs_cl, double);
+    if(layer>0) next_layer_neuron_error= (double*)malloc(n_inputs_cl*sizeof(double));
     compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer]));     // Shortcut, for code readability.  Computes the error term for the current layer.
 
-    Free(neuron_error);
+    free(neuron_error);
     if(layer>0) neuron_error= next_layer_neuron_error;
   }
   
   // Free temporary storage ...
   for(int i=0;i<dbn[0].n_layers;i++)
-    Free(observed_output[i]);
-  Free(observed_output);
+    free(observed_output[i]);
+  free(observed_output);
 }
 
 void *dbn_backprop_partial_minibatch(void *ptab) {
