@@ -1,6 +1,7 @@
 require(mlbench)
 data(Vehicle)
 require(Rdbn)
+set.seed(34)
 
 ## Scale all variables to [0,1].
 x <- t(Vehicle[,c(1:18)])
@@ -18,6 +19,8 @@ db <- dbn(n_layers= 3, layer_sizes= c(18,75,50), batch_size=100, cd_n=1, momentu
 db <- dbn.pretrain(db, data= x[,trainIndx], n_epocs= 10, n_threads=1)
 
 ## refine model with new learning parameters.
+set.seed(34)
+
 db_refine <- dbn.refine(db, data= x[,trainIndx], labels= y[trainIndx], n_epocs=100, rate_mult=10, n_threads=8)
 pred_dbn <- dbn.predict(db_refine, data=x[,testIndx], n_threads=1)
 
