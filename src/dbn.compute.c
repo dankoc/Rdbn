@@ -25,7 +25,7 @@
 // This version stores intermediate layers, and returns a double**.  
 // Perfect for use with backpropagation!
 double **dbn_compute_store_layers(dbn_t *dbn, double *input) {
-  double **layer_output= (double**)malloc(dbn[0].n_layers*sizeof(double*));
+  double **layer_output= (double**)Calloc(dbn[0].n_layers,double*);
   layer_output[0]= vector_copy(input, dbn[0].n_inputs);
   for(int i=0;i<dbn[0].n_rbms;i++) {
     layer_output[i+1]= get_layer_outputs(dbn, i, layer_output[i], 1);
@@ -38,7 +38,7 @@ double *dbn_compute(dbn_t *dbn, double *input) {
   double *layer_output;
   for(int i=0;i<dbn[0].n_rbms;i++) {
     layer_output= get_layer_outputs(dbn, i, current_input, 1);
-    free(current_input);  // Careful of memory leaks when switching around these pointers!!
+    Free(current_input);  // Careful of memory leaks when switching around these pointers!!
     current_input= layer_output;
   }
   return(layer_output);
@@ -57,7 +57,7 @@ void *batch_compute(void* compute) {
     }
 	
     // Clean up and increment pointers for the next pass.
-    free(output);
+    Free(output);
     pta[0].output += pta[0].dbn[0].n_outputs;
     pta[0].input += pta[0].dbn[0].n_inputs;
   }

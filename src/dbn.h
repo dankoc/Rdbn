@@ -28,5 +28,9 @@ double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs);
 delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn);
 dbn_t *dbn_r_to_c(SEXP dbn_r);
 
+#ifndef Win32
+pthread_mutex_t mutexsum;
+#endif
+
 #endif
 

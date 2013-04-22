@@ -9,10 +9,10 @@ db <- dbn(n_layers= 2, layer_sizes= c(2,2,2), batch_size=10)
 db <- dbn.pretrain(db, data= x)
 
 set.seed(20)
-db1 <- dbn.refine(db, data= x, labels= y, n_threads=1, n_epocs= 1)
+db1 <- dbn.refine(db, data= x, labels= y, n_threads=1, n_epocs= 1000)
 
 set.seed(20)
-db5 <- dbn.refine(db, data= x, labels= y, n_threads=5, n_epocs= 1)
+db5 <- dbn.refine(db, data= x, labels= y, n_threads=5, n_epocs= 1000)
 
 db5
 
