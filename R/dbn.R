@@ -24,13 +24,18 @@ setClass("dbn",#"restricted_boltzman_machine",
 # constructor.
 dbn <- function(n_layers, 
                 layer_sizes, 
-                x= NULL,				
-                y= NULL,				
-                batch_size=1, 
+                batch_size=10, 
                 learning_rate=0.1, 
                 cd_n=1, 
                 momentum_decay= NA,
-                weight_cost=NA, ...) 
+                weight_cost=NA,
+
+                # The following are defined to allow training during the S4 object construction.
+                x= NULL,				
+                y= NULL,				
+                n_epocs=100,
+                rate_mult=5,
+                n_threads=1) 
 {
   rbm_network <- list()
   
@@ -52,9 +57,9 @@ dbn <- function(n_layers,
     batch_size=as.integer(batch_size))
 
   if(!is.null(x)) {
-    dbn <- dbn.pretrain(dbn, data= x, ...)
+    dbn <- dbn.pretrain(dbn, data= x, n_epocs= n_epocs, n_threads= n_threads)
     if(!is.null(y)) {
-	  dbn <- dbn.refine(dbn, data= x, labels= y, ...)
+	  dbn <- dbn.refine(dbn, data= x, labels= y, n_epocs= n_epocs, rate_mult= rate_mult, n_threads= n_threads)
     }
   }
 
@@ -77,6 +82,8 @@ setGeneric("dbn.pretrain",
   
 setMethod("dbn.pretrain", c(dbn="dbn"), 
   function(dbn, data, n_epocs= 1000, n_threads=1) {
+    if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs) 
+      data <- t(data)
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
     .Call("train_dbn_R", dbn, as.real(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
@@ -94,6 +101,8 @@ setGeneric("dbn.refine",
   
 setMethod("dbn.refine", c(dbn="dbn"), 
   function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_threads=1) { #n_approx=500,
+    if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs) 
+      data <- t(data)
     stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
 
 #    print("Adding discriminitive layer.")
@@ -198,7 +207,7 @@ setMethod("dbn.set_momentum_decay", c(dbn="dbn"),
 
     if(NROW(momentum_decay)== 1) momentum_decay <- rep(momentum_decay, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
-      dbn@network[[i]]@use_momentum= !is.na(momentum_decay[i])#TRUE if specified.
+ #     dbn@network[[i]]@use_momentum= !is.na(momentum_decay[i])#TRUE if specified.
       dbn@network[[i]]@momentum_decay= momentum_decay[i]
     }
     return(dbn)

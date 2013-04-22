@@ -156,13 +156,13 @@ rbm <- function(n_inputs,
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("rbm.train", 
-  def=function(rbm, data, n_epocs= 1000, n_threads=1) {
+  def=function(rbm, data, n_epocs= 50, n_threads=1) {
 	stopifnot(class(rbm) == "rbm")
 	standardGeneric("rbm.train")
 })
   
 setMethod("rbm.train", c(rbm="rbm"), 
-  function(rbm, data, n_epocs= 1000, n_threads=1) { ## Regularization/ LASSO type options?!
+  function(rbm, data, n_epocs= 50, n_threads=1) { ## Regularization/ LASSO type options?!
   	stopifnot(NROW(data) == rbm@n_inputs)
 	
 	## Reassign input biases to training example requencies?!  As suggested in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf

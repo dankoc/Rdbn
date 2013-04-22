@@ -39,7 +39,6 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
       // Compute error derivites for the weights ... (dE/w_{i,j}).
       double previous_ij= get_matrix_value(batch[0].delta_w, j, i);
       set_matrix_value(batch[0].delta_w, j, i, previous_ij+observed_output[layer][i]*neuron_error[j]); 
-//      if(i==0) Rprintf("L: %d j: %d E: %f\n", layer, j, neuron_error[j]);
 
       // Compute error derivites for the biases.  Conceptually similar to a connection with a neuron of constant output (==1).
       // see: http://stackoverflow.com/questions/3775032/how-to-update-the-bias-in-neural-network-backpropagation.
@@ -55,10 +54,7 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
  
 /* Returns the error derivitives for a particular example.  Equilavent to do_batch_member in rbm.c. */
 void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w_t *batch) {
-//  pthread_mutex_lock(&backpropagation_mutex);
   double **observed_output= dbn_compute_store_layers(dbn, input); // Compute the output of the neural network.
-//  pthread_mutex_unlock(&backpropagation_mutex);
-
   double *next_layer_neuron_error, *neuron_error; // Stores dE/dz.
   
   // Compute last layer error term: dE/dz_j= y_j * (1-y_j) * dE/dy_j
@@ -66,9 +62,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
   int n_outputs_ll= dbn[0].n_outputs; // n_outputs in the last layer.
   int layer_index= dbn[0].n_layers-1; // Index of the layer in the double **.
 
-//  pthread_mutex_lock(&backpropagation_mutex);
   neuron_error= (double*)Calloc(n_outputs_ll,double);
-//  pthread_mutex_unlock(&backpropagation_mutex);
   
   for(int j=0;j<n_outputs_ll;j++) {// Foreach neuron in the output layer.
     double oo= observed_output[layer_index][j];
@@ -81,9 +75,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
     int n_inputs_cl= dbn[0].rbms[layer].n_inputs;   // # inputs in current layer
 
     if(layer>0) {
-//      pthread_mutex_lock(&backpropagation_mutex);
       next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
-//      pthread_mutex_unlock(&backpropagation_mutex);
     }
     compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer])); 
 
@@ -92,15 +84,12 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
   }
   
   // Free temporary storage ...
-//  pthread_mutex_lock(&backpropagation_mutex);
   for(int i=0;i<dbn[0].n_layers;i++)
     Free(observed_output[i]);
   Free(observed_output);
-//  pthread_mutex_unlock(&backpropagation_mutex);
 }
 
 void *dbn_backprop_partial_minibatch(void *ptab) {
-//  pthread_mutex_lock(&backpropagation_mutex);
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
   for(int i=0;i<pta[0].do_n_elements;i++) {
     backpropagation(pta[0].dbn, pta[0].input, pta[0].expected_output, pta[0].batch);
@@ -109,7 +98,6 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
     pta[0].input+= pta[0].dbn[0].n_inputs;
     pta[0].expected_output+= pta[0].dbn[0].n_outputs;
   }
-//  pthread_mutex_unlock(&backpropagation_mutex);
 }
 
 /////////////IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
@@ -134,7 +122,6 @@ void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_outpu
 /////////////IF PTREADS, USE THIS. ///////////////////////////////////////////////
 /* Runs the backpropagation algorithm over each element of a mini-batch. */
 void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expected_output, int n_threads) {
-  R_CStackLimit = (uintptr_t)-1;
 
   // If using a momentum, take a step first.
   for(int i=0;i<dbn[0].n_rbms;i++)
@@ -148,7 +135,6 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
 	  
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-  pthread_mutex_init(&backpropagation_mutex, NULL);
   
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
@@ -164,7 +150,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
     input+= pta[i].do_n_elements*dbn[0].n_inputs;
     expected_output+= pta[i].do_n_elements*dbn[0].n_outputs;
   }
-// break dbn.backpropagation.c:150
+
   // Wait for threads to complete, and combine the data into a single vector.
   delta_w_t *batch;
   for(int i=0;i<n_threads;i++) {
@@ -180,7 +166,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
       free_delta_w_ptr(pta[i].batch, dbn[0].n_rbms);
     }
   }
-// break dbn.backpropagation.c:167
+
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
     if(dbn[0].rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
@@ -192,7 +178,6 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
   Free(pta); Free(threads);
-  pthread_mutex_destroy(&backpropagation_mutex);
 
 }
 /////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
