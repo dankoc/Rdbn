@@ -100,8 +100,8 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
 }
 
 void *dbn_backprop_partial_minibatch(void *ptab) {
-  dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
   pthread_mutex_lock(&backpropagation_mutex);
+  dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
   for(int i=0;i<pta[0].do_n_elements;i++) {
     backpropagation(pta[0].dbn, pta[0].input, pta[0].expected_output, pta[0].batch);
 
@@ -160,9 +160,9 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
 
     pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
 	
-	// Increment pointers for the next thread.
-	input+= pta[i].do_n_elements*dbn[0].n_inputs;
-	expected_output+= pta[i].do_n_elements*dbn[0].n_outputs;
+    // Increment pointers for the next thread.
+    input+= pta[i].do_n_elements*dbn[0].n_inputs;
+    expected_output+= pta[i].do_n_elements*dbn[0].n_outputs;
   }
 // break dbn.backpropagation.c:150
   // Wait for threads to complete, and combine the data into a single vector.

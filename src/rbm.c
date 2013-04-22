@@ -113,7 +113,6 @@ void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
     vector_sum(batch[0].delta_input_bias, dw[0].delta_input_bias, batch[0].delta_w[0].nrows);
 }
 
-
 /*************************************************************************************
  *  Common functions required for many of the input/ output clamping and fitting ...
  */
