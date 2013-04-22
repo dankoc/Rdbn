@@ -33,7 +33,7 @@ dbn <- function(n_layers,
                 # The following are defined to allow training during the S4 object construction.
                 x= NULL,				
                 y= NULL,				
-                n_epocs=100,
+                n_epocs=50,
                 rate_mult=5,
                 n_threads=1) 
 {

@@ -96,7 +96,7 @@ void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_
   double *previous_layer_input, *next_layer_input;
   previous_layer_input= examples;
   for(int layer=1;layer<dbn[0].n_rbms;layer++) {
-    next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
+   next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
    Rprintf("Training layer %d: ",layer+1);
    rbm_train(&(dbn[0].rbms[layer]), next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
    Rprintf("\n");

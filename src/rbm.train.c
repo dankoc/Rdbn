@@ -271,10 +271,7 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
     //if(i%(100)) Rprintf(".");
     current_position= input_example; // Reset training pointer.
     for(int j=0;j<n_training_iterations;j++) {
-      if(n_threads >0)
-        do_minibatch_pthreads(rbm, current_position, n_threads);  // Do a minibatch using the current position of the training pointer.
-      else 
-        do_minibatch(rbm, current_position, n_threads);
+      do_minibatch_pthreads(rbm, current_position, n_threads);  // Do a minibatch using the current position of the training pointer.
       current_position+= rbm[0].batch_size*rbm[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
 	}
 	if(left_over_iterations>0) {
