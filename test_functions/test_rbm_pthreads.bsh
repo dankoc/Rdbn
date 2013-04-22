@@ -1,0 +1,2 @@
+time R --no-save < rbm.1.R
+time R --no-save < rbm.8.R

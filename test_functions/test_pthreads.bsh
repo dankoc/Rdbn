@@ -1,0 +1,2 @@
+time R --no-save < nc.1.R
+time R --no-save < nc.8.R
