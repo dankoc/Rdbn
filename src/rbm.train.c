@@ -193,7 +193,7 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
     pta[i].batch= alloc_dwt_from_rbm(rbm);
     pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
-	
+	Rprintf("n: %d ;b: %d", pta[i].do_n_elements, rbm[0].batch_size);
     // Increment pointers for the next thread.
     input_example+= pta[i].do_n_elements*rbm[0].n_inputs;
   }
