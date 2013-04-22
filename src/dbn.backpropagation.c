@@ -55,9 +55,9 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
  
 /* Returns the error derivitives for a particular example.  Equilavent to do_batch_member in rbm.c. */
 void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w_t *batch) {
-  pthread_mutex_lock(&backpropagation_mutex);
+//  pthread_mutex_lock(&backpropagation_mutex);
   double **observed_output= dbn_compute_store_layers(dbn, input); // Compute the output of the neural network.
-  pthread_mutex_unlock(&backpropagation_mutex);
+//  pthread_mutex_unlock(&backpropagation_mutex);
 
   double *next_layer_neuron_error, *neuron_error; // Stores dE/dz.
   
@@ -66,9 +66,9 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
   int n_outputs_ll= dbn[0].n_outputs; // n_outputs in the last layer.
   int layer_index= dbn[0].n_layers-1; // Index of the layer in the double **.
 
-  pthread_mutex_lock(&backpropagation_mutex);
+//  pthread_mutex_lock(&backpropagation_mutex);
   neuron_error= (double*)Calloc(n_outputs_ll,double);
-  pthread_mutex_unlock(&backpropagation_mutex);
+//  pthread_mutex_unlock(&backpropagation_mutex);
   
   for(int j=0;j<n_outputs_ll;j++) {// Foreach neuron in the output layer.
     double oo= observed_output[layer_index][j];
@@ -81,9 +81,9 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
     int n_inputs_cl= dbn[0].rbms[layer].n_inputs;   // # inputs in current layer
 
     if(layer>0) {
-      pthread_mutex_lock(&backpropagation_mutex);
+//      pthread_mutex_lock(&backpropagation_mutex);
       next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
-      pthread_mutex_unlock(&backpropagation_mutex);
+//      pthread_mutex_unlock(&backpropagation_mutex);
 	}
     compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer])); 
 
@@ -92,16 +92,16 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
   }
   
   // Free temporary storage ...
-  pthread_mutex_lock(&backpropagation_mutex);
+//  pthread_mutex_lock(&backpropagation_mutex);
   for(int i=0;i<dbn[0].n_layers;i++)
     Free(observed_output[i]);
   Free(observed_output);
-  pthread_mutex_unlock(&backpropagation_mutex);
+//  pthread_mutex_unlock(&backpropagation_mutex);
 }
 
 void *dbn_backprop_partial_minibatch(void *ptab) {
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
-
+  pthread_mutex_lock(&backpropagation_mutex);
   for(int i=0;i<pta[0].do_n_elements;i++) {
     backpropagation(pta[0].dbn, pta[0].input, pta[0].expected_output, pta[0].batch);
 
@@ -109,6 +109,7 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
     pta[0].input+= pta[0].dbn[0].n_inputs;
     pta[0].expected_output+= pta[0].dbn[0].n_outputs;
   }
+  pthread_mutex_unlock(&backpropagation_mutex);
 }
 
 /////////////IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
