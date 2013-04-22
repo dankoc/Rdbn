@@ -37,8 +37,9 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
     if(layer>0) next_layer_neuron_error[i]= 0;
     for(int j=0;j<n_outputs_cl;j++) {
       // Compute error derivites for the weights ... (dE/w_{i,j}).
-	  double previous_ij= get_matrix_value(batch[0].delta_w, j, i);
+      double previous_ij= get_matrix_value(batch[0].delta_w, j, i);
       set_matrix_value(batch[0].delta_w, j, i, previous_ij+observed_output[layer][i]*neuron_error[j]); 
+//      if(i==0) Rprintf("L: %d j: %d E: %f\n", layer, j, neuron_error[j]);
 
       // Compute error derivites for the biases.  Conceptually similar to a connection with a neuron of constant output (==1).
       // see: http://stackoverflow.com/questions/3775032/how-to-update-the-bias-in-neural-network-backpropagation.
@@ -121,6 +122,8 @@ void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_outpu
 /////////////IF PTREADS, USE THIS. ///////////////////////////////////////////////
 /* Runs the backpropagation algorithm over each element of a mini-batch. */
 void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expected_output, int n_threads) {
+  R_CStackLimit = (uintptr_t)-1;
+
   // If using a momentum, take a step first.
   for(int i=0;i<dbn[0].n_rbms;i++)
     if(dbn[0].rbms[i].use_momentum) // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
