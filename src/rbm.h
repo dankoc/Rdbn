@@ -68,5 +68,8 @@ SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_thread
 double rbm_sample_state(double prob);
 double logistic_function(double value);
 
+// MUTEX for training...
+pthread_mutex_t rbm_mutex;
+
 #endif
 

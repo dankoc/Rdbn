@@ -18,20 +18,6 @@
 /**********************************************************************
  Functions for getting/ updating during training. */
  
-void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
-  for(int i=0;i<rbm[0].n_outputs;i++) {
-    batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
-    for(int j=0;j<rbm[0].n_inputs;j++) {
-      double delta_w_i_j= get_matrix_value(batch[0].delta_w, i, j)+
-			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
-      set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions... But against C99.
-	  
-      if(i==0) // Only 
-        batch[0].delta_input_bias[j]+= input_example[j]-input_recon[j]; 
-    }
-  }
-}
-
 /*
  * Add matricies io_weights and delta_w.  The result will be in io_weights.
  *
@@ -117,6 +103,20 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   }
 }
 
+void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
+  for(int i=0;i<rbm[0].n_outputs;i++) {
+    batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
+    for(int j=0;j<rbm[0].n_inputs;j++) {
+      double delta_w_i_j= get_matrix_value(batch[0].delta_w, i, j)+
+			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
+      set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions... But against C99.
+	  
+      if(i==0) // Only 
+        batch[0].delta_input_bias[j]+= input_example[j]-input_recon[j]; 
+    }
+  }
+}
+
 /*  
  * Processes a single batch element, and increments the delta_w, delta_bias_input, and delta_bias_output
  *  weights accordingly.
@@ -141,7 +141,9 @@ void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t *batch) {
   // Put all of this together so that only 1 loop is required ...
   // Compute  ... in this computation, sample random states (?!).
   // Compute <vihj>_data-<vihj>_recon and update batch.
+  pthread_mutex_lock(&rbm_mutex);
   compute_delta_w(rbm, batch, init_output_recon, input_example, output_recon, input_recon);
+  pthread_mutex_unlock(&rbm_mutex);
 
   Free(init_output_recon); Free(output_recon); Free(input_recon);
 }
@@ -184,35 +186,28 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
   int n_per_batch= floor(rbm[0].batch_size/n_threads);
   int remainder= (rbm[0].batch_size%n_threads);
   	  
+  delta_w_t *batch= alloc_dwt_from_rbm(rbm);
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
+  pthread_mutex_init(&rbm_mutex, NULL);
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].rbm= rbm;
     pta[i].input= input_example;
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
-    pta[i].batch= alloc_dwt_from_rbm(rbm);
+    pta[i].batch= batch;
     pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
-	Rprintf("n: %d ;b: %d", pta[i].do_n_elements, rbm[0].batch_size);
     // Increment pointers for the next thread.
     input_example+= pta[i].do_n_elements*rbm[0].n_inputs;
   }
 
   // Wait for threads to complete, and combine the data into a single vector.
-  delta_w_t *batch;
   for(int i=0;i<n_threads;i++) {
     pthread_join(threads[i], NULL); // Wait for thread to finish.
-	
-    if(i==0) {
-      batch= pta[i].batch;
-    }
-    else {
-      sum_delta_w(batch, pta[i].batch);
-      free_delta_w_ptr(pta[i].batch, 1);
-    }
   }
   Free(pta); Free(threads);
-    
+  pthread_mutex_destroy(&rbm_mutex);
+   
   // Take a step in teh direction of the gradient.
   if(rbm[0].use_momentum) { // Correct and update momentum term.
     apply_momentum_correction(rbm, batch); 
