@@ -156,6 +156,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   for(int i=0;i<n_threads;i++) {
     pthread_join(threads[i], NULL);
 	
+    // It's ~2x faster to prepare independent batch examples and sum after, than to use a mutex lock.
     if(i==0) {
       batch= pta[i].batch;
     }

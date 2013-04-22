@@ -21,7 +21,7 @@ pred_dbn <- dbn.predict(db, data=x[,testIndx], n_threads=8)
 print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW(y[testIndx])))
 
 ###
-## Alternatively, sections of network training can be called independently.  This provides additional control over training parameters.
+## Alternatively, sections of network training can be called independently.  This provides additional control over training parameters, and can result in better performance.
 db <- dbn(n_layers= 3, layer_sizes= c(18,75,50), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.5, weight_cost= 0.1)
 db <- dbn.pretrain(db, data= x[,trainIndx], n_epocs= 50, n_threads=8)
 
