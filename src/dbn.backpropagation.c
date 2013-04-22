@@ -36,6 +36,7 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
   for(int i=0;i<n_inputs_cl;i++) {
     if(layer>0) next_layer_neuron_error[i]= 0;
     for(int j=0;j<n_outputs_cl;j++) {
+      pthread_mutex_lock(&backpropagation_mutex);
       // Compute error derivites for the weights ... (dE/w_{i,j}).
       double previous_ij= get_matrix_value(batch[0].delta_w, j, i);
       set_matrix_value(batch[0].delta_w, j, i, previous_ij+observed_output[layer][i]*neuron_error[j]); 
@@ -43,6 +44,7 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
       // Compute error derivites for the biases.  Conceptually similar to a connection with a neuron of constant output (==1).
       // see: http://stackoverflow.com/questions/3775032/how-to-update-the-bias-in-neural-network-backpropagation.
       if(i==0) batch[0].delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
+      pthread_mutex_unlock(&backpropagation_mutex);
   
       // Compute error for neurons in an internal 'hidden' layer [dE/dy_{i}].
       // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
@@ -77,9 +79,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
     if(layer>0) {
       next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
     }
-    pthread_mutex_lock(&backpropagation_mutex);
     compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer])); 
-    pthread_mutex_unlock(&backpropagation_mutex);
 
     Free(neuron_error);
     if(layer>0) neuron_error= next_layer_neuron_error;
