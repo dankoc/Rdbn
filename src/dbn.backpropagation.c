@@ -77,7 +77,9 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
     if(layer>0) {
       next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
     }
+    pthread_mutex_lock(&backpropagation_mutex);
     compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer])); 
+    pthread_mutex_unlock(&backpropagation_mutex);
 
     Free(neuron_error);
     if(layer>0) neuron_error= next_layer_neuron_error;
@@ -132,16 +134,17 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   n_threads= (dbn[0].batch_size<n_threads)?dbn[0].batch_size:n_threads;
   int n_per_batch= floor(dbn[0].batch_size/n_threads);
   int remainder= (dbn[0].batch_size%n_threads);
+  delta_w_t *batch= alloc_dwt_from_dbn(dbn);
 	  
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-  
+  pthread_mutex_init(&backpropagation_mutex, NULL);
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].dbn= dbn;
     pta[i].input= input;
     pta[i].expected_output= expected_output;
-    pta[i].batch= alloc_dwt_from_dbn(dbn);
+    pta[i].batch= batch;
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
 
     pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
@@ -152,20 +155,11 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   }
 
   // Wait for threads to complete, and combine the data into a single vector.
-  delta_w_t *batch;
   for(int i=0;i<n_threads;i++) {
     pthread_join(threads[i], NULL);
-	
-    if(i==0) {
-      batch= pta[i].batch;
-    }
-    else {
-      for(int j=0;j<dbn[0].n_rbms;j++) {
-        sum_delta_w(&(batch[j]), &(pta[i].batch[j]));
-      }
-      free_delta_w_ptr(pta[i].batch, dbn[0].n_rbms);
-    }
   }
+  Free(pta); Free(threads);
+  pthread_mutex_destroy(&rbm_mutex);
 
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
@@ -177,7 +171,6 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
     }
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
-  Free(pta); Free(threads);
 
 }
 /////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
