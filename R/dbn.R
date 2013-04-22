@@ -184,7 +184,7 @@ setMethod("dbn.set_learning_rate", c(dbn="dbn"),
     dbn@learning_rate<- learning_rate
     if(NROW(learning_rate)== 1) learning_rate <- rep(learning_rate, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
-      dbn@network[[i]]@learning_rate= learning_rate[i]
+      dbn@network[[i]]@learning_rate= as.real(learning_rate[i])
     }
     return(dbn)
 })
@@ -207,8 +207,8 @@ setMethod("dbn.set_momentum_decay", c(dbn="dbn"),
 
     if(NROW(momentum_decay)== 1) momentum_decay <- rep(momentum_decay, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
- #     dbn@network[[i]]@use_momentum= !is.na(momentum_decay[i])#TRUE if specified.
-      dbn@network[[i]]@momentum_decay= momentum_decay[i]
+      dbn@network[[i]]@use_momentum= !is.na(momentum_decay[i])#TRUE if specified.
+      dbn@network[[i]]@momentum_decay= as.real(momentum_decay[i])
     }
     return(dbn)
 })
@@ -230,8 +230,8 @@ setMethod("dbn.set_weight_cost", c(dbn="dbn"),
 
     if(NROW(weight_cost)== 1) weight_cost <- rep(weight_cost, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
-      dbn@network[[i]]@use_l2_penalty= TRUE
-      dbn@network[[i]]@weight_cost= weight_cost[i]
+      dbn@network[[i]]@use_l2_penalty= !is.na(weight_cost[i])
+      dbn@network[[i]]@weight_cost= as.real(weight_cost[i])
     }
     return(dbn)
 })
