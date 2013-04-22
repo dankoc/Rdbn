@@ -147,6 +147,8 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
 	  
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
+  pthread_mutex_init(&backpropagation_mutex, NULL);
+  
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].dbn= dbn;
@@ -189,6 +191,8 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
   Free(pta); Free(threads);
+  pthread_mutex_destroy(&backpropagation_mutex);
+
 }
 /////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
 
