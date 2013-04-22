@@ -100,7 +100,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
 }
 
 void *dbn_backprop_partial_minibatch(void *ptab) {
-  pthread_mutex_lock(&backpropagation_mutex);
+//  pthread_mutex_lock(&backpropagation_mutex);
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
   for(int i=0;i<pta[0].do_n_elements;i++) {
     backpropagation(pta[0].dbn, pta[0].input, pta[0].expected_output, pta[0].batch);
@@ -109,7 +109,7 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
     pta[0].input+= pta[0].dbn[0].n_inputs;
     pta[0].expected_output+= pta[0].dbn[0].n_outputs;
   }
-  pthread_mutex_unlock(&backpropagation_mutex);
+//  pthread_mutex_unlock(&backpropagation_mutex);
 }
 
 /////////////IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
