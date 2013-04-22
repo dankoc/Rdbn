@@ -84,7 +84,7 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
       pthread_mutex_lock(&backpropagation_mutex);
       next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
       pthread_mutex_unlock(&backpropagation_mutex);
-	}
+    }
     compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer])); 
 
     Free(neuron_error);
