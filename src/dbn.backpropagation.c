@@ -175,7 +175,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
     }
     else {
       for(int j=0;j<dbn[0].n_rbms;j++) {
-        sum_delta_w(batch, &(pta[i].batch[j]));
+        sum_delta_w(&(batch[j]), &(pta[i].batch[j]));
       }
       free_delta_w_ptr(pta[i].batch, dbn[0].n_rbms);
     }
