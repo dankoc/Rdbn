@@ -24,9 +24,9 @@ data <- t(train[,c(2:NCOL(train))])/255
 label <- train[,1]
 
 ## Train a deep belief network.
-require(Rdbn)                                   #Hinton's Science paper used --> momentum_decay= 0.9
-db <- dbn(n_layers= 4, layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.99, learning_rate=0.1, weight_cost= 2e-5)
-db <- dbn.pretrain(db, data= data, n_epocs= 10, n_threads=8) ## Hilton's Science paper used 100.
+require(Rdbn)
+db <- dbn(n_layers= 4, layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-5)
+db <- dbn.pretrain(db, data= data, n_epocs= 100, n_threads=8)
 
 save.image("pretrained.RData")
 
