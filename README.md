@@ -50,7 +50,6 @@ To train a classifier on the Vehicle dataset in ML bench, use the following:
     pred_dbn <- dbn.predict(db, data=x[,testIndx], n_threads=8)
 
     print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW(y[testIndx])))
-    ## ~71% with set.seed(34)
 
     ###
     ## Alternatively, network training strategies can be applied independently.  
@@ -64,7 +63,6 @@ To train a classifier on the Vehicle dataset in ML bench, use the following:
     pred_dbn <- dbn.predict(db_refine, data=x[,testIndx], n_threads=8)
 
     print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW(y[testIndx])))
-    ## ~75% with set.seed(34)
 
 See files in the 'Rdbn/test_functions/' folder for additional examples of how to interact with the package in R.  Vignette and reference manual coming soon!
 
