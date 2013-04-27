@@ -4,6 +4,8 @@ Fast code to learn deep belief networks in R.
 
 Rdbn was written to allow training and classification using restricted Boltzmann machines (RBMs) and deep belief networks (DBNs) in an R environment.  
 
+Rdbn was written quickly, and is still actively undergoing testing and optimization.  When I'm confident that the package is reasonably bug-free, it will be submitted to CRAN.
+
 Rdbn supports:
 * Pre-training a deep belief network using ideas from 'contrastive divergence'.
 * Fine-tuning the network for classification tasks using the backpropagation algorithm.
