@@ -16,8 +16,6 @@
 ## Learning algorithms that have been tried on it and their levels of success, can be found at 
 ## http://yann.lecun.com/exdb/mnist/index.html.
 
-setwd("/home/dankoc/testData/MNIst_db_handwriting/csv")
-
 ## Read data from csv.
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
 data <- t(train[,c(2:NCOL(train))])/255
