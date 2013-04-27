@@ -16,14 +16,58 @@ Installing
 ----------
 In a UNIX based OS with R and dev tools installed, one can simply type: 
 
-  R CMD install Rdbn/
+    R CMD install Rdbn/
 
 R should take care of the rest.  Note that on OS X developer tools must be installed in order to have a C compiler.  Windows is not supported at present.  This package is intended for eventual submission to CRAN, and Windows support will most likely be added at that time.
 
 
 Using the package
 -----------------
-See the examples in the 'Rdbn/test_functions/' folder for insight on how to interact with the package in R.  Vignette and reference manual coming soon!
+To train a classifier on the Vehicle dataset in ML bench, use the following:
+
+    require(mlbench)
+    data(Vehicle)
+    require(Rdbn)
+    set.seed(34) ## Different starting points can result in different performance.
+
+    ###
+    ## Transform covariates for optimal classification by a neural network.
+    x <- t(Vehicle[,c(1:18)])
+    y <- Vehicle[,19]
+    for(i in c(1:(NCOL(Vehicle)-1))) {
+      x[i,] <- logistic_function(scale(Vehicle[,i])*2) ## 2 is an arbitrarily chosen value... 
+    }
+
+    ###
+    ## Divide the data into training and test sets.
+    trainIndx <- sample(c(1:NCOL(x)), NCOL(x)*0.8, replace=FALSE)
+    testIndx <- c(1:NCOL(x))[!(c(1:NCOL(x)) %in% trainIndx)]
+
+    ###
+    ## Quick & Simple calls to train a classifier using deep belief networks.
+    db <- dbn(x= x[,trainIndx], y= y[trainIndx], n_layers= 3, layer_sizes= c(18,75,50), 
+      batch_size=100, momentum_decay= 0.9, learning_rate=0.5, weight_cost= 0.1, n_threads=8)
+    pred_dbn <- dbn.predict(db, data=x[,testIndx], n_threads=8)
+
+    print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW(y[testIndx])))
+    ## ~71% with set.seed(34)
+
+    ###
+    ## Alternatively, network training strategies can be applied independently.  
+    ## This provides additional control over training parameters, and can result in better performance.
+    db <- dbn(n_layers= 3, layer_sizes= c(18,75,50), batch_size=100, cd_n=1, momentum_decay= 0.9, 
+      learning_rate=0.5, weight_cost= 0.1)
+    db <- dbn.pretrain(db, data= x[,trainIndx], n_epocs= 50, n_threads=8)
+
+    ## Refine using backpropagation with new learning parameters.
+    db_refine <- dbn.refine(db, data= x[,trainIndx], labels= y[trainIndx], n_epocs=100, rate_mult=10, n_threads=8)
+    pred_dbn <- dbn.predict(db_refine, data=x[,testIndx], n_threads=8)
+
+    print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW(y[testIndx])))
+    ## ~75% with set.seed(34)
+
+See files in the 'Rdbn/test_functions/' folder for additional examples of how to interact with the package in R.  Vignette and reference manual coming soon!
+
 
 
 Useful References
