@@ -20,8 +20,54 @@
  *  Functions to fix the output nodes to and sample values at the input nodes
  *
  ************************************************************************************/
-extern inline void clamp_output(rbm_t *rbm, double *output, double *resulting_input);
-extern inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output);
+/************************************************************************************
+ *
+ *  Functions to fix the output nodes to and sample values at the input nodes
+ *
+ ************************************************************************************/
+ double get_input_prob(rbm_t *rbm, int input_index, double *output) {
+  double prob= rbm[0].bias_inputs[input_index];
+  for(int i=0;i<rbm[0].n_outputs;i++)
+    prob+= output[i]*get_matrix_value(rbm[0].io_weights, i, input_index);
+  return(logistic_function(prob));
+}
+ 
+/*
+ *  Fixes the output nodes to the specified states, and samples the input.
+ *
+ *  Arguments: 
+ *    rbm    --> Information on the boltzman machine.
+ *    output --> The value of all output nodes ... Assumed to be a probability (i.e. [0,1], inclusive).
+ */
+void clamp_output(rbm_t *rbm, double *output, double *resulting_input) {
+  for(int i=0;i<rbm[0].n_inputs;i++) // Get prob. of input node by summing over output states.
+	resulting_input[i]= get_input_prob(rbm, i, output);
+}
+
+/************************************************************************************
+ *
+ *  Functions to fix the output nodes to and sample values at the input nodes
+ *
+ ************************************************************************************/
+ double get_output_prob(rbm_t *rbm, int output_index, double *input) {
+  double prob= rbm[0].bias_outputs[output_index];
+  for(int i=0;i<rbm[0].n_inputs;i++)
+    prob+= input[i]*get_matrix_value(rbm[0].io_weights, output_index, i);
+  return(logistic_function(prob));
+}
+ 
+/*
+ *  Fixes the input nodes to the specified states, and samples the output.
+ *
+ *  Arguments: 
+ *    rbm    --> Information on the boltzman machine.
+ *    input  --> The value of all input nodes ... Assumed to be a probability (i.e. [0,1], inclusive).
+ */
+void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
+  for(int i=0;i<rbm[0].n_outputs;i++) // Get prob. of input node by summing over output states.
+	resulting_output[i]= get_output_prob(rbm, i, input);
+}
+
 
 /*************************************************************************************
  *  Functions of initiatlizing, allocating, and free-ing rbm_t.
