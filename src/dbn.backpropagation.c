@@ -176,35 +176,30 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   }
 
   // Wait for threads to complete, and combine the data into a single vector.
-  delta_w_t *batch;
   for(int i=0;i<n_threads;i++) {
     pthread_join(threads[i], NULL);
-	
-    // It's ~2x faster to prepare independent batch examples and sum after, than to use a mutex lock.
-    if(i==0) {
-      batch= pta[i].batch;
-    }
-    else {
-      for(int j=0;j<dbn[0].n_rbms;j++) {
-        sum_delta_w(&(batch[j]), &(pta[i].batch[j]));
-      }
-      free_delta_w_ptr(pta[i].batch, dbn[0].n_rbms);
-    }
   }
-  Free(pta); Free(threads);
-//  pthread_mutex_destroy(&rbm_mutex);
+  Free(threads);
 
   // Update the weights.
+  delta_w_t **batch= (delta_w_t**)Calloc(n_threads, delta_w_t*);
   for(int i=0;i<dbn[0].n_rbms;i++) {
+    for(int k=0;k<n_threads;k++)
+      batch[i]= pta[k].batch+i;
+
     if(dbn[0].rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
-      apply_momentum_correction(&(dbn[0].rbms[i]), &(batch[i]));
+      apply_momentum_correction(&(dbn[0].rbms[i]), batch, n_threads);
     }
     else {
-      apply_delta_w(&(dbn[0].rbms[i]), &(batch[i]));
+      apply_delta_w(&(dbn[0].rbms[i]), batch, n_threads);
     }
   }
-  free_delta_w_ptr(batch, dbn[0].n_rbms);
+  
+  for(int i=0;i<n_threads;i++)
+    free_delta_w_ptr(pta[i].batch, dbn[0].n_rbms);
 
+  Free(batch);
+  Free(pta); 
 }
 /////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
 
