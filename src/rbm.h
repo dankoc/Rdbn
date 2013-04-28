@@ -42,13 +42,39 @@ typedef struct {
   // Applying delta_w uses the parameters specified here.
   int batch_size;
 } delta_w_t;
-
+/*
 #define logistic_function(value) (1/ (1+ exp(-value)))
 #define rbm_sample_state(prob) (((prob)>(runif(0.0, 1.0)))?0:1)
+*/
 
-void clamp_input(rbm_t *rbm, double *input, double *resulting_output);
-void clamp_output(rbm_t *rbm, double *output, double *resulting_input);
+double rbm_sample_state(double prob) {
+  return(prob>runif(0.0, 1.0)?1:0);
+}
 
+double logistic_function(double value) {
+  return(1/ (1+ exp(-value)));
+}
+
+
+inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
+  for(int i=0;i<rbm[0].n_outputs;i++) {// Get prob. of input node by summing over output states.
+    resulting_output[i]= rbm[0].bias_outputs[i];
+    for(int j=0;j<rbm[0].n_inputs;j++) {
+      resulting_output[i]+= input[j]*get_matrix_value(rbm[0].io_weights, i, j);
+    }
+	resulting_output[i]= logistic_function(resulting_output[i]);
+  }
+}
+
+inline void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
+  for(int i=0;i<rbm[0].n_inputs;i++) {// Get prob. of input node by summing over output states.
+    resulting_input[i]= rbm[0].bias_inputs[i];
+    for(int j=0;j<rbm[0].n_outputs;j++) {
+      resulting_input[i]+= output[j]*get_matrix_value(rbm[0].io_weights, j, i);
+	}
+	resulting_input[i]= logistic_function(resulting_input[i]);
+  }
+}
 
 rbm_t *alloc_rbm(int n_inputs, int n_outputs);
 void free_rbm(rbm_t *rbm);
