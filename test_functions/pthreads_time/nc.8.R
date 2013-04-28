@@ -16,7 +16,7 @@ testIndx <- c(1:NCOL(x))[!(c(1:NCOL(x)) %in% trainIndx)]
 ###
 ## Quick & Simple calls to train a classifier using deep belief networks.
 db <- dbn(n_layers= 3, layer_sizes= c(18,75,50), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.5, weight_cost= 0.1)
-db <- dbn.pretrain(db, data= x[,trainIndx], n_epocs= 5, n_threads=1)
+db <- dbn.pretrain(db, data= x[,trainIndx], n_epocs= 5, n_threads=8)
 
 ## refine model with new learning parameters.
 db@batch_size <- as.integer(100)
