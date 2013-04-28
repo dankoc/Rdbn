@@ -18,8 +18,13 @@
 
 ## Read data from csv.
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
+
+## Balance training set -- Use 10 examples of each image during each mini-batch.  
+min_examples <- min(summary(as.factor(label)))
+
 data <- t(train[,c(2:NCOL(train))])/255
 label <- train[,1]
+
 
 ## Train a deep belief network.
 require(Rdbn)

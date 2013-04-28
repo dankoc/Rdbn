@@ -33,7 +33,7 @@ double **dbn_compute_store_layers(dbn_t *dbn, double *input) {
   return(layer_output);
 }
 
-double *dbn_compute(dbn_t *dbn, double *input) {
+inline double *dbn_compute(dbn_t *dbn, double *input) {
   double *current_input= vector_copy(input, dbn[0].n_inputs);
   double *layer_output;
   for(int i=0;i<dbn[0].n_rbms;i++) {
