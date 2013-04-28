@@ -74,21 +74,19 @@ void apply_delta_w(rbm_t *rbm, delta_w_t **dw, int n_dw);
 void initial_momentum_step(rbm_t *rbm);
 void apply_momentum_correction(rbm_t *rbm, delta_w_t **dw, int n_dw);
 
+void sum_delta_w(delta_w_t *batch, delta_w_t *dw);
 void free_delta_w_ptr(delta_w_t *dw, int n);
+
+rbm_t *rbm_r_to_c(SEXP rbm_r);
+rbm_t *rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs);
 void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, int n_threads);
 
 delta_w_t *alloc_dwt_from_rbm(rbm_t *rbm);
 
-rbm_t *rbm_r_to_c(SEXP rbm_r);
-rbm_t *rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs);
-
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 
 // MUTEX for training...
-#ifndef Win32
-#include <pthread.h>
 pthread_mutex_t rbm_mutex;
-#endif
 
 #endif
 

@@ -112,6 +112,15 @@ void free_delta_w_ptr(delta_w_t *dw, int n) {
   Free(dw);
 }
 
+
+/* Takes the sum of two delta_w_t variables, batch and dw.  Sum returned in batch. */
+void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
+  matrix_sum(batch[0].delta_w, dw[0].delta_w);
+  vector_sum(batch[0].delta_output_bias, dw[0].delta_output_bias, batch[0].delta_w[0].ncols);
+  if(batch[0].input_bias_allocated && dw[0].input_bias_allocated)
+    vector_sum(batch[0].delta_input_bias, dw[0].delta_input_bias, batch[0].delta_w[0].nrows);
+}
+
 /************************************************************************************
  *
  *  Converts rbm S4 classes (in R) into C structures ...
