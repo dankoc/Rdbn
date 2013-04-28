@@ -11,22 +11,42 @@ typedef struct {
 #define get_matrix_value(m, col, row) (m[0].matrix[col*m[0].nrows+row])
 #define set_matrix_value(m, col, row, value) (m[0].matrix[col*m[0].nrows+row]= value)
 
+
+inline void hadamard_product(matrix_t *m1, matrix_t *m2) {
+  for(int i=0;i<(m1[0].ncols*m1[0].nrows);i++)
+	  m1[0].matrix[i] *= m2[0].matrix[i];
+}
+
+inline void matrix_sum(matrix_t *m1, matrix_t *m2) {
+  for(int i=0;i<(m1[0].ncols*m1[0].nrows);i++)
+	  m1[0].matrix[i] += m2[0].matrix[i];
+}
+
+inline void vector_product(double *vector1, double *vector2, int n) {
+  for(int i=0;i<n;i++)
+    vector1[i] *= vector2[i];
+}
+
+inline void vector_sum(double *vector1, double *vector2, int n) {
+  for(int i=0;i<n;i++)
+    vector1[i] += vector2[i];
+}
+
+inline double *vector_copy(double *vector, int n){
+  double *v_copy= (double*)Calloc(n, double);
+  for(int i=0;i<n;i++)
+    v_copy[i]= vector[i];
+  return(v_copy);
+}
+
+/* Basic allocation and free functions don't need to be inlined. */
 matrix_t *alloc_matrix(int ncols, int nrows);
 matrix_t *R_alloc_matrix(int ncols, int nrows);
 void init_matrix(matrix_t *m, double init_value);
 void init_matrix_rnorm(matrix_t *m, double mean, double varience);
 void free_matrix(matrix_t *m);
 
-void hadamard_product(matrix_t *m1, matrix_t *m2); // m1*m2; result in m1.
-void matrix_sum(matrix_t *m1, matrix_t *m2); // m1+m2; result in m1.
-//void matrix_dif(matrix_t *m1, matrix_t *m2); // m1-m2; result in m1.
-//void times_scalar(matrix_t *m1, double a); // a*m1; result in m1.
-
 void init_vector(double *vector, int n, double init_value);
-void vector_product(double *vector1, double *vector2, int n);
-void vector_sum(double *vector1, double *vector2, int n);
-double *vector_difference_cpy(double *vector1, double *vector2, int n);
-double *vector_copy(double *vector, int n);
 
 #endif
 

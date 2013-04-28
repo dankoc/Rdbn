@@ -15,6 +15,21 @@
 #include "rbm.h"
 #include "matrix_functions.h"
 
+
+/* 
+ * Takes the sum of two delta_w_t variables, batch and dw.  Sum returned in batch. 
+ *
+ * Previously defined in rbm.c.  Here needed just for backprop.
+ */
+static inline void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
+  matrix_sum(batch[0].delta_w, dw[0].delta_w);
+  vector_sum(batch[0].delta_output_bias, dw[0].delta_output_bias, batch[0].delta_w[0].ncols);
+  if(batch[0].input_bias_allocated && dw[0].input_bias_allocated)
+    vector_sum(batch[0].delta_input_bias, dw[0].delta_input_bias, batch[0].delta_w[0].nrows);
+}
+
+
+
 /****************************************************************************
  *
  * Backpropagation.
