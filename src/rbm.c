@@ -15,7 +15,7 @@
 #include "matrix_functions.h"
 
 
-extern inline double rbm_sample_state(double prob);
+//extern inline double rbm_sample_state(double prob);
 extern inline double logistic_function(double value);
 
 /************************************************************************************

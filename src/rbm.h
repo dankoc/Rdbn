@@ -43,9 +43,7 @@ typedef struct {
   int batch_size;
 } delta_w_t;
 
-inline double rbm_sample_state(double prob) {
-  return(prob>runif(0.0, 1.0)?1:0);
-}
+#define rbm_sample_state(prob) (prob>runif(0.0, 1.0)?1:0)
 
 inline double logistic_function(double value) {
   return(1/ (1+ exp(-value)));
