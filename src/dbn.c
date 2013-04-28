@@ -24,7 +24,7 @@
 /*
  * Shortcut to allocate memory and clamps the given input layer.  Returns a new *double with the output of that layer.
  */
-extern inline double *get_layer_outputs(dbn_t *dbn, int layer, double *input);
+extern inline double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs);
 
 /*************************************************************************************
  *  Functions of initiatlizing, allocating, and free-ing rbm_t.
