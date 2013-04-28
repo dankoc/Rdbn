@@ -70,9 +70,9 @@ rbm_t *alloc_rbm(int n_inputs, int n_outputs);
 void free_rbm(rbm_t *rbm);
 void init_rbm(rbm_t *rbm, double learning_rate, int batch_size, int cd_n, double expected_frequency_on);
 
-void apply_delta_w(rbm_t *rbm, delta_w_t *dw);
+void apply_delta_w(rbm_t *rbm, delta_w_t **dw, int n_dw);
 void initial_momentum_step(rbm_t *rbm);
-void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw);
+void apply_momentum_correction(rbm_t *rbm, delta_w_t **dw, int n_dw);
 
 void free_delta_w_ptr(delta_w_t *dw, int n);
 void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, int n_threads);

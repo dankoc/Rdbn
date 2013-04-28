@@ -23,23 +23,29 @@
  *
  * Also includes 
  */
-void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
+void apply_delta_w(rbm_t *rbm, delta_w_t **dw, int n_dw) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
-    rbm[0].bias_outputs[i] += rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
+    double delta_output_bias= 0;
+    for(int k=0;k<n_dw;k++) delta_output_bias+= dw[k][0].delta_output_bias[i];
+    rbm[0].bias_outputs[i] += rbm[0].learning_rate*delta_output_bias/(double)dw[0][0].batch_size; 
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
-      double delta_w_i_j= get_matrix_value(dw[0].delta_w, i, j);
+      double delta_w_i_j= 0;
+      for(int k=0;k<n_dw;k++) delta_w_i_j+= get_matrix_value(dw[k][0].delta_w, i, j);
 	  
       // If using L2 penalty (a.k.a "weight decay"), apply that here.
       if(rbm[0].use_l2_penalty) 
         delta_w_i_j-= rbm[0].weight_cost*previous_w_i_j; // Is this the right sign!?
 		
-      double new_w_i_j= previous_w_i_j+rbm[0].learning_rate*delta_w_i_j/(double)dw[0].batch_size;
+      double new_w_i_j= previous_w_i_j+rbm[0].learning_rate*delta_w_i_j/(double)dw[0][0].batch_size;
 
       set_matrix_value(rbm[0].io_weights, i, j, new_w_i_j);
 	  
-      if(i==0 && rbm[0].update_input_bias) // Only update once... and if everything says to update.
-        rbm[0].bias_inputs[j] += rbm[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
+      if(i==0 && rbm[0].update_input_bias) {// Only update once... and if everything says to update.
+        double delta_input_bias=0;
+        for(int k=0;k<n_dw;k++) delta_input_bias+= dw[k][0].delta_input_bias[j];
+        rbm[0].bias_inputs[j] += rbm[0].learning_rate*delta_input_bias/(double)dw[0][0].batch_size;
+      }
     }
   }
 }
@@ -73,18 +79,22 @@ void initial_momentum_step(rbm_t *rbm) {
   }
 }
  
-void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
+void apply_momentum_correction(rbm_t *rbm, delta_w_t **dw, int n_dw) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
-    rbm[0].bias_outputs[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
-    rbm[0].output_momentum[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
+    double delta_output_bias= 0;
+    for(int k=0;k<n_dw;k++) delta_output_bias+= dw[k][0].delta_output_bias[i];
+	delta_output_bias*= rbm[0].learning_rate/(double)dw[0][0].batch_size; 
+    rbm[0].bias_outputs[i]+= delta_output_bias;
+    rbm[0].output_momentum[i]+= delta_output_bias;
     for(int j=0;j<rbm[0].n_inputs;j++) {
-      double step= get_matrix_value(dw[0].delta_w, i, j); // delta_w_i_j
+      double step= 0;
+      for(int k=0;k<n_dw;k++) step+= get_matrix_value(dw[k][0].delta_w, i, j);
       double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
 
       // If using L2 penalty (a.k.a "weight decay"), apply that here.
       if(rbm[0].use_l2_penalty) 
         step-= rbm[0].weight_cost*previous_w_i_j; // Do I apply this to the momentum term as well, or just the correction?!
-      step*= rbm[0].learning_rate/(double)dw[0].batch_size; // For the momentum method ... do I still scale by the batch size?!
+      step*= rbm[0].learning_rate/(double)dw[0][0].batch_size; // For the momentum method ... do I still scale by the batch size?!
 
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
       // \theta_t' was applied before taking the step.
@@ -96,8 +106,11 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
       set_matrix_value(rbm[0].momentum, i, j, previous_momentum_i_j+step);
 
       if(i==0 && rbm[0].update_input_bias) { // Only update once... and if everything says to update.
-        rbm[0].bias_inputs[j]+= rbm[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
-        rbm[0].input_momentum[j]+= rbm[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
+        double delta_input_bias=0;
+        for(int k=0;k<n_dw;k++) delta_input_bias+= dw[k][0].delta_input_bias[j];
+        delta_input_bias*= rbm[0].learning_rate/(double)dw[0][0].batch_size;
+        rbm[0].bias_inputs[j]+= delta_input_bias;
+        rbm[0].input_momentum[j]+= delta_input_bias;
       }
     }
   }
@@ -141,9 +154,7 @@ static inline void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t
   // Put all of this together so that only 1 loop is required ...
   // Compute  ... in this computation, sample random states (?!).
   // Compute <vihj>_data-<vihj>_recon and update batch.
-  pthread_mutex_lock(&rbm_mutex);
   compute_delta_w(rbm, batch, init_output_recon, input_example, output_recon, input_recon);
-  pthread_mutex_unlock(&rbm_mutex);
 
   Free(init_output_recon); Free(output_recon); Free(input_recon);
 }
@@ -185,39 +196,43 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
   n_threads= (rbm[0].batch_size<n_threads)?rbm[0].batch_size:n_threads;
   int n_per_batch= floor(rbm[0].batch_size/n_threads);
   int remainder= (rbm[0].batch_size%n_threads);
-  	  
-  delta_w_t *batch= alloc_dwt_from_rbm(rbm);
+
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-  pthread_mutex_init(&rbm_mutex, NULL);
+//  pthread_mutex_init(&rbm_mutex, NULL);
   for(int i=0;i<n_threads;i++) {
     // Set up data passed to partial_minibatch()
     pta[i].rbm= rbm;
     pta[i].input= input_example;
     pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
-    pta[i].batch= batch;
+    pta[i].batch= alloc_dwt_from_rbm(rbm);
     pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
     // Increment pointers for the next thread.
     input_example+= pta[i].do_n_elements*rbm[0].n_inputs;
   }
 
   // Wait for threads to complete, and combine the data into a single vector.
+  delta_w_t **batch= (delta_w_t**)Calloc(n_threads, delta_w_t*);
   for(int i=0;i<n_threads;i++) {
     pthread_join(threads[i], NULL); // Wait for thread to finish.
+	batch[i] = pta[i].batch;
   }
-  Free(pta); Free(threads);
-  pthread_mutex_destroy(&rbm_mutex);
+  Free(threads);
+//  pthread_mutex_destroy(&rbm_mutex);
    
   // Take a step in teh direction of the gradient.
   if(rbm[0].use_momentum) { // Correct and update momentum term.
-    apply_momentum_correction(rbm, batch); 
+    apply_momentum_correction(rbm, batch, n_threads); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
-    apply_delta_w(rbm, batch);
+    apply_delta_w(rbm, batch, n_threads);
   }
   
   // Cleanup temporary variables ...  
-  free_delta_w_ptr(batch, 1); 
+  for(int i=0;i<n_threads;i++) {
+    free_delta_w_ptr(pta[i].batch, 1); 
+  }
+  Free(batch); Free(pta);
 }
  
 void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
@@ -235,10 +250,10 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
   
   // Take a step in teh direction of the gradient.
   if(rbm[0].use_momentum) { // Correct and update momentum term.
-    apply_momentum_correction(rbm, pta.batch); 
+    apply_momentum_correction(rbm, &(pta.batch), 1); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
-    apply_delta_w(rbm, pta.batch);
+    apply_delta_w(rbm, &(pta.batch), 1);
   }
   
   // Cleanup temporary variables ...  
