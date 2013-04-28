@@ -43,10 +43,13 @@ typedef struct {
   int batch_size;
 } delta_w_t;
 
-double rbm_sample_state(double prob);
-double logistic_function(double value);
+inline double rbm_sample_state(double prob) {
+  return(prob>runif(0.0, 1.0)?1:0);
+}
 
-
+inline double logistic_function(double value) {
+  return(1/ (1+ exp(-value)));
+}
 
 
 inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {

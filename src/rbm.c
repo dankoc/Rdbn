@@ -15,13 +15,8 @@
 #include "matrix_functions.h"
 
 
-double rbm_sample_state(double prob) {
-  return(prob>runif(0.0, 1.0)?1:0);
-}
-
-double logistic_function(double value) {
-  return(1/ (1+ exp(-value)));
-}
+extern inline double rbm_sample_state(double prob);
+extern inline double logistic_function(double value);
 
 /************************************************************************************
  *
