@@ -20,7 +20,7 @@ typedef struct {
  * Shortcut to allocate memory and clamps the given input layer.  Returns a new *double with the output of that layer.
  */
 inline double *get_layer_outputs(dbn_t *dbn, int layer, double *input) {
-  double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs*n_inputs,double);
+  double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs,double);
   double *layer_output_ptr= layer_output;
   clamp_input(&(dbn[0].rbms[layer]), input, layer_output);
   return(layer_output);
