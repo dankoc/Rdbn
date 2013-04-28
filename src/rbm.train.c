@@ -103,7 +103,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   }
 }
 
-void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
+static inline void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
     batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {

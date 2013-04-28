@@ -50,7 +50,7 @@ inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
   for(int i=0;i<rbm[0].n_outputs;i++) {// Get prob. of input node by summing over output states.
     resulting_output[i]= rbm[0].bias_outputs[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
-      resulting_output[i]= input[j]*get_matrix_value(rbm[0].io_weights, i, j);
+      resulting_output[i]+= input[j]*get_matrix_value(rbm[0].io_weights, i, j);
     }
 	resulting_output[i]= logistic_function(resulting_output[i]);
   }
