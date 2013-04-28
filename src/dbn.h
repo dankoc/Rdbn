@@ -31,7 +31,6 @@ SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_label
 SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r);
 SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r);
 
-double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs);
 delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn);
 dbn_t *dbn_r_to_c(SEXP dbn_r);
 
