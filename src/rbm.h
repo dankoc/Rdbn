@@ -45,10 +45,6 @@ typedef struct {
 
 #define rbm_sample_state(prob) (prob>runif(0.0, 1.0)?1:0)
 #define logistic_function(value) (1/ (1+exp(-value)))
-/*inline double logistic_function(double value) {
-  return(1/ (1+ exp(-value)));
-}*/
-
 
 inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
   for(int i=0;i<rbm[0].n_outputs;i++) {// Get prob. of input node by summing over output states.

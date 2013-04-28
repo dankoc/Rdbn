@@ -14,10 +14,6 @@
 #include "rbm.h"
 #include "matrix_functions.h"
 
-
-//extern inline double rbm_sample_state(double prob);
-//extern inline double logistic_function(double value);
-
 /************************************************************************************
  *
  *  Functions to fix the output nodes to and sample values at the input nodes
