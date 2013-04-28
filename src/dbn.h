@@ -16,13 +16,20 @@ typedef struct {
   int batch_size;         // Specifies the batch size for training during backprop.
 } dbn_t;
 
+/*
+ * Shortcut to allocate memory and clamps the given input layer.  Returns a new *double with the output of that layer.
+ */
+inline double *get_layer_outputs(dbn_t *dbn, int layer, double *input) {
+  double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs*n_inputs,double);
+  double *layer_output_ptr= layer_output;
+  clamp_input(&(dbn[0].rbms[layer]), input, layer_output);
+  return(layer_output);
+}
+
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r);
 SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r);
 SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r);
-
-double **dbn_compute_store_layers(dbn_t *dbn, double *input);
-//double *dbn_compute(dbn_t *dbn, double *input);
 
 double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs);
 delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn);

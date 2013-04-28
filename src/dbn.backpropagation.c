@@ -15,7 +15,6 @@
 #include "rbm.h"
 #include "matrix_functions.h"
 
-
 /****************************************************************************
  *
  * Backpropagation.
@@ -28,7 +27,17 @@
  * (NOTE: May require Couresea account).
  */
 
-void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error, delta_w_t *batch) {
+ 
+static inline double **dbn_compute_store_layers(dbn_t *dbn, double *input) {
+  double **layer_output= (double**)Calloc(dbn[0].n_layers,double*);
+  layer_output[0]= vector_copy(input, dbn[0].n_inputs);
+  for(int i=0;i<dbn[0].n_rbms;i++) {
+    layer_output[i+1]= get_layer_outputs(dbn, i, layer_output[i], 1);
+  }
+  return(layer_output);
+}
+
+static inline void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error, delta_w_t *batch) {
   int n_outputs_cl= dbn[0].rbms[layer].n_outputs; // # outputs in current layer
   int n_inputs_cl= dbn[0].rbms[layer].n_inputs;   // # inputs in current layer
 
@@ -53,7 +62,7 @@ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double
 }
  
 /* Returns the error derivitives for a particular example.  Equilavent to do_batch_member in rbm.c. */
-void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w_t *batch) {
+static inline void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w_t *batch) {
   double **observed_output= dbn_compute_store_layers(dbn, input); // Compute the output of the neural network.
   double *next_layer_neuron_error, *neuron_error; // Stores dE/dz.
   

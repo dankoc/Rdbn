@@ -126,7 +126,7 @@ static inline void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_ou
  *    
  *
  */
-void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t *batch) {
+static inline void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t *batch) {
  
   // Run Gibbs sampling for CDn steps.
   double *init_output_recon= (double*)Calloc(rbm[0].n_outputs, double);

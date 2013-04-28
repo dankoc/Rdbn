@@ -20,6 +20,12 @@
 #include "rbm.h"
 #include "matrix_functions.h"
 
+
+/*
+ * Shortcut to allocate memory and clamps the given input layer.  Returns a new *double with the output of that layer.
+ */
+extern inline double *get_layer_outputs(dbn_t *dbn, int layer, double *input);
+
 /*************************************************************************************
  *  Functions of initiatlizing, allocating, and free-ing rbm_t.
  */
@@ -56,21 +62,6 @@ delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn) {
   }
   return(batch);
 }
-
-/*
- * Clamps the input for a given layer.  Returns a new *double with the output of that layer.
- */
-double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs) {
-  double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs*n_inputs,double);
-  double *layer_output_ptr= layer_output;
-  for(int i=0;i<n_inputs;i++) { // One-by-one fill in the outputs.
-    clamp_input(&(dbn[0].rbms[layer]), input, layer_output_ptr);
-	input+= dbn[0].rbms[layer].n_inputs; // Increment pointers.
-	layer_output_ptr+= dbn[0].rbms[layer].n_outputs;
-  }
-  return(layer_output);
-}
-
 
 /************************************************************************************
  * 

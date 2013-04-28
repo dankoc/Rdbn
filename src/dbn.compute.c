@@ -22,18 +22,7 @@
  * For a given input, computes the output layer.
  */
  
-// This version stores intermediate layers, and returns a double**.  
-// Perfect for use with backpropagation!
-double **dbn_compute_store_layers(dbn_t *dbn, double *input) {
-  double **layer_output= (double**)Calloc(dbn[0].n_layers,double*);
-  layer_output[0]= vector_copy(input, dbn[0].n_inputs);
-  for(int i=0;i<dbn[0].n_rbms;i++) {
-    layer_output[i+1]= get_layer_outputs(dbn, i, layer_output[i], 1);
-  }
-  return(layer_output);
-}
-
-inline double *dbn_compute(dbn_t *dbn, double *input) {
+static inline double *dbn_compute(dbn_t *dbn, double *input) {
   double *current_input= vector_copy(input, dbn[0].n_inputs);
   double *layer_output;
   for(int i=0;i<dbn[0].n_rbms;i++) {
