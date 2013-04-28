@@ -185,7 +185,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
   delta_w_t **batch= (delta_w_t**)Calloc(n_threads, delta_w_t*);
   for(int i=0;i<dbn[0].n_rbms;i++) {
     for(int k=0;k<n_threads;k++)
-      batch[i]= pta[k].batch+i;
+      batch[k]= (pta[k].batch+i);
 
     if(dbn[0].rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
       apply_momentum_correction(&(dbn[0].rbms[i]), batch, n_threads);
