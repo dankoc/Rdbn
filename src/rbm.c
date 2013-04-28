@@ -15,6 +15,14 @@
 #include "matrix_functions.h"
 
 
+double rbm_sample_state(double prob) {
+  return(prob>runif(0.0, 1.0)?1:0);
+}
+
+double logistic_function(double value) {
+  return(1/ (1+ exp(-value)));
+}
+
 /************************************************************************************
  *
  *  Functions to fix the output nodes to and sample values at the input nodes

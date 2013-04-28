@@ -42,18 +42,11 @@ typedef struct {
   // Applying delta_w uses the parameters specified here.
   int batch_size;
 } delta_w_t;
-/*
-#define logistic_function(value) (1/ (1+ exp(-value)))
-#define rbm_sample_state(prob) (((prob)>(runif(0.0, 1.0)))?0:1)
-*/
 
-double rbm_sample_state(double prob) {
-  return(prob>runif(0.0, 1.0)?1:0);
-}
+double rbm_sample_state(double prob);
+double logistic_function(double value);
 
-double logistic_function(double value) {
-  return(1/ (1+ exp(-value)));
-}
+
 
 
 inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
