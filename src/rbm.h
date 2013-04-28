@@ -44,10 +44,10 @@ typedef struct {
 } delta_w_t;
 
 #define rbm_sample_state(prob) (prob>runif(0.0, 1.0)?1:0)
-
-inline double logistic_function(double value) {
+#define logistic_function(value) (1/ (1+exp(-value)))
+/*inline double logistic_function(double value) {
   return(1/ (1+ exp(-value)));
-}
+}*/
 
 
 inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {

@@ -16,7 +16,7 @@
 
 
 //extern inline double rbm_sample_state(double prob);
-extern inline double logistic_function(double value);
+//extern inline double logistic_function(double value);
 
 /************************************************************************************
  *
