@@ -108,7 +108,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t **dw, int n_dw) {
       if(i==0 && rbm[0].update_input_bias) { // Only update once... and if everything says to update.
         double delta_input_bias=0;
         for(int k=0;k<n_dw;k++) delta_input_bias+= dw[k][0].delta_input_bias[j];
-		delta_input_bias*= rbm[0].learning_rate/(double)dw[0][0].batch_size
+        delta_input_bias*= rbm[0].learning_rate/(double)dw[0][0].batch_size;
         rbm[0].bias_inputs[j]+= delta_input_bias;
         rbm[0].input_momentum[j]+= delta_input_bias;
       }
@@ -250,10 +250,10 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
   
   // Take a step in teh direction of the gradient.
   if(rbm[0].use_momentum) { // Correct and update momentum term.
-    apply_momentum_correction(rbm, pta.batch); 
+    apply_momentum_correction(rbm, &(pta.batch), 1); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
-    apply_delta_w(rbm, pta.batch);
+    apply_delta_w(rbm, &(pta.batch), 1);
   }
   
   // Cleanup temporary variables ...  
