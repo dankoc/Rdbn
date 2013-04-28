@@ -8,13 +8,14 @@ typedef struct {
   double *matrix; // Hoping to avoid the overhead in double**;
 } matrix_t;
 
+#define get_matrix_value(m, col, row) (m[0].matrix[col*m[0].nrows+row])
+#define set_matrix_value(m, col, row, value) (m[0].matrix[col*m[0].nrows+row]= value)
+
 matrix_t *alloc_matrix(int ncols, int nrows);
 matrix_t *R_alloc_matrix(int ncols, int nrows);
 void init_matrix(matrix_t *m, double init_value);
 void init_matrix_rnorm(matrix_t *m, double mean, double varience);
 void free_matrix(matrix_t *m);
-double get_matrix_value(matrix_t *m, int col, int row);
-void set_matrix_value(matrix_t *m, int col, int row, double value);
 
 void hadamard_product(matrix_t *m1, matrix_t *m2); // m1*m2; result in m1.
 void matrix_sum(matrix_t *m1, matrix_t *m2); // m1+m2; result in m1.

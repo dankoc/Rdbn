@@ -41,14 +41,6 @@ void free_matrix(matrix_t *m) {
   Free(m); // (??)
 }
 
-double get_matrix_value(matrix_t *m, int col, int row) {
-  return(m[0].matrix[col*m[0].nrows+row]); // Is this what R assumes?!
-}
-
-void set_matrix_value(matrix_t *m, int col, int row, double value) {
-  m[0].matrix[col*m[0].nrows+row]= value; // Is this what R assumes?!
-}
-
 
 /*
  * Computes the Hadamard product of two matrices.
