@@ -26,12 +26,12 @@
 void apply_delta_w(rbm_t *rbm, delta_w_t **dw, int n_dw) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
     double delta_output_bias= 0;
-    for(int k=0;k<n_dw;k++) delta_output_bias+= dw[k][0].delta_output_bias[i];
+    for(int k=0;k<n_dw;k++) delta_output_bias+= dw[0][k].delta_output_bias[i];
     rbm[0].bias_outputs[i] += rbm[0].learning_rate*delta_output_bias/(double)dw[0][0].batch_size; 
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
       double delta_w_i_j= 0;
-      for(int k=0;k<n_dw;k++) delta_w_i_j+= get_matrix_value(dw[k][0].delta_w, i, j);
+      for(int k=0;k<n_dw;k++) delta_w_i_j+= get_matrix_value(dw[0][k].delta_w, i, j);
 	  
       // If using L2 penalty (a.k.a "weight decay"), apply that here.
       if(rbm[0].use_l2_penalty) 
@@ -43,7 +43,7 @@ void apply_delta_w(rbm_t *rbm, delta_w_t **dw, int n_dw) {
 	  
       if(i==0 && rbm[0].update_input_bias) {// Only update once... and if everything says to update.
         double delta_input_bias=0;
-        for(int k=0;k<n_dw;k++) delta_input_bias+= dw[k][0].delta_input_bias[j];
+        for(int k=0;k<n_dw;k++) delta_input_bias+= dw[0][k].delta_input_bias[j];
         rbm[0].bias_inputs[j] += rbm[0].learning_rate*delta_input_bias/(double)dw[0][0].batch_size;
       }
     }
@@ -82,13 +82,13 @@ void initial_momentum_step(rbm_t *rbm) {
 void apply_momentum_correction(rbm_t *rbm, delta_w_t **dw, int n_dw) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
     double delta_output_bias= 0;
-    for(int k=0;k<n_dw;k++) delta_output_bias+= dw[k][0].delta_output_bias[i];
+    for(int k=0;k<n_dw;k++) delta_output_bias+= dw[0][k].delta_output_bias[i];
 	delta_output_bias*= rbm[0].learning_rate/(double)dw[0][0].batch_size; 
     rbm[0].bias_outputs[i]+= delta_output_bias;
     rbm[0].output_momentum[i]+= delta_output_bias;
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double step= 0;
-      for(int k=0;k<n_dw;k++) step+= get_matrix_value(dw[k][0].delta_w, i, j);
+      for(int k=0;k<n_dw;k++) step+= get_matrix_value(dw[0][k].delta_w, i, j);
       double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
 
       // If using L2 penalty (a.k.a "weight decay"), apply that here.
@@ -107,7 +107,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t **dw, int n_dw) {
 
       if(i==0 && rbm[0].update_input_bias) { // Only update once... and if everything says to update.
         double delta_input_bias=0;
-        for(int k=0;k<n_dw;k++) delta_input_bias+= dw[k][0].delta_input_bias[j];
+        for(int k=0;k<n_dw;k++) delta_input_bias+= dw[0][k].delta_input_bias[j];
         delta_input_bias*= rbm[0].learning_rate/(double)dw[0][0].batch_size;
         rbm[0].bias_inputs[j]+= delta_input_bias;
         rbm[0].input_momentum[j]+= delta_input_bias;
