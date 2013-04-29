@@ -46,7 +46,15 @@ typedef struct {
 #define rbm_sample_state(prob) (prob>runif(0.0, 1.0)?1:0)
 #define logistic_function(value) (1/ (1+exp(-value)))
 
-inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
+
+#ifndef INLINE
+# if __GNUC__ && !__GNUC_STDC_INLINE__
+#  define INLINE extern inline
+# else
+#  define INLINE inline
+# endif
+#endif
+INLINE void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
   for(int i=0;i<rbm[0].n_outputs;i++) {// Get prob. of input node by summing over output states.
     resulting_output[i]= rbm[0].bias_outputs[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
@@ -56,7 +64,7 @@ inline void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
   }
 }
 
-inline void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
+INLINE void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
   for(int i=0;i<rbm[0].n_inputs;i++) {// Get prob. of input node by summing over output states.
     resulting_input[i]= rbm[0].bias_inputs[i];
     for(int j=0;j<rbm[0].n_outputs;j++) {

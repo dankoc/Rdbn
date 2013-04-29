@@ -19,7 +19,15 @@ typedef struct {
 /*
  * Shortcut to allocate memory and clamps the given input layer.  Returns a new *double with the output of that layer.
  */
-inline double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs) {
+
+#ifndef INLINE
+# if __GNUC__ && !__GNUC_STDC_INLINE__
+#  define INLINE extern inline
+# else
+#  define INLINE inline
+# endif
+#endif
+INLINE double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs) {
   double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs*n_inputs,double);
   double *layer_output_ptr= layer_output;
   for(int i=0;i<n_inputs;i++) { // One-by-one fill in the outputs.
