@@ -57,7 +57,7 @@ void run_batch_compute_pthreads(dbn_t *dbn, double *input, int n_examples, int n
  // If more threads than batch members, just assign each batch member to a spearate thread.
   n_threads= (dbn[0].batch_size<n_threads)?n_examples:n_threads;
   int n_per_batch= floor(n_examples/n_threads);
-  int remainder= (n_examples%n_threads==0)?n_per_batch:(n_examples%n_threads);
+  int remainder= n_examples%n_threads;
   	  
   dbn_pthread_predict_arg_t *pta= (dbn_pthread_predict_arg_t*)Calloc(n_threads, dbn_pthread_predict_arg_t);
   pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
