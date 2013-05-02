@@ -102,10 +102,29 @@ setClass("rbm",#"restricted_boltzman_machine",
   ),
 )
 
-# constructor.
-# e.g.:
-# rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
-# Initial weights set using S8.1 in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
+################################################################################
+#' Creates a new restricted Boltzman machine object.
+#'
+#' Creates a new restricted Boltzmann machine (RBM) object, with the specified n_inputs
+#' and n_outputs.
+#' 
+#' Initial weights set to Normally distributed mean= 0, var= 0.01 (as suggested in using S8.1 of:
+#' http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf)
+#'
+#' @param n_inputs Description of \code{n_inputs}.  An object of type rbm to be trained.
+#' 
+#' @param data Description of \code{data}.  The training data.  Training examples 
+#'	are passed as columns (but specifying rows will work also, provided that the
+#'  matrix is not square).
+#'
+#' @param n_epocs Description of \code{n_epocs}.  Number of 'epocs', or loops 
+#'  through the training set to make.  Default: 50.
+#' 
+#' @param n_threads Description of \code{n_threads}.  Executes the specified
+#'  number of threads on a POSTIX system.  Default: 1.
+#'
+#' @examples
+#' rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
 rbm <- function(n_inputs, 
                 n_outputs, 
                 x= NULL,				
@@ -119,7 +138,6 @@ rbm <- function(n_inputs,
                 bias_outputs=NULL, ...) 
 {
 
-  ## Initialize bias vectors for inputs.
   if(is.null(bias_inputs)) {
     bias_inputs <- rep(0, n_inputs)
   }
@@ -147,37 +165,71 @@ rbm <- function(n_inputs,
   return(rbm)
 }
 
- # require(Rdbn)
- # rr <- rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
- # train(rr, matrix(c(1:10), ncol=5))
-
-#` Method to train a boltzman machine (stored in rbm).
-#` @param rbm The boltzman machine.
-#` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
-#` @export
+################################################################################
+#' Train a restricted Boltzman machine.
+#'
+#' Trains a restricted Boltzmann machine (RBM) using 'contrastive divergence'.  
+#'
+#' @param rbm Description of \code{rbm}.  An object of type rbm to be trained.
+#' 
+#' @param data Description of \code{data}.  The training data.  Training examples 
+#'	are passed as columns (but specifying rows will work also, provided that the
+#'  matrix is not square).
+#'
+#' @param n_epocs Description of \code{n_epocs}.  Number of 'epocs', or loops 
+#'  through the training set to make.  Default: 50.
+#' 
+#' @param n_threads Description of \code{n_threads}.  Executes the specified
+#'  number of threads on a POSTIX system.  Default: 1.
+#'
+#' @export
+#' @docType methods
+#' @rdname rbm.train
+#' 
+#' @examples
+#' require(Rdbn)
+#'
+#' # Simulate some data to test.
+#' Classes <- c("A", "B", "C", "D")
+#' y <- sample(Classes, 1000, replace=TRUE)
+#'
+#' sample_on <- function(n) { rnorm(n, 1.5, sd=1) }
+#' sample_off <- function(n) { rnorm(n, -1.5, sd=1) }
+#'
+#' x <- logistic_function(matrix(unlist(lapply(y, function(x){
+#'   if(x==Classes[1]) return(c(sample_on(4), sample_off(12)))
+#'   if(x==Classes[2]) return(c(sample_off(4), sample_on(4), sample_off(8)))
+#'   if(x==Classes[3]) return(c(sample_off(8), sample_on(4), sample_off(4)))  
+#'   if(x==Classes[4]) return(c(sample_off(12), sample_on(4)))
+#' })), nrow= 16))
+#'
+#' # Make a new RBM object and train.
+#' rbm.obj <- rbm(n_inputs= 16, n_outputs= 4, batch_size=100, cd_n=1, momentum_decay=0.9, weight_cost= 5e-2)
+#' rbm.train(rbm.obj, data= x, n_epocs= 100, n_threads=3)
 setGeneric("rbm.train", 
   def=function(rbm, data, n_epocs= 50, n_threads=1) {
 	stopifnot(class(rbm) == "rbm")
 	standardGeneric("rbm.train")
 })
-  
+ 
+#' @rdname rbm.train
+#' @aliases helloworld,character,ANY-method
 setMethod("rbm.train", c(rbm="rbm"), 
   function(rbm, data, n_epocs= 50, n_threads=1) { ## Regularization/ LASSO type options?!
+    if(NROW(data) != rbm@n_inputs) data <- t(data) ## Take transpose, if columns don't represent inputs.
   	stopifnot(NROW(data) == rbm@n_inputs)
 	
 	## Reassign input biases to training example requencies?!  As suggested in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
 	rbm@bias_inputs <- as.real(rowSums(data)/NCOL(data))
 	
-	## Pass to C for training.
     .Call("train_rbm_R", rbm, as.real(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 
-## Returns the output of the logicstic function.
-#setGeneric("logistic_function", def=function(rbm, vect_val) {standardGeneric("logistic_function")} )
-#setMethod("logistic_function", c(rbm="rbm"), 
+################################################################################
+#' Returns the output of the logistic function on a data vector.
+#'
+#' @param vect_val Description of \code{vect_val}.  A numeric value, vector, or matrix to transform.
 logistic_function <- function(vect_val) {
     return(1/(1+exp(-vect_val)))
-}#)
+}
 
-
-#     x %*% y
