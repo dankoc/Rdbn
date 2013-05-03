@@ -10,7 +10,7 @@ Rdbn supports:
 * Advanced training features such as momentum-accelerated learning, and L2 regularization.
 * Parallel processing on UNIX-based systems using pthreads.
 
-Rdbn was written quickly, and is still actively undergoing testing and optimization.  When I'm confident that the package is reasonably bug-free, it will be submitted to CRAN.
+Rdbn was written quickly (for educational reasons), and is still actively undergoing testing and optimization.  When I'm confident that the package is reasonably bug-free, it will be submitted to CRAN (possibly being partially re-written to incorporate faster linear algebra libraries).
 
 Installing
 ----------
