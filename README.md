@@ -1,6 +1,6 @@
 Rdbn
 ====
-Fast code to learn deep belief networks in R.
+Learn deep belief networks in R.
 
 Rdbn was written to allow training and classification using restricted Boltzmann machines (RBMs) and deep belief networks (DBNs) in an R environment.  
 
