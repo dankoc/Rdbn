@@ -9,7 +9,7 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
-#include <pthread.h>
+#include <omp.h>
 #include "dbn.h"
 #include "dbn.backpropagation.h"
 #include "rbm.h"
@@ -57,6 +57,7 @@ static inline void compute_layer_error(dbn_t *dbn, int layer, double **observed_
   int n_inputs_cl= dbn[0].rbms[layer].n_inputs;   // # inputs in current layer
 
   // Compute error for this layer.
+  #pragma omp parallel
   for(int i=0;i<n_inputs_cl;i++) {
     if(layer>0) next_layer_neuron_error[i]= 0;
     for(int j=0;j<n_outputs_cl;j++) {
@@ -88,6 +89,7 @@ static inline void backpropagation(dbn_t *dbn, double *input, double *expected_o
 
   neuron_error= (double*)Calloc(n_outputs_ll,double);
   
+  #pragma omp parallel
   for(int j=0;j<n_outputs_ll;j++) {// Foreach neuron in the output layer.
     double oo= observed_output[layer_index][j];
     neuron_error[j]= oo*(1-oo)*(-1)*(oo-expected_output[j]); // Compute dE/dz_j
@@ -124,7 +126,6 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
   }
 }
 
-/////////////IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
 /* Runs the backpropagation algorithm over each element of a mini-batch. */
 void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_output) {
   dbn_pthread_arg_t pta;
@@ -133,67 +134,15 @@ void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_outpu
   pta.expected_output= expected_output;
   pta.do_n_elements= dbn[0].batch_size;
   pta.batch= alloc_dwt_from_dbn(dbn);
-  dbn_backprop_partial_minibatch(&pta);
-  
-  // Update the weights.
-  for(int i=0;i<dbn[0].n_rbms;i++) {
-    apply_delta_w(&(dbn[0].rbms[i]), &(pta.batch[i]));
-  }
-  free_delta_w_ptr(pta.batch, dbn[0].n_rbms);
-}
-/////////////\IF NO PTREADS, USE THIS. ///////////////////////////////////////////////
-
-/////////////IF PTREADS, USE THIS. ///////////////////////////////////////////////
-/* Runs the backpropagation algorithm over each element of a mini-batch. */
-void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expected_output, int n_threads) {
 
   // If using a momentum, take a step first.
   for(int i=0;i<dbn[0].n_rbms;i++)
     if(dbn[0].rbms[i].use_momentum) // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
       initial_momentum_step(&(dbn[0].rbms[i]));
 
-  // If more threads than batch members, just assign each batch member to a spearate thread.
-  n_threads= (dbn[0].batch_size<n_threads)?dbn[0].batch_size:n_threads;
-  int n_per_batch= floor(dbn[0].batch_size/n_threads);
-  int remainder= (dbn[0].batch_size%n_threads);
-
-  dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)Calloc(n_threads, dbn_pthread_arg_t);
-  pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-//  pthread_mutex_init(&backpropagation_mutex, NULL);
-  for(int i=0;i<n_threads;i++) {
-    // Set up data passed to partial_minibatch()
-    pta[i].dbn= dbn;
-    pta[i].input= input;
-    pta[i].expected_output= expected_output;
-    pta[i].batch= alloc_dwt_from_dbn(dbn);
-    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
-
-    pthread_create(threads+i, NULL, dbn_backprop_partial_minibatch, (void*)(pta+i));
-
-    // Increment pointers for the next thread.
-    input+= pta[i].do_n_elements*dbn[0].n_inputs;
-    expected_output+= pta[i].do_n_elements*dbn[0].n_outputs;
-  }
-
-  // Wait for threads to complete, and combine the data into a single vector.
-  delta_w_t *batch;
-  for(int i=0;i<n_threads;i++) {
-    pthread_join(threads[i], NULL);
-
-    // It's ~2x faster to prepare independent batch examples and sum after, than to use a mutex lock.
-    if(i==0) {
-      batch= pta[i].batch;
-    }
-    else {
-      for(int j=0;j<dbn[0].n_rbms;j++) {
-        sum_delta_w(&(batch[j]), &(pta[i].batch[j]));
-      }
-      free_delta_w_ptr(pta[i].batch, dbn[0].n_rbms);
-    }
-  }
-  Free(pta); Free(threads);
-//  pthread_mutex_destroy(&rbm_mutex);
-
+  // Do the minibatch.
+  dbn_backprop_partial_minibatch(&pta);
+  
   // Update the weights.
   for(int i=0;i<dbn[0].n_rbms;i++) {
     if(dbn[0].rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
@@ -204,9 +153,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
     }
   }
   free_delta_w_ptr(batch, dbn[0].n_rbms);
-
 }
-/////////////\IF PTREADS, USE THIS. ///////////////////////////////////////////////
 
 /*
  * Refines the deep belief network using backpropagation of error derivitives for a given number of epocs.
@@ -221,8 +168,9 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
  * Assumptions: 
  *   --> n_examples is a multiple of dbn.batch_size ... additional examples are ignored.
  */
-
 void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n_examples, int n_epocs, int n_threads) {
+  omp_set_num_threads(n_threads);
+
   double *current_input, *current_output;
   int n_training_iterations= floor(n_examples/dbn[0].batch_size); 
   int left_over= n_examples%dbn[0].batch_size;
@@ -231,14 +179,14 @@ void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n
     current_input= input_example; // Reset training pointer.
     current_output= output_example;
     for(int j=0;j<n_training_iterations;j++) {
-      backpropagation_minibatch_pthreads(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
+      backpropagation_minibatch(dbn, current_input, current_output);  // Do a minibatch using the current position of the training pointer.
       current_input+= dbn[0].batch_size*dbn[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
       current_output+=dbn[0].batch_size*dbn[0].n_outputs; // Increment the input_example pointer batch_size # of columns.
     }
     if(left_over>0) { // Do remaining training examples.
       int old_batch_size= dbn[0].batch_size;
       dbn[0].batch_size= left_over;
-      backpropagation_minibatch_pthreads(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
+      backpropagation_minibatch(dbn, current_input, current_output);  // Do a minibatch using the current position of the training pointer.
 	  dbn[0].batch_size= old_batch_size;
     }
   }
