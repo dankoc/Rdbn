@@ -1,7 +1,6 @@
 /*
  * rbm.train.c -- Trains a restricted Boltzman machine using contrastive divergence.
  * 
- * Supports parallel processing using pthreads (if availiable).
  *
  */
 #include <R.h>
@@ -10,7 +9,7 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
-#include <pthread.h>
+#include <omp.h>
 #include "rbm.h"
 #include "rbm.train.h"
 #include "matrix_functions.h"
@@ -24,6 +23,7 @@
  * Also includes 
  */
 void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
+  #pragma omp parallel
   for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].bias_outputs[i] += rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
     for(int j=0;j<rbm[0].n_inputs;j++) {
@@ -54,6 +54,7 @@ void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
  */
 
 void initial_momentum_step(rbm_t *rbm) {
+  #pragma omp parallel
   for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].output_momentum[i]*= rbm[0].momentum_decay;
     rbm[0].bias_outputs[i]+= rbm[0].output_momentum[i];
@@ -74,6 +75,7 @@ void initial_momentum_step(rbm_t *rbm) {
 }
  
 void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
+  #pragma omp parallel
   for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].bias_outputs[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
     rbm[0].output_momentum[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
@@ -104,12 +106,13 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
 }
 
 static inline void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
+  #pragma omp parallel
   for(int i=0;i<rbm[0].n_outputs;i++) {
     batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double delta_w_i_j= get_matrix_value(batch[0].delta_w, i, j)+
 			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
-      set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j); // Really need to inline these setter-getter functions... But against C99.
+      set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j);
 
       if(i==0) // Only 
         batch[0].delta_input_bias[j]+= input_example[j]-input_recon[j]; 
@@ -141,9 +144,7 @@ static inline void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t
   // Put all of this together so that only 1 loop is required ...
   // Compute  ... in this computation, sample random states (?!).
   // Compute <vihj>_data-<vihj>_recon and update batch.
-  pthread_mutex_lock(&rbm_mutex);
   compute_delta_w(rbm, batch, init_output_recon, input_example, output_recon, input_recon);
-  pthread_mutex_unlock(&rbm_mutex);
 
   Free(init_output_recon); Free(output_recon); Free(input_recon);
 }
@@ -174,53 +175,9 @@ void *rbm_partial_minibatch(void *ptab) {
   }
   
 }
-
-void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
-  // If using momentum Take a step BEFORE computing the local gradient.
-  if(rbm[0].use_momentum) { 
-    initial_momentum_step(rbm);
-  }
-  
-  // If more threads than batch members, just assign each batch member to a spearate thread.
-  n_threads= (rbm[0].batch_size<n_threads)?rbm[0].batch_size:n_threads;
-  int n_per_batch= floor(rbm[0].batch_size/n_threads);
-  int remainder= (rbm[0].batch_size%n_threads);
-  	  
-  delta_w_t *batch= alloc_dwt_from_rbm(rbm);
-  rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
-  pthread_t *threads= (pthread_t*)Calloc(n_threads, pthread_t);
-  pthread_mutex_init(&rbm_mutex, NULL);
-  for(int i=0;i<n_threads;i++) {
-    // Set up data passed to partial_minibatch()
-    pta[i].rbm= rbm;
-    pta[i].input= input_example;
-    pta[i].do_n_elements= (i<(n_threads-1))?n_per_batch:(n_per_batch+remainder); // For the last thread, only run remaining elements.
-    pta[i].batch= batch;
-    pthread_create(threads+i, NULL, rbm_partial_minibatch, (void*)(pta+i));
-    // Increment pointers for the next thread.
-    input_example+= pta[i].do_n_elements*rbm[0].n_inputs;
-  }
-
-  // Wait for threads to complete, and combine the data into a single vector.
-  for(int i=0;i<n_threads;i++) {
-    pthread_join(threads[i], NULL); // Wait for thread to finish.
-  }
-  Free(pta); Free(threads);
-  pthread_mutex_destroy(&rbm_mutex);
-   
-  // Take a step in teh direction of the gradient.
-  if(rbm[0].use_momentum) { // Correct and update momentum term.
-    apply_momentum_correction(rbm, batch); 
-  }
-  else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
-    apply_delta_w(rbm, batch);
-  }
-  
-  // Cleanup temporary variables ...  
-  free_delta_w_ptr(batch, 1); 
-}
  
-void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
+void do_minibatch(rbm_t *rbm, double *input_example) { // Use velocity?!; Use sparsity target?!  // Change name to 
+
   // If using momentum Take a step BEFORE computing the local gradient.
   if(rbm[0].use_momentum) { 
     initial_momentum_step(rbm);
@@ -258,6 +215,8 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
  *   --> n_examples is a multiple of rbm.batch_size ... additional examples are ignored.
  */
 void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, int n_threads) {
+  omp_set_num_threads(n_threads);
+
   double *current_position;
   int n_training_iterations= floor(n_examples/rbm[0].batch_size); 
   int left_over_iterations= n_examples%rbm[0].batch_size; 
@@ -266,13 +225,13 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
     //if(i%(100)) Rprintf(".");
     current_position= input_example; // Reset training pointer.
     for(int j=0;j<n_training_iterations;j++) {
-      do_minibatch_pthreads(rbm, current_position, n_threads);  // Do a minibatch using the current position of the training pointer.
+      do_minibatch(rbm, current_position);  // Do a minibatch using the current position of the training pointer.
       current_position+= rbm[0].batch_size*rbm[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
 	}
 	if(left_over_iterations>0) {
       int prev_batch_size = rbm[0].batch_size;
       rbm[0].batch_size= left_over_iterations;
-      do_minibatch_pthreads(rbm,current_position,n_threads);
+      do_minibatch(rbm,current_position);
       rbm[0].batch_size= prev_batch_size;
     }
   }
