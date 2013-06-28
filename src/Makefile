@@ -8,7 +8,7 @@
 
 CC=gcc
 LIBS:=-lm -lz -fopenmp ${shell pkg-config openssl --libs}
-CFLAGS:=-c -pg -g -Wall ${LIBS}
+CFLAGS:=-c -pg -g -Wall -fopenmp ${LIBS}
 SOURCES= rbm.c rbm.train.c dbn.c dbn.backpropagation.c dbn.compute.c matrix_functions.c RegisterRRoutines.c
 OBJECTS=$(SOURCES:.c=.o)
 

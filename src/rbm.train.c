@@ -23,7 +23,7 @@
  * Also includes 
  */
 void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
-  #pragma omp parallel
+  #pragma omp parallel for
   for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].bias_outputs[i] += rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
     for(int j=0;j<rbm[0].n_inputs;j++) {
@@ -54,7 +54,7 @@ void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
  */
 
 void initial_momentum_step(rbm_t *rbm) {
-  #pragma omp parallel
+  #pragma omp parallel for
   for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].output_momentum[i]*= rbm[0].momentum_decay;
     rbm[0].bias_outputs[i]+= rbm[0].output_momentum[i];
@@ -75,7 +75,7 @@ void initial_momentum_step(rbm_t *rbm) {
 }
  
 void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
-  #pragma omp parallel
+  #pragma omp parallel for
   for(int i=0;i<rbm[0].n_outputs;i++) {
     rbm[0].bias_outputs[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
     rbm[0].output_momentum[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
@@ -106,7 +106,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
 }
 
 static inline void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
-  #pragma omp parallel
+  #pragma omp parallel for
   for(int i=0;i<rbm[0].n_outputs;i++) {
     batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {

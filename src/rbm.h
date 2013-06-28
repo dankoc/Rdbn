@@ -56,7 +56,7 @@ typedef struct {
 #endif
 
 INLINE void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
-  #pragma omp parallel
+  #pragma omp parallel for
   for(int i=0;i<rbm[0].n_outputs;i++) {// Get prob. of input node by summing over output states.
     resulting_output[i]= rbm[0].bias_outputs[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
@@ -67,7 +67,7 @@ INLINE void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
 }
 
 INLINE void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
-  #pragma omp parallel
+  #pragma omp parallel for
   for(int i=0;i<rbm[0].n_inputs;i++) {// Get prob. of input node by summing over output states.
     resulting_input[i]= rbm[0].bias_inputs[i];
     for(int j=0;j<rbm[0].n_outputs;j++) {
