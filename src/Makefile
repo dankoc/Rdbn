@@ -7,7 +7,7 @@
 #endif
 
 CC=gcc
-LIBS:=-lm -lz -fopenmp ${shell pkg-config openssl --libs}
+LIBS:=-lm -lz -fopenmp -lgomp ${shell pkg-config openssl --libs}
 CFLAGS:=-c -pg -g -Wall -fopenmp ${LIBS}
 SOURCES= rbm.c rbm.train.c dbn.c dbn.backpropagation.c dbn.compute.c matrix_functions.c RegisterRRoutines.c
 OBJECTS=$(SOURCES:.c=.o)
@@ -18,7 +18,7 @@ space:= $(empty) $(empty)
 MFLGSESC := $(subst $(space),\$(space),\$(space))
 
 Rdbn.so:  
-	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${SOURCES} ${LIBS}
+	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${CFLAGS} ${SOURCES} ${LIBS}
 
 clean:
 	rm -f *.o *.so
