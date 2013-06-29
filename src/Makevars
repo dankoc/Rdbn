@@ -1,2 +1,0 @@
-PKG_CFLAGS=$(SHLIB_OPENMP_CFLAGS) -fopenmp
-PKG_LIBS=-fopenmp -lgomp $(SHLIB_OPENMP_CFLAGS)
