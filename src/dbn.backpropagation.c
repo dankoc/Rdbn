@@ -3,6 +3,8 @@
  *                          to refine deep belief networks.
  *
  */
+#include "pthread.support.h"
+ 
 #include <R.h>
 #include <Rdefines.h>
 #include <Rmath.h>

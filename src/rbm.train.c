@@ -4,6 +4,8 @@
  * Supports parallel processing using pthreads (if availiable).
  *
  */
+#include "pthread.support.h"
+ 
 #include <R.h>
 #include <Rdefines.h>
 #include <Rmath.h>

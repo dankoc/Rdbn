@@ -3,6 +3,8 @@
  *                          for a trained network.
  *
  */
+#include "pthread.support.h"
+ 
 #include <R.h>
 #include <Rdefines.h>
 #include <Rmath.h>
