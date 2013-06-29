@@ -144,10 +144,14 @@ static inline void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t
   // Put all of this together so that only 1 loop is required ...
   // Compute  ... in this computation, sample random states (?!).
   // Compute <vihj>_data-<vihj>_recon and update batch.
-  pthread_mutex_lock(&rbm_mutex);
-  compute_delta_w(rbm, batch, init_output_recon, input_example, output_recon, input_recon);
-  pthread_mutex_unlock(&rbm_mutex);
-
+  #ifdef _POSIX_THREADS 
+   pthread_mutex_lock(&rbm_mutex);
+   compute_delta_w(rbm, batch, init_output_recon, input_example, output_recon, input_recon);
+   pthread_mutex_unlock(&rbm_mutex);
+  #else 
+   compute_delta_w(rbm, batch, init_output_recon, input_example, output_recon, input_recon);
+  #endif
+  
   Free(init_output_recon); Free(output_recon); Free(input_recon);
 }
 
