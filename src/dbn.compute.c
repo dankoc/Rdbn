@@ -36,7 +36,7 @@ static inline double *dbn_compute(dbn_t *dbn, double *input) {
 void *batch_compute(void* compute) {
   dbn_pthread_predict_arg_t *pta= (dbn_pthread_predict_arg_t*)compute;
 
-  #pragma omp parallel for
+//  #pragma omp parallel for
   for(int i=0;i<pta[0].do_n_elements;i++) {
     // Get the dbn outputs.
     double *output= dbn_compute(pta[0].dbn, pta[0].input);

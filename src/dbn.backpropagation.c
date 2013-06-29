@@ -57,7 +57,6 @@ static inline void compute_layer_error(dbn_t *dbn, int layer, double **observed_
   int n_inputs_cl= dbn[0].rbms[layer].n_inputs;   // # inputs in current layer
 
   // Compute error for this layer.
-//  #pragma omp parallel for
   for(int i=0;i<n_inputs_cl;i++) {
     if(layer>0) next_layer_neuron_error[i]= 0;
     for(int j=0;j<n_outputs_cl;j++) {
@@ -89,7 +88,6 @@ static inline void backpropagation(dbn_t *dbn, double *input, double *expected_o
 
   neuron_error= (double*)Calloc(n_outputs_ll,double);
   
-//  #pragma omp parallel for
   for(int j=0;j<n_outputs_ll;j++) {// Foreach neuron in the output layer.
     double oo= observed_output[layer_index][j];
     neuron_error[j]= oo*(1-oo)*(-1)*(oo-expected_output[j]); // Compute dE/dz_j
