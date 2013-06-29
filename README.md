@@ -18,7 +18,7 @@ In a UNIX based OS with R and dev tools installed, one can simply type:
 
     R CMD install Rdbn/
 
-R should take care of the rest.  Note that on OS X developer tools must be installed in order to have a C compiler.  Windows is not supported at present.  This package is intended for eventual submission to CRAN, and Windows support will most likely be added at that time.
+R should take care of the rest.  Note that on OS X developer tools must be installed in order to have a C compiler.  Windows -should- work without the parallel processing advantages, but has not yet been tested.
 
 
 Using the package
@@ -66,7 +66,11 @@ To train a classifier on the Vehicle dataset in ML bench, use the following:
 
 See files in the 'Rdbn/test_functions/' folder for additional examples of how to interact with the package in R.  Vignette and reference manual coming soon!
 
-
+Implementation Notes
+--------------------
+* In the future I may re-write to use vector form and optimized libraries (i.e., BLAS or LAPAK).  This will speed up training large networks.
+* I'm also interested in adding CUDA support ... so much to do, so little time.
+* Rdbn -should- compile on Windows at this point.  If you get it working, please drop me a note.
 
 Useful References
 -----------------
