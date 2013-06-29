@@ -127,7 +127,7 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
 }
 
 /* Runs the backpropagation algorithm over each element of a mini-batch. */
-void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_output) {
+void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_output, int n_threads) {
   dbn_pthread_arg_t pta;
   pta.dbn= dbn;
   pta.input= input;
