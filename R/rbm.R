@@ -80,13 +80,13 @@ dbn_layer <- function(n_inputs,
     n_outputs=as.integer(n_outputs), 
     io_weights=io_weights, 
     bias_outputs= bias_outputs,
-    learning_rate=as.real(learning_rate), 
+    learning_rate=as.double(learning_rate), 
     cd_n=as.integer(cd_n), 
     batch_size=as.integer(batch_size),
 	use_l2_penalty=as.logical(use_l2_penalty),
-	weight_cost=as.real(weight_cost),
+	weight_cost=as.double(weight_cost),
     use_momentum= as.logical(use_momentum), 
-    momentum_decay= as.real(momentum_decay))
+    momentum_decay= as.double(momentum_decay))
 }
 
 #` An S4 class that stores a basic boltzman machine.
@@ -152,11 +152,11 @@ rbm <- function(n_inputs,
       io_weights=io_weights, 
       bias_outputs= bias_outputs,
       weight_cost= weight_cost,
-      learning_rate=as.real(learning_rate), 
+      learning_rate=as.double(learning_rate), 
       cd_n=as.integer(cd_n), 
       batch_size=as.integer(batch_size),
-      momentum_decay= as.real(momentum_decay)),
-    bias_inputs= as.real(bias_inputs))
+      momentum_decay= as.double(momentum_decay)),
+    bias_inputs= as.double(bias_inputs))
   
   if(!is.null(x)) {
     rbm <- rbm.train(rbm, data= x, ...)
@@ -220,9 +220,9 @@ setMethod("rbm.train", c(rbm="rbm"),
   	stopifnot(NROW(data) == rbm@n_inputs)
 	
 	## Reassign input biases to training example requencies?!  As suggested in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-	rbm@bias_inputs <- as.real(rowSums(data)/NCOL(data))
+	rbm@bias_inputs <- as.double(rowSums(data)/NCOL(data))
 	
-    .Call("train_rbm_R", rbm, as.real(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
+    .Call("train_rbm_R", rbm, as.double(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 
 ################################################################################

@@ -53,7 +53,7 @@ dbn <- function(n_layers,
     layer_sizes=as.integer(layer_sizes), 
     network= rbm_network, 
     class_levels=character(0),
-    learning_rate= as.real(learning_rate), 
+    learning_rate= as.double(learning_rate), 
     batch_size=as.integer(batch_size))
 
   if(!is.null(x)) {
@@ -85,7 +85,7 @@ setMethod("dbn.pretrain", c(dbn="dbn"),
     if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs) 
       data <- t(data)
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
-    .Call("train_dbn_R", dbn, as.real(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
+    .Call("train_dbn_R", dbn, as.double(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 
 
@@ -134,7 +134,7 @@ setMethod("dbn.refine", c(dbn="dbn"),
 	dbn@n_layers <- as.integer(dbn@n_layers+1)
 	
 #    print("Fine tuning weights using backpropragation.")
-    .Call("backpropagation_dbn_R", dbn, as.real(data), as.integer(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
+    .Call("backpropagation_dbn_R", dbn, as.double(data), as.integer(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 
 
@@ -155,11 +155,11 @@ setGeneric("dbn.predict",
 setMethod("dbn.predict", c(dbn="dbn"), 
   function(dbn, data, raw_matrix=FALSE, n_threads=1) {
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
-    pred_matrix <- .Call("predict_dbn_R", dbn, as.real(data), as.integer(n_threads), package="Rdbn") 
+    pred_matrix <- .Call("predict_dbn_R", dbn, as.double(data), as.integer(n_threads), package="Rdbn") 
     if(raw_matrix) 
       return(pred_matrix)
     else 
-      pred_classes <- .Call("convert_to_max_R", dbn, as.real(pred_matrix), package="Rdbn") 
+      pred_classes <- .Call("convert_to_max_R", dbn, as.double(pred_matrix), package="Rdbn") 
 	
     pred_classes <- as.factor(sapply(pred_classes, function(x) {dbn@class_levels[x]}))
     return(pred_classes)
@@ -184,7 +184,7 @@ setMethod("dbn.set_learning_rate", c(dbn="dbn"),
     dbn@learning_rate<- learning_rate
     if(NROW(learning_rate)== 1) learning_rate <- rep(learning_rate, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
-      dbn@network[[i]]@learning_rate= as.real(learning_rate[i])
+      dbn@network[[i]]@learning_rate= as.double(learning_rate[i])
     }
     return(dbn)
 })
@@ -208,7 +208,7 @@ setMethod("dbn.set_momentum_decay", c(dbn="dbn"),
     if(NROW(momentum_decay)== 1) momentum_decay <- rep(momentum_decay, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
       dbn@network[[i]]@use_momentum= !is.na(momentum_decay[i])#TRUE if specified.
-      dbn@network[[i]]@momentum_decay= as.real(momentum_decay[i])
+      dbn@network[[i]]@momentum_decay= as.double(momentum_decay[i])
     }
     return(dbn)
 })
@@ -231,7 +231,7 @@ setMethod("dbn.set_weight_cost", c(dbn="dbn"),
     if(NROW(weight_cost)== 1) weight_cost <- rep(weight_cost, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
       dbn@network[[i]]@use_l2_penalty= !is.na(weight_cost[i])
-      dbn@network[[i]]@weight_cost= as.real(weight_cost[i])
+      dbn@network[[i]]@weight_cost= as.double(weight_cost[i])
     }
     return(dbn)
 })
