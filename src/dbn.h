@@ -46,7 +46,7 @@ SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r);
 delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn);
 dbn_t *dbn_r_to_c(SEXP dbn_r);
 
-#ifndef Win32
+#ifdef _POSIX_THREADS 
 #include <pthread.h>
 pthread_mutex_t backpropagation_mutex;
 #endif

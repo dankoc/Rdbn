@@ -93,7 +93,7 @@ rbm_t *rbm_layer_r_to_c(SEXP rbm_r, double *points_to_bias_inputs);
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 
 // MUTEX for training...
-#ifndef Win32
+#ifdef _POSIX_THREADS 
 #include <pthread.h>
 pthread_mutex_t rbm_mutex;
 #endif

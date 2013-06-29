@@ -9,11 +9,14 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/Applic.h>
-#include <pthread.h>
 #include "dbn.h"
 #include "dbn.compute.h"
 #include "rbm.h"
 #include "matrix_functions.h"
+
+#ifdef _POSIX_THREADS 
+#include <pthread.h>
+#endif
 
 /****************************************************************************
  *
@@ -52,6 +55,7 @@ void *batch_compute(void* compute) {
   }
 }
 
+#ifdef _POSIX_THREADS 
 void run_batch_compute_pthreads(dbn_t *dbn, double *input, int n_examples, int n_threads, double *output) {
   // Activate each as a separate thread.
  // If more threads than batch members, just assign each batch member to a spearate thread.
@@ -84,6 +88,7 @@ void run_batch_compute_pthreads(dbn_t *dbn, double *input, int n_examples, int n
   Free(pta);
   Free(threads);
 }
+#endif
 
 void run_batch_compute(dbn_t *dbn, double *input, int n_examples, int n_threads, double *output) {
   dbn_pthread_predict_arg_t pta;
@@ -142,11 +147,12 @@ SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r) {
   protect(output_r= allocMatrix(REALSXP, dbn[0].n_outputs, n_examples));
   double *output= REAL(output_r);
   
-  if(n_threads > 1)
+  #ifdef _POSIX_THREADS 
     run_batch_compute_pthreads(dbn, input, n_examples, n_threads, output);
-  else 
+  #else 
     run_batch_compute(dbn, input, n_examples, n_threads, output);
-  
+  #endif
+
   unprotect(1);
   return(output_r);
 }
