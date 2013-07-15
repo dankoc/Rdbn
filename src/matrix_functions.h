@@ -20,8 +20,8 @@ void free_matrix(matrix_t *m);
 void init_vector(double *vector, int n, double init_value);
 double *vector_copy(double *vector, int n);
 
-#define matrix_sum(matrix_t *m1, matrix_t *m2) (for(int i=0;i<(m1[0].ncols*m1[0].nrows);i++) m1[0].matrix[i] += m2[0].matrix[i])
-#define vector_sum(double *vector1, double *vector2, int n) (for(int i=0;i<n;i++) vector1[i] += vector2[i])
+#define matrix_sum(m1, m2) (for(int i=0;i<(m1[0].ncols*m1[0].nrows);i++) m1[0].matrix[i] += m2[0].matrix[i]) /* (matrix_t*, matrix_t*) */
+#define vector_sum(vector1, vector2, n) (for(int i=0;i<n;i++) vector1[i] += vector2[i]) /* (double* double* int) */
 
 #endif
 
