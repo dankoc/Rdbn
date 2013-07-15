@@ -8,8 +8,8 @@ typedef struct {
   double *matrix; // Hoping to avoid the overhead in double**;
 } matrix_t;
 
-#define get_matrix_value(m, col, row) (m[0].matrix[col*m[0].nrows+row])
-#define set_matrix_value(m, col, row, value) (m[0].matrix[col*m[0].nrows+row]= value)
+#define get_matrix_value(M, COL, ROW) ((M)->matrix[(COL) * (M)->nrows + (ROW)])
+#define set_matrix_value(M, COL, ROW, VALUE) (M)->matrix[(COL) * (M)->nrows + (ROW)] = VALUE
 
 matrix_t *alloc_matrix(int ncols, int nrows);
 matrix_t *R_alloc_matrix(int ncols, int nrows);
@@ -20,8 +20,7 @@ void free_matrix(matrix_t *m);
 void init_vector(double *vector, int n, double init_value);
 double *vector_copy(double *vector, int n);
 
-#define matrix_sum(m1, m2) (for(int i=0;i<(m1[0].ncols*m1[0].nrows);i++) m1[0].matrix[i] += m2[0].matrix[i]) /* (matrix_t*, matrix_t*) */
-#define vector_sum(vector1, vector2, n) (for(int i=0;i<n;i++) vector1[i] += vector2[i]) /* (double* double* int) */
+#define matrix_sum(M1, M2) for (int i = 0; i < ((M1)->ncols * (M1)->nrows); ++i) (M1)->matrix[i] += (M2)->matrix[i]
+#define vector_sum(V1, V2, N) for (int i = 0; i < N; ++i) (V1)[i] += (V2)[i]
 
 #endif
-
