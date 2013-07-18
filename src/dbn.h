@@ -20,23 +20,7 @@ typedef struct {
  * Shortcut to allocate memory and clamps the given input layer.  Returns a new *double with the output of that layer.
  */
 
-#ifndef INLINE
-# if __GNUC__ && !__GNUC_STDC_INLINE__
-#  define INLINE extern inline
-# else
-#  define INLINE inline
-# endif
-#endif
-INLINE double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs) {
-  double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs*n_inputs,double);
-  double *layer_output_ptr= layer_output;
-  for(int i=0;i<n_inputs;i++) { // One-by-one fill in the outputs.
-    clamp_input(&(dbn[0].rbms[layer]), input, layer_output_ptr);
-	input+= dbn[0].rbms[layer].n_inputs; // Increment pointers.
-	layer_output_ptr+= dbn[0].rbms[layer].n_outputs;
-  }
-  return(layer_output);
-}
+double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs);
 
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r);
