@@ -9,7 +9,7 @@ typedef struct {
 } matrix_t;
 
 #define get_matrix_value(M, COL, ROW) ((M)->matrix[(COL) * (M)->nrows + (ROW)])
-#define get_matrix_value(M, INDEX) ((M)->matrix[INDEX]) //  MUCH fast in many cases.
+#define get_matrix_value_byIndex(M, INDEX) ((M)->matrix[INDEX]) //  MUCH fast in many cases.
 
 #define set_matrix_value(M, COL, ROW, VALUE) (M)->matrix[(COL) * (M)->nrows + (ROW)] = VALUE
 

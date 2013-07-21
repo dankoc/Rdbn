@@ -24,7 +24,7 @@ void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
   for(int i=0;i<rbm->n_outputs;i++) {// Get prob. of input node by summing over output states.
     resulting_output[i]= rbm->bias_outputs[i];
     for(int j=0;j<rbm->n_inputs;j++) {
-      resulting_output[i]+= input[j]*get_matrix_value(rbm->io_weights, k++);
+      resulting_output[i]+= input[j]*get_matrix_value_byIndex(rbm->io_weights, k++);
 //      resulting_output[i]+= input[j]*get_matrix_value(rbm->io_weights, i, j);
     }
     resulting_output[i]= logistic_function(resulting_output[i]);
@@ -32,10 +32,11 @@ void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
 }
 
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
+  int k;
   for(int i=0;i<rbm->n_inputs;i++) {// Get prob. of input node by summing over output states.
     resulting_input[i]= rbm->bias_inputs[i];
-    for(int j=0,k=i;j<rbm->n_outputs;j++,k+=rbm->n_outputs)) {
-      resulting_input[i]+= output[j]*get_matrix_value(rbm->io_weights, k);
+    for(int j=0,k=i;j<rbm->n_outputs;j++,k+=rbm->n_inputs) {
+      resulting_input[i]+= output[j]*get_matrix_value_byIndex(rbm->io_weights, k);
 //      resulting_input[i]+= output[j]*get_matrix_value(rbm->io_weights, j, i);
     }
     resulting_input[i]= logistic_function(resulting_input[i]);
