@@ -44,7 +44,7 @@ typedef struct {
   int batch_size;
 } delta_w_t;
 
-#define rbm_sample_state(prob) (prob>(((double)(xorshift()%1000)/1000))?1:0)
+#define rbm_sample_state(prob) ((prob*10000)>(xorshift()%10000)?1:0)
 #define logistic_function(value) (1/ (1+exp(-value)))
 
 
