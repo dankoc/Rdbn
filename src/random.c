@@ -4,7 +4,7 @@
  */
  
 #include "random.h"
-
+/*
 unsigned long xorshift(void) {
  unsigned long t;
  t=(x_rand^(x_rand>>7)); x_rand=y_rand; y_rand=z_rand; z_rand=w_rand; w_rand=v_rand;
@@ -12,3 +12,4 @@ unsigned long xorshift(void) {
 
  return (y_rand+y_rand+1)*v_rand;
 }
+*/

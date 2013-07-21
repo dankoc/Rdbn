@@ -15,6 +15,7 @@
 #include "rbm.h"
 #include "rbm.train.h"
 #include "matrix_functions.h"
+#include "random.h"
 
 #ifdef _POSIX_THREADS 
 #include <pthread.h>
@@ -304,7 +305,6 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
  *
  *  An R interface for RBM training ...
  */
-
 SEXP train_rbm_R(SEXP rbm_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r) {
   rbm_t *rbm= rbm_r_to_c(rbm_r); // Get values from R function.
 
