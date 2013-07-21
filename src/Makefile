@@ -1,11 +1,3 @@
-#ifeq ($(BIGWIGLIBHOME),)
-#        BIGWIGLIBHOME := ~/bin/bigwig/bigwiglib
-#endif
-#
-#ifeq (${MACHTYPE},)
-#        MACHTYPE=x86_64
-#endif
-
 CC=gcc
 LIBS:=-lm -lz -pthread ${shell pkg-config openssl --libs}
 CFLAGS:=-c -g -Wall ${LIBS}
@@ -18,7 +10,7 @@ space:= $(empty) $(empty)
 MFLGSESC := $(subst $(space),\$(space),\$(space))
 
 Rdbn.so:  
-	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${SOURCES} ${LIBS}
+	MAKEFLAGS=${MFLGSESC} R CMD SHLIB -o $@ ${SOURCES} ${CFLAGS}
 
 clean:
 	rm -f *.o *.so
