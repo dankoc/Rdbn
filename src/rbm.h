@@ -1,7 +1,6 @@
 #ifndef restricted_boltzmann_machine_H 
 #define restricted_boltzmann_machine_H
 #include "matrix_functions.h"
-#include <stdlib.h> // For rand() ... Should be faster than runif()?!
 
 typedef struct {
   // Basic description of a restricted Boltzman machine.
@@ -44,7 +43,17 @@ typedef struct {
   int batch_size;
 } delta_w_t;
 
-#define rbm_sample_state(prob) (prob>((double)((rand()%1000)/1000))?1:0)
+/* Fast random number generation... */
+static unsigned long x=123456789,y=362436069,z=521288629,w=88675123,v=886756453;
+unsigned long xorshift(void) {
+ unsigned long t;
+ t=(x^(x>>7)); x=y; y=z; z=w; w=v;
+ v=(v^(v<<6))^(t^(t<<13));
+
+ return (y+y+1)*v;
+}
+
+#define rbm_sample_state(prob) (prob>((double)((xorshift()%1000)/1000))?1:0)
 #define logistic_function(value) (1/ (1+exp(-value)))
 
 
