@@ -13,4 +13,10 @@ static /*R_INLINE*/ unsigned long xorshift(void) {
  return (y_rand+y_rand+1)*v_rand;
 }
 
+static unsigned int g_seed= 56465;
+static unsigned int fastrand() {
+  g_seed = (214013*g_seed+2531011);
+  return (g_seed>>16)&0x7FFF;
+}
+
 #endif
