@@ -15,7 +15,6 @@
 #include "rbm.h"
 #include "rbm.train.h"
 #include "matrix_functions.h"
-#include "random.h"
 
 #ifdef _POSIX_THREADS 
 #include <pthread.h>
