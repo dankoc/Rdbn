@@ -70,7 +70,7 @@ Tips for Designing a Useful Network
 -----------------------------------
 When training a network, it is important that each mini-batch contains a mixed set of examples from each of the class(es) that the network is designed to recognize.  Rdbn does *not* make any changes to the order of the training examples.  
 
-If all examples of a particular class appear together in the training sequence, it is very important to permute the training examples before passing to Rdbn.  One easy way to do this, which works a bit better than a random permutation, is using the following function, shuffle, which returns an order permuted to mix up different sides of the vector: 
+If all examples of a particular class appear together in the training sequence, it is very important to permute the training examples before passing to Rdbn.  The following function, shuffle, returns a permuted order that mixes up different sides of the vector.  This function works for a two-class case, but the idea can be extended to additional classes: 
 
     ## Shuffles the last 50% of elements into the 1st 50%.
     shuffle <- function(n_elements) {
