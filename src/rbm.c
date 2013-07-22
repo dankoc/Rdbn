@@ -13,6 +13,7 @@
 #include <R_ext/Applic.h>
 #include "rbm.h"
 #include "matrix_functions.h"
+#include <cblas.h>
 
 /************************************************************************************
  *
@@ -20,15 +21,9 @@
  *
  ************************************************************************************/
 void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
-  int k=0;
-  for(int i=0;i<rbm->n_outputs;i++) {// Get prob. of input node by summing over output states.
-    resulting_output[i]= rbm->bias_outputs[i];
-    for(int j=0;j<rbm->n_inputs;j++) {
-      resulting_output[i]+= input[j]*get_matrix_value_byIndex(rbm->io_weights, k++);
-//      resulting_output[i]+= input[j]*get_matrix_value(rbm->io_weights, i, j);
-    }
-    resulting_output[i]= logistic_function(resulting_output[i]);
-  }
+  cblas_dgemv (CblasRowMajor,
+               CblasNoTrans, M, N,
+               1.0, A, Ida, X, incX, beta, Y, incY);
 }
 
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
