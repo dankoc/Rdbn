@@ -21,9 +21,14 @@
  *
  ************************************************************************************/
 void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
-  cblas_dgemv (CblasRowMajor,
-               CblasNoTrans, M, N,
-               1.0, A, Ida, X, incX, beta, Y, incY);
+  // For now, copy the biases into the output vector.  A bit of a hack, but if will allow a test before more extensive re-writes.
+  for(int i=0;i<rbm->n_outputs;i++)
+    resulting_output[i]= rbm->bias_outputs[i];
+  
+  cblas_dgemv (CblasRowMajor, CblasNoTrans, 
+               rbm->n_inputs, rbm->n_outputs, 1.0, rbm->io_weights.matrix, lda, rbm->io_weights.nrows,
+			   input, 1, 
+               1.0, resulting_output, rbm->n_outputs);
 }
 
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
