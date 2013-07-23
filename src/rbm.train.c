@@ -79,47 +79,41 @@ void initial_momentum_step(rbm_t *rbm) {
 }
  
 void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
-  for(int i=0;i<rbm[0].n_outputs;i++) {
-    rbm[0].bias_outputs[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
-    rbm[0].output_momentum[i]+= rbm[0].learning_rate*dw[0].delta_output_bias[i]/(double)dw[0].batch_size; 
-    for(int j=0;j<rbm[0].n_inputs;j++) {
-      double step= get_matrix_value(dw[0].delta_w, i, j); // delta_w_i_j
-      double previous_w_i_j= get_matrix_value(rbm[0].io_weights, i, j);
+  double alpha= (rbm->learning_rate/(double)dw->batch_size);
 
-      // If using L2 penalty (a.k.a "weight decay"), apply that here.
-      if(rbm[0].use_l2_penalty) 
-        step-= rbm[0].weight_cost*previous_w_i_j; // Do I apply this to the momentum term as well, or just the correction?!
-      step*= rbm[0].learning_rate/(double)dw[0].batch_size; // For the momentum method ... do I still scale by the batch size?!
-
-      // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
-      // \theta_t' was applied before taking the step.
-      set_matrix_value(rbm[0].io_weights, i, j, previous_w_i_j+step);  //  
-
-      // Update velocities.  v_t = v_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.11, 2nd half).
-      // v_t' was applied before taking the step.
-      double previous_momentum_i_j= get_matrix_value(rbm[0].momentum, i, j);
-      set_matrix_value(rbm[0].momentum, i, j, previous_momentum_i_j+step);
-
-      if(i==0 && rbm[0].update_input_bias) { // Only update once... and if everything says to update.
-        rbm[0].bias_inputs[j]+= rbm[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
-        rbm[0].input_momentum[j]+= rbm[0].learning_rate*dw[0].delta_input_bias[j]/(double)dw[0].batch_size;
-      }
-    }
+  { // Output biases
+    cblas_daxpy(rbm->n_outputs, alpha, dw->delta_output_bias, 1, rbm->bias_outputs, 1)
+    cblas_daxpy(rbm->n_inputs, alpha, dw->delta_output_bias, 1, rbm->output_momentum, 1);
+  }
+  
+  if(rbm->update_input_bias) { // Input biases
+    cblas_daxpy(rbm->n_inputs, alpha, dw->delta_input_bias, 1, rbm->bias_inputs, 1)
+    cblas_daxpy(rbm->n_inputs, alpha, dw->delta_input_bias, 1, rbm->input_momentum, 1);
+  }
+  
+  { // Weights.
+  int size= rbm->n_inputs*rbm->n_outputs; 
+  if(rbm->use_l2_penalty)
+    cblas_daxpy(size, (-1*rbm->weight_cost), rbm->io_weights, 1, dw->delta_w, 1); // L2 penalty.
+  
+  cblas_daxpy(size, alpha, dw->delta_w, 1, rbm->io_weights, 1);
+  cblas_daxpy(size, alpha, dw->delta_w, 1, rbm->momentum, 1);
   }
 }
 
 /*static inline*/ void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
   for(int i=0;i<rbm[0].n_outputs;i++) {
-    batch[0].delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
+    batch->delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
       double delta_w_i_j= get_matrix_value(batch[0].delta_w, i, j)+
 			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
       set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j);
 
-      if(i==0) // Only 
-        batch[0].delta_input_bias[j]+= input_example[j]-input_recon[j]; 
     }
   }
+  
+  for(int j=0;j<rbm[0].n_inputs;j++)
+        batch->delta_input_bias[j]+= input_example[j]-input_recon[j]; 
 }
 
 /*  
