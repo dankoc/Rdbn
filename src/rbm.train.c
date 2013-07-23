@@ -82,7 +82,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   double alpha= (rbm->learning_rate/(double)dw->batch_size);
   // Output biases
   cblas_daxpy(rbm->n_outputs, alpha, dw->delta_output_bias, 1, rbm->bias_outputs, 1);
-  cblas_daxpy(rbm->n_inputs, alpha, dw->delta_output_bias, 1, rbm->output_momentum, 1);
+  cblas_daxpy(rbm->n_outputs, alpha, dw->delta_output_bias, 1, rbm->output_momentum, 1);
   
   if(rbm->update_input_bias) { // Input biases
     cblas_daxpy(rbm->n_inputs, alpha, dw->delta_input_bias, 1, rbm->bias_inputs, 1);
@@ -92,10 +92,10 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   // Weights.
   int size= rbm->n_inputs*rbm->n_outputs-1; 
   if(rbm->use_l2_penalty)
-    cblas_daxpy(size, (-1*rbm->weight_cost), rbm->io_weights, 1, dw->delta_w, 1); // L2 penalty.
+    cblas_daxpy(size, (-1*rbm->weight_cost), rbm->io_weights->matrix, 1, dw->delta_w->matrix, 1); // L2 penalty.
   
-  cblas_daxpy(size, alpha, dw->delta_w, 1, rbm->io_weights, 1);
-  cblas_daxpy(size, alpha, dw->delta_w, 1, rbm->momentum, 1);
+  cblas_daxpy(size, alpha, dw->delta_w->matrix, 1, rbm->io_weights->matrix, 1);
+  cblas_daxpy(size, alpha, dw->delta_w->matrix, 1, rbm->momentum->matrix, 1);
 }
 
 /*static inline*/ void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
