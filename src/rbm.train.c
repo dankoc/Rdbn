@@ -57,11 +57,11 @@ void apply_delta_w(rbm_t *rbm, delta_w_t *dw) {
 void initial_momentum_step(rbm_t *rbm) {
   // Output biases
   cblas_dscal(rbm->n_outputs, rbm->momentum_decay, rbm->output_momentum, 1);
-  cblas_daxpy(rbm->n_outputs, 1.0, rbm->output_momentum, 1, dw->delta_output_bias, 1);
+  cblas_daxpy(rbm->n_outputs, 1.0, rbm->output_momentum, 1, rbm->bias_outputs, 1);
   
   if(rbm->update_input_bias) { // Input biases
     cblas_dscal(rbm->n_inputs, rbm->momentum_decay, rbm->input_momentum, 1);
-    cblas_daxpy(rbm->n_inputs, 1.0, rbm->input_momentum, 1, dw->delta_input_bias, 1);
+    cblas_daxpy(rbm->n_inputs, 1.0, rbm->input_momentum, 1, rbm->bias_inputs, 1);
   }
   
   // Weights.
@@ -74,7 +74,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   double alpha= (rbm->learning_rate/(double)dw->batch_size);
 
   cblas_daxpy(rbm->n_outputs, alpha, dw->delta_output_bias, 1, rbm->output_momentum, 1);
-  cblas_daxpy(size, alpha, dw->delta_w->matrix, 1, rbm->momentum->matrix, 1);
+  cblas_daxpy(rbm->n_outputs*rbm->n_inputs, alpha, dw->delta_w->matrix, 1, rbm->momentum->matrix, 1);
   if(rbm->update_input_bias)
     cblas_daxpy(rbm->n_inputs, alpha, dw->delta_input_bias, 1, rbm->input_momentum, 1);
 
