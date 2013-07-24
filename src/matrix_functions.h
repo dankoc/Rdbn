@@ -9,9 +9,10 @@ typedef struct {
 } matrix_t;
 
 #define get_matrix_value(M, COL, ROW) ((M)->matrix[(COL) * (M)->nrows + (ROW)])
-#define get_matrix_value_byIndex(M, INDEX) ((M)->matrix[INDEX]) //  MUCH fast in many cases.
-
 #define set_matrix_value(M, COL, ROW, VALUE) (M)->matrix[(COL) * (M)->nrows + (ROW)] = VALUE
+
+#define get_matrix_value_byIndex(M, INDEX) ((M)->matrix[INDEX]) //  MUCH fast in many cases.
+#define set_matrix_value_byIndex(M, INDEX, VALUE) (M)->matrix[INDEX] = VALUE
 
 matrix_t *alloc_matrix(int ncols, int nrows);
 matrix_t *R_alloc_matrix(int ncols, int nrows);

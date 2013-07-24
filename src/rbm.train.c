@@ -82,12 +82,13 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
 }
 
 /*static inline*/ void compute_delta_w(rbm_t *rbm, delta_w_t *batch, double *init_output_recon, double *input_example, double *output_recon, double *input_recon) {
+  int k=0;
   for(int i=0;i<rbm[0].n_outputs;i++) {
     batch->delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm[0].n_inputs;j++) {
-      double delta_w_i_j= get_matrix_value(batch[0].delta_w, i, j)+
+      double delta_w_i_j= get_matrix_value_byIndex(batch[0].delta_w, k)+
 			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
-      set_matrix_value(batch[0].delta_w, i, j, delta_w_i_j);
+      set_matrix_value_byIndex(batch[0].delta_w, k++, delta_w_i_j);
 
     }
   }
