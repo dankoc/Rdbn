@@ -30,4 +30,6 @@ val <- dbn.predict(db_refine, data=x, raw_matrix=FALSE)
 mat <- dbn.predict(db_refine, data=x, raw_matrix=TRUE)
 
 
-cor.test(dbn.predict(db, data=x, raw_matrix=TRUE)[,1], dbn.predict(db, data=x, raw_matrix=TRUE)[,5]))
+print(sum(val == as.character(y))/NROW(y))
+
+cor.test(dbn.predict(db, data=x, raw_matrix=TRUE)[,1], dbn.predict(db, data=x, raw_matrix=TRUE)[,5])

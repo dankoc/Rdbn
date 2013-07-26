@@ -87,15 +87,14 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   double *restrict delta_output_bias =batch->delta_output_bias;
   double *restrict delta_input_bias =batch->delta_input_bias;
 
-  for(int i=0;i<rbm->n_outputs;i++) { // Sample states for each neuron in the reconstructed ... MUCH faster.  Still technically correct?! 
-   init_output_recon[i]= rbm_sample_state(init_output_recon[i]);
-  }
+//  for(int i=0;i<rbm->n_outputs;i++) // Sample states for each neuron in the reconstructed ... MUCH faster.  Still technically correct?! 
+//   init_output_recon[i]= rbm_sample_state(init_output_recon[i]);
 
   for(int i=0;i<rbm->n_outputs;i++) {
     delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm->n_inputs;j++,k++) {
       double delta_w_i_j= get_matrix_value_byIndex(delta_w, k)+
-			(init_output_recon[i]*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
+			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
       set_matrix_value_byIndex(delta_w, k, delta_w_i_j);
 
     }
