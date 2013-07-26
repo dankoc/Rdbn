@@ -11,20 +11,15 @@ for(i in c(1:(NROW(x)))) {
 # hist(x[1,]) ## Looks about right.
 
 ## Train a deep belief network.
-db <- dbn(n_layers= 4, layer_sizes= c(9,50,50,100), batch_size=100, cd_n=1, momentum_decay= 0.99, learning_rate=0.1)
-db <- dbn.pretrain(db, data= x, n_epocs= 100, n_threads=8)
-
-save.image("~/test_Vowel.RData")
-
-load("~/test_Vowel.RData")
-require(Rdbn)
+db <- dbn(n_layers= 2, layer_sizes= c(9,20), batch_size=11, cd_n=1, momentum_decay= 0.8, learning_rate=0.1, weight_cost=0.1)
+#db <- dbn.pretrain(db, data= x, n_epocs= 50, n_threads=8)
 
 ## Update learning parameters.
-db <- dbn.set_momentum_decay(db, 0.8)
-db <- dbn.set_learning_rate(db, 0.03)
+db <- dbn.set_momentum_decay(db, 0.5)
+db <- dbn.set_learning_rate(db, 0.05)
 
 ## refine model with new learning parameters.
-db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=100, rate_mult=5, n_threads=1)
+db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=500, rate_mult=5, n_threads=1)
 
 val <- dbn.predict(db_refine, data=x, raw_matrix=FALSE)
 mat <- dbn.predict(db_refine, data=x, raw_matrix=TRUE)
