@@ -13,7 +13,6 @@
 #include <R_ext/Applic.h>
 #include "rbm.h"
 #include "matrix_functions.h"
-#include <cblas.h>
 
 /************************************************************************************
  *
