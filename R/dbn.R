@@ -102,7 +102,7 @@ setMethod("dbn.pretrain", c(dbn="dbn"),
 setGeneric("dbn.daydream", 
   def=function(dbn, data, cd_n= 1000, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
-	standardGeneric("dbn.pretrain")
+	standardGeneric("dbn.daydream")
 })
   
 setMethod("dbn.daydream", c(dbn="dbn"), 

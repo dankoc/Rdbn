@@ -35,7 +35,7 @@ static inline double *dbn_daydream(dbn_t *dbn, int cd_n, double *input) {
     current_input= layer_output;
   }
   
-  double *recon_input= daydream(dbn->rbms[dbn->n_rbms-1], cd_n, layer_output);
+  double *recon_input= daydream(&(dbn->rbms[dbn->n_rbms-1]), cd_n, layer_output);
   Free(layer_output);
   
   layer_output= recon_input;
@@ -65,7 +65,7 @@ SEXP daydream_dbn_R(SEXP dbn_r, SEXP input_r, SEXP R_cd_n, SEXP n_threads_r) {
   protect(output_r= allocMatrix(REALSXP, dbn->n_inputs, n_examples));
   double *output= REAL(output_r);
   
-  double *input_recon= dbn_daydream(dbn, cd_n, input, output);
+  double *input_recon= dbn_daydream(dbn, cd_n, input);
   
   for(int i=0;i<dbn->n_inputs;i++)
     output[i]= input_recon[i];
