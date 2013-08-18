@@ -25,12 +25,12 @@
  * Shortcut to allocate memory and clamps the given input layer.  Returns a new *double with the output of that layer.
  */
 double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs) {
-  double *layer_output= (double*)Calloc(dbn[0].rbms[layer].n_outputs*n_inputs,double);
+  double *layer_output= (double*)Calloc(dbn->rbms[layer].n_outputs*n_inputs,double);
   double *layer_output_ptr= layer_output;
   for(int i=0;i<n_inputs;i++) { // One-by-one fill in the outputs.
-    clamp_input(&(dbn[0].rbms[layer]), input, layer_output_ptr);
-        input+= dbn[0].rbms[layer].n_inputs; // Increment pointers.
-        layer_output_ptr+= dbn[0].rbms[layer].n_outputs;
+    clamp_input(&(dbn->rbms[layer]), input, layer_output_ptr);
+    input+= dbn->rbms[layer].n_inputs; // Increment pointers.
+    layer_output_ptr+= dbn->rbms[layer].n_outputs;
   }
   return(layer_output);
 }
@@ -85,20 +85,21 @@ delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn) {
  *    examples   --> Examples of input used to train the network.
  *    n_examples --> Number of examples passed to the training.
  *    n_epocs    --> Number of times to iterate over the input examples during training.
+ *    n_threads  --> Number of threads to run pre-training on.
  */
 void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_threads) {
   // Trian the first layer.
   Rprintf("Training layer 1: ");
-  rbm_train(&(dbn[0].rbms[0]), examples, n_examples, n_epocs, n_threads);
+  rbm_train(&(dbn->rbms[0]), examples, n_examples, n_epocs, n_threads);
   Rprintf("\n");
   
   // train later layers.
   double *previous_layer_input, *next_layer_input;
   previous_layer_input= examples;
-  for(int layer=1;layer<dbn[0].n_rbms;layer++) {
+  for(int layer=1;layer<dbn->n_rbms;layer++) {
    next_layer_input= get_layer_outputs(dbn, layer-1, previous_layer_input, n_examples); // Get the output from the previous layer; that's the input to the next layer ...
    Rprintf("Training layer %d: ",layer+1);
-   rbm_train(&(dbn[0].rbms[layer]), next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
+   rbm_train(&(dbn->rbms[layer]), next_layer_input, n_examples, n_epocs, n_threads); // Train the current layer.
    Rprintf("\n");
 
     // Free the previous input layer (unless we're on the first pass and pointing to *examples.
@@ -106,7 +107,7 @@ void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_
       Free(previous_layer_input); // Free the previous input layer.
 	previous_layer_input= next_layer_input; // Set previous_layer_input to the current layer for the next pass...
   }
-  if(dbn[0].n_rbms>1) // Clean up allocated memory ... iff it's not still set to *examples.
+  if(dbn->n_rbms>1) // Clean up allocated memory ... iff it's not still set to *examples.
     Free(previous_layer_input); 
 }
 
@@ -116,22 +117,22 @@ void dbn_train(dbn_t *dbn, double *examples, int n_examples, int n_epocs, int n_
 dbn_t *dbn_r_to_c(SEXP dbn_r) {
   dbn_t *dbn= (dbn_t*)R_alloc(1, sizeof(dbn_t));
 
-  dbn[0].batch_size= INTEGER(GET_SLOT(dbn_r, Rf_install("batch_size")))[0];
-  dbn[0].n_layers= INTEGER(GET_SLOT(dbn_r,Rf_install("n_layers")))[0];
-  dbn[0].n_rbms= dbn[0].n_layers-1;
-  dbn[0].layer_sizes= INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
+  dbn->batch_size= INTEGER(GET_SLOT(dbn_r, Rf_install("batch_size")))[0];
+  dbn->n_layers= INTEGER(GET_SLOT(dbn_r,Rf_install("n_layers")))[0];
+  dbn->n_rbms= dbn->n_layers-1;
+  dbn->layer_sizes= INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
 
-  dbn[0].n_rbms= dbn[0].n_layers-1;
-  dbn[0].rbms= (rbm_t*)R_alloc(dbn[0].n_rbms, sizeof(rbm_t));
-  dbn[0].rbms[0]= (rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), 0)))[0]; // Apply rbm_r_to_c for network[[i]].
+  dbn->n_rbms= dbn->n_layers-1;
+  dbn->rbms= (rbm_t*)R_alloc(dbn->n_rbms, sizeof(rbm_t));
+  dbn->rbms[0]= (rbm_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), 0)))[0]; // Apply rbm_r_to_c for network[[i]].
 
-  for(int i=1;i<dbn[0].n_rbms;i++) {
+  for(int i=1;i<dbn->n_rbms;i++) {
     // Force bias_input[i] = bias_output[i-1];
-    dbn[0].rbms[i]= (rbm_layer_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i), dbn[0].rbms[i-1].bias_outputs))[0];
+    dbn->rbms[i]= (rbm_layer_r_to_c(VECTOR_ELT(GET_SLOT(dbn_r, Rf_install("network")), i), dbn->rbms[i-1].bias_outputs))[0];
   }
 
-  dbn[0].n_outputs= dbn[0].rbms[dbn[0].n_rbms-1].n_outputs;
-  dbn[0].n_inputs= dbn[0].rbms[0].n_inputs;
+  dbn->n_outputs= dbn->rbms[dbn->n_rbms-1].n_outputs;
+  dbn->n_inputs= dbn->rbms->n_inputs;
   
   return(dbn);
 }
