@@ -27,7 +27,7 @@ rowMeans(x[,y=="D"])
 
 ## Train a deep belief network.
 require(Rdbn)
-db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-3)
+db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 5e-2)
 db <- dbn.pretrain(db, data= x, n_epocs= 100, n_threads=8)
 
 ## Check whether the example converted to a useful set in pre-training.
@@ -38,7 +38,7 @@ db <- dbn.set_momentum_decay(db, 0.8)
 db <- dbn.set_learning_rate(db, 0.03)
 
 ## refine model with new learning parameters.
-db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=100, rate_mult=5, n_threads=1)
+db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=500, rate_mult=5, n_threads=1)
 
 val <- dbn.predict(db_refine, data=x)
 mat <- dbn.predict(db_refine, data=x)
@@ -47,30 +47,13 @@ mat <- dbn.predict(db_refine, data=x)
 print(paste("Performance: ", sum(val == y)/NROW(y)))
 
 ###
-## This works much better with just one layer!
-db.one <- dbn(n_layers= 2, layer_sizes= c(16,100), batch_size=10, cd_n=1, momentum_decay= 0.99, learning_rate=0.1)
-db.one <- dbn.pretrain(db.one, data= x, n_epocs= 100, n_threads=8)
-a.one <- dbn.predict(db.one, data=x, raw_matrix=TRUE)
-db.one <- dbn.set_momentum_decay(db.one, 0.8)
-db.one <- dbn.set_learning_rate(db.one, 0.03)
-db.one <- dbn.refine(db.one, data= x, labels= y, n_epocs=100, rate_mult=5, n_threads=1)
-val.one <- dbn.predict(db.one, data=x)
-print(paste("Performance: ", sum(val.one == y)/NROW(y)))
-
-###
 ## Which neurons are predictive of each class?... 
-th <- 0.9
+th <- 0.2
 which(rowSums(a[,(y == "A")])/sum(y == "A") > th)
 which(rowSums(a[,(y == "B")])/sum(y == "B") > th)
 which(rowSums(a[,(y == "C")])/sum(y == "C") > th)
 which(rowSums(a[,(y == "D")])/sum(y == "D") > th)
-rowSums(a)/NROW(y)*1000
-
-th <- 0.9
-which(rowSums(a.one[,(y == "A")])/sum(y == "A") > th)
-which(rowSums(a.one[,(y == "B")])/sum(y == "B") > th)
-which(rowSums(a.one[,(y == "C")])/sum(y == "C") > th)
-which(rowSums(a.one[,(y == "D")])/sum(y == "D") > th)
+(rowSums(a)/NROW(y)*1000)#[which(rowSums(a[,(y == "A")])/sum(y == "A") > th)]
 
 ## Use SVM.
 require(e1071)

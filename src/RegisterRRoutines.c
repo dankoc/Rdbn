@@ -24,8 +24,11 @@ void R_init_Rdbn(DllInfo *info) {
        {"backpropagation_dbn_R", (DL_FUNC)&backpropagation_dbn_R, 6},
        {"predict_dbn_R", (DL_FUNC)&predict_dbn_R, 4},
        {"convert_to_max_R", (DL_FUNC)&convert_to_max_R, 3},
+       {"daydream_dbn_R", (DL_FUNC)&daydream_dbn_R, 5},
+
        {NULL, NULL, 0}
      };
 
         R_registerRoutines(info, NULL, callMethods, NULL, NULL);
 }
+

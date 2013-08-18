@@ -35,6 +35,20 @@ double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs) {
   return(layer_output);
 }
 
+/*
+ * Shortcut to allocate memory and clamps the given input layer.  Returns a new *double with the output of that layer.
+ */
+double *get_layer_inputs(dbn_t *dbn, int layer, double *output, int n_outputs) {
+  double *layer_input= (double*)Calloc(dbn->rbms[layer].n_inputs*n_outputs,double);
+  double *layer_input_ptr= layer_input;
+  for(int i=0;i<n_outputs;i++) { // One-by-one fill in the outputs.
+    clamp_output(&(dbn->rbms[layer]), output, layer_input_ptr);
+    output+= dbn->rbms[layer].n_outputs; // Increment pointers.
+    layer_input_ptr+= dbn->rbms[layer].n_inputs;
+  }
+  return(layer_input);
+}
+
 /*************************************************************************************
  *  Functions of initiatlizing, allocating, and free-ing rbm_t.
  */

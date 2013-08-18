@@ -89,6 +89,30 @@ setMethod("dbn.pretrain", c(dbn="dbn"),
 })
 
 
+ # require(Rdbn)
+ # rr <- rbm(n_inputs= as.integer(5), n_outputs= as.integer(10))
+ # train(rr, matrix(c(1:10), ncol=5))
+
+#` Method to preform alternating Gibbs sampling on the inner-most RBM layer.
+#` @param dbn The layered network of RBMs.
+#` @param data A data vector representing [a] traning case(s).
+#` @param cd_n Number of iterations of contrastive divergence Gibbs sampling to run in the top-level RBM.
+#` @param n_threads Number of concurrent threads to run.
+#` @export
+setGeneric("dbn.daydream", 
+  def=function(dbn, data, cd_n= 1000, n_threads=1) {
+	stopifnot(class(dbn) == "dbn")
+	standardGeneric("dbn.pretrain")
+})
+  
+setMethod("dbn.daydream", c(dbn="dbn"), 
+  function(dbn, data, cd_n= 1000, n_threads=1) {
+    if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs) 
+      data <- t(data)
+  	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
+    .Call("daydream_dbn_R", dbn, as.numeric(data), as.integer(cd_n), as.integer(n_threads), package="Rdbn") 
+})
+
 #` Method to train a boltzman machine (stored in rbm).
 #` @param dbn The layered network of RBMs.
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.

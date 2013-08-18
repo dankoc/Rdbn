@@ -114,8 +114,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
  *
  */
 /*static inline*/ void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t *batch) {
- 
-  // Run Gibbs sampling for CDn steps.
+   // Run Gibbs sampling for CDn steps.
   double *init_output_recon= (double*)Calloc(rbm[0].n_outputs, double);
   double *input_recon= (double*)Calloc(rbm[0].n_inputs, double);
   clamp_input(rbm, input_example, init_output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))

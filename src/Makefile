@@ -1,7 +1,7 @@
 CC=gcc
 LIBS:=-lm -lz -lblas -pthread
 CFLAGS:=-c -g -Wall ${LIBS}
-SOURCES= rbm.c rbm.train.c dbn.c dbn.backpropagation.c dbn.compute.c matrix_functions.c random.c RegisterRRoutines.c
+SOURCES= rbm.c rbm.train.c dbn.c dbn.backpropagation.c dbn.compute.c dbn.daydream.c matrix_functions.c random.c RegisterRRoutines.c
 OBJECTS=$(SOURCES:.c=.o)
 
 # define a space

@@ -48,6 +48,22 @@ void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
 
 
 /*************************************************************************************
+ * Preforms alternating Gibbs sampling on *rbm.  Returns a reconstructed input example.
+ *
+ */
+double *daydream(rbm_t *rbm, int cd_n, double *input_example) {
+  double *output_recon= (double*)Calloc(rbm[0].n_outputs, double);
+  clamp_input(rbm, input_example, output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
+  double *input_recon= (double*)Calloc(rbm[0].n_inputs, double);
+
+  for(int cd=0;cd<cd_n;cd++) {
+    clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
+    clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
+  }
+  return(input_recon);
+}
+
+/*************************************************************************************
  *  Functions of initiatlizing, allocating, and free-ing rbm_t.
  */
 
