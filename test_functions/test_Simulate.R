@@ -3,10 +3,10 @@
 require(Rdbn)
 
 Classes <- c("A", "B", "C", "D")
-y <- sample(Classes, 1000, replace=TRUE)
+y <- rep(Classes, 250) #sample(Classes, 1000, replace=TRUE)
 
-sample_on <- function(n) { rnorm(n, 1.5, sd=1) }
-sample_off <- function(n) { rnorm(n, -1.5, sd=1) }
+sample_on <- function(n) { rnorm(n, 0.5, sd=1) }
+sample_off <- function(n) { rnorm(n, -0.5, sd=1) }
 
 x <- logistic_function(matrix(unlist(lapply(y, function(x){
   if(x==Classes[1]) return(c(sample_on(4), sample_off(12)))
@@ -30,31 +30,51 @@ require(Rdbn)
 db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=100, cd_n=1, momentum_decay= 0.99, learning_rate=0.1)
 db <- dbn.pretrain(db, data= x, n_epocs= 10, n_threads=8)
 
+## Check whether the example converted to a useful set in pre-training.
+a <- dbn.predict(db, data=x, raw_matrix=TRUE)
+
 ## Update learning parameters.
 db <- dbn.set_momentum_decay(db, 0.8)
 db <- dbn.set_learning_rate(db, 0.03)
 
 ## refine model with new learning parameters.
-db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=100, rate_mult=5, n_threads=1)
+db_refine <- dbn.refine(db, data= x, labels= y, n_epocs=1000, rate_mult=5, n_threads=1)
 
 val <- dbn.predict(db_refine, data=x)
 mat <- dbn.predict(db_refine, data=x)
 
-## Perfect performance! :)
+## Not much better than guessing.
 print(paste("Performance: ", sum(val == y)/NROW(y)))
 
+###
+## This works much better with just one layer!
+db.one <- dbn(n_layers= 2, layer_sizes= c(16,100), batch_size=100, cd_n=1, momentum_decay= 0.99, learning_rate=0.1)
+db.one <- dbn.pretrain(db.one, data= x, n_epocs= 10, n_threads=8)
+a.one <- dbn.predict(db.one, data=x, raw_matrix=TRUE)
+db.one <- dbn.set_momentum_decay(db.one, 0.8)
+db.one <- dbn.set_learning_rate(db.one, 0.03)
+db.one <- dbn.refine(db.one, data= x, labels= y, n_epocs=1000, rate_mult=5, n_threads=1)
+val.one <- dbn.predict(db.one, data=x)
+print(paste("Performance: ", sum(val.one == y)/NROW(y)))
 
-## Some additional sanity checks here. #################################################
-## Works fine.
-# which(dbn.predict(db, x[,y=="A"][,1], raw_matrix=TRUE)>0.5) #[1]  8 32 77 85
-# which(dbn.predict(db, x[,y=="A"][,2], raw_matrix=TRUE)>0.5) #[1]  8 32 77 85
-# which(dbn.predict(db, x[,y=="A"][,3], raw_matrix=TRUE)>0.5) #[1]  8 32 77 85
-# which(dbn.predict(db, x[,y=="B"][,3], raw_matrix=TRUE)>0.5) #[1]  6 10 13 19 21 49 71 73 98
-# which(dbn.predict(db, x[,y=="C"][,3], raw_matrix=TRUE)>0.5) #[1]  8 49 58 72 90 95 96
-# which(dbn.predict(db, x[,y=="D"][,3], raw_matrix=TRUE)>0.5) #[1]  7  8 12 45 49 73 84
+###
+## Which neurons are predictive of each class?... 
+th <- 0.9
+which(rowSums(a[,(y == "A")])/sum(y == "A") > th)
+which(rowSums(a[,(y == "B")])/sum(y == "B") > th)
+which(rowSums(a[,(y == "C")])/sum(y == "C") > th)
+which(rowSums(a[,(y == "D")])/sum(y == "D") > th)
 
-# cor.test(dbn.predict(db, data=x, raw_matrix=TRUE)[,y=="A"][,3], dbn.predict(db, data=x, raw_matrix=TRUE)[,y=="A"][,1])$estimate[[1]] #0.9999505
-# cor.test(dbn.predict(db, data=x, raw_matrix=TRUE)[,y=="B"][,3], dbn.predict(db, data=x, raw_matrix=TRUE)[,y=="A"][,1])$estimate[[1]] #0.04404162
+th <- 0.9
+which(rowSums(a.one[,(y == "A")])/sum(y == "A") > th)
+which(rowSums(a.one[,(y == "B")])/sum(y == "B") > th)
+which(rowSums(a.one[,(y == "C")])/sum(y == "C") > th)
+which(rowSums(a.one[,(y == "D")])/sum(y == "D") > th)
 
-## All 4 outputs light up, indicating problem with backprop.
-# which(dbn.predict(db_refine, x[,y=="A"][,1], raw_matrix=TRUE)>0.5) #[1] 1 2 3 4
+## Use SVM.
+require(e1071)
+asvm <- svm(t(x), as.factor(y)) ## SVM does better with RAW data.
+pred_svm <- predict(asvm, t(x))
+
+print(paste("% correct (svm): ", sum(pred_svm == as.character(y))/NROW(y)))
+

@@ -30,6 +30,8 @@ require(Rdbn)
 db <- dbn(n_layers= 4, layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-5)
 db <- dbn.pretrain(db, data= data, n_epocs= 100, n_threads=8)
 
+save.image("pretrain.RData")
+
 ## Update learning parameters.
 db <- dbn.set_momentum_decay(db, 0.8)
 db <- dbn.set_learning_rate(db, 0.03)
@@ -120,4 +122,75 @@ summary(pred[pred!=label&label==9])/sum(pred!=label&label==9)
          # 7          8          9 
 # 0.19010819 0.21483771 0.00000000 
 
+
+
+###############################################################################
+## Test the un-refined model for 'classification accuracy'.
+##
+## Summary: Pre-training dosen't appear to be converging to a useful set of weights.
+##          Bug in RBM (?!)
+##
+n <- 1000
+a <- dbn.predict(db, data=data[,c(1:n)], raw_matrix=TRUE)
+
+#####
+## Visualize neuron activation patterns | input.
+par(mfrow=c(1,1), mar=c(5,4,4,2)+0.1)
+plot(rowSums(a[,(label[1:n] == 1)])/sum(label[1:n] == 1), type="l", ylim=c(0,1))
+points(rowSums(a[,(label[1:n] == 2)])/sum(label[1:n] == 2), type="l", col="red")
+points(rowSums(a[,(label[1:n] == 3)])/sum(label[1:n] == 3), type="l", col="blue")
+points(rowSums(a[,(label[1:n] == 4)])/sum(label[1:n] == 4), type="l", col="green")
+points(rowSums(a[,(label[1:n] == 5)])/sum(label[1:n] == 5), type="l", col="gray")
+points(rowSums(a[,(label[1:n] == 6)])/sum(label[1:n] == 6), type="l", col="orange")
+points(rowSums(a[,(label[1:n] == 7)])/sum(label[1:n] == 7), type="l", col="dark red")
+points(rowSums(a[,(label[1:n] == 8)])/sum(label[1:n] == 8), type="l", col="dark green")
+points(rowSums(a[,(label[1:n] == 9)])/sum(label[1:n] == 9), type="l", col="dark blue")
+points(rowSums(a[,(label[1:n] == 0)])/sum(label[1:n] == 0), type="l", col="pink")
+
+par(mfrow=c(10,1), mar=c(1,4,1,2)+0.1)
+plot(rowSums(a[,(label[1:n] == 1)])/sum(label[1:n] == 1), type="l", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 2)])/sum(label[1:n] == 2), type="l", col="red", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 3)])/sum(label[1:n] == 3), type="l", col="blue", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 4)])/sum(label[1:n] == 4), type="l", col="green", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 5)])/sum(label[1:n] == 5), type="l", col="gray", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 6)])/sum(label[1:n] == 6), type="l", col="orange", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 7)])/sum(label[1:n] == 7), type="l", col="dark red", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 8)])/sum(label[1:n] == 8), type="l", col="dark green", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 9)])/sum(label[1:n] == 9), type="l", col="dark blue", ylim=c(0,1))
+plot(rowSums(a[,(label[1:n] == 0)])/sum(label[1:n] == 0), type="l", col="pink", ylim=c(0,1))
+
+#####
+## Which neurons indicate each number...
+th <- 0.95
+which(rowSums(a[,(label[1:n] == 1)])/sum(label[1:n] == 1) > th)
+which(rowSums(a[,(label[1:n] == 2)])/sum(label[1:n] == 2) > th)
+which(rowSums(a[,(label[1:n] == 3)])/sum(label[1:n] == 3) > th)
+which(rowSums(a[,(label[1:n] == 4)])/sum(label[1:n] == 4) > th)
+which(rowSums(a[,(label[1:n] == 5)])/sum(label[1:n] == 5) > th)
+which(rowSums(a[,(label[1:n] == 6)])/sum(label[1:n] == 6) > th)
+which(rowSums(a[,(label[1:n] == 7)])/sum(label[1:n] == 7) > th)
+which(rowSums(a[,(label[1:n] == 8)])/sum(label[1:n] == 8) > th)
+which(rowSums(a[,(label[1:n] == 9)])/sum(label[1:n] == 9) > th)
+which(rowSums(a[,(label[1:n] == 0)])/sum(label[1:n] == 0) > th)
+
+#####
+## Correlations ... yuck.
+cor.test(rowSums(a[,(label[1:n] == 1)]), rowSums(a[,(label[1:n] == 0)]))
+cor.test(rowSums(a[,(label[1:n] == 9)]), rowSums(a[,(label[1:n] == 8)]))
+cor.test(rowSums(a[,(label[1:n] == 2)]), rowSums(a[,(label[1:n] == 8)]))
+cor.test(rowSums(a[,(label[1:n] == 1)]), rowSums(a[,(label[1:n] == 8)]))
+cor.test(rowSums(a[,(label[1:n] == 6)]), rowSums(a[,(label[1:n] == 8)]))
+
+#####
+## Try taining a classifier.  Naive Bayes should really work very well, if pre-training converged 
+## to a useful set of weights.  Yet, no dice.  
+require(e1071)
+nb_a <- naiveBayes(t(a), label[1:n])
+
+pred_l <- predict(nb_a, t(a)) ## This does not work ... not sure why?!
+sum(pred_l == label[1:n])/n
+
+## Poor performance on the first 10.
+predict(nb_a, t(a)[c(1:10),], type="raw")
+label[1:10]
 

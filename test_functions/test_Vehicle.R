@@ -40,3 +40,14 @@ pred_svm <- predict(asvm, t(x[,testIndx]))
 
 print(paste("% correct (svm): ", sum(pred_svm == as.character(y[testIndx]))/NROW(y[testIndx])))
 
+
+########################################################################################
+## Which neurons are predictive of each class?... This is how its supposed to be!
+a <- dbn.predict(db_refine, data=x, raw_matrix=TRUE)
+th <- 0.5
+which(rowSums(a[,(y == "bus")])/sum(y == "bus") > th)
+which(rowSums(a[,(y == "opel")])/sum(y == "opel") > th)
+which(rowSums(a[,(y == "saab")])/sum(y == "saab") > th)
+which(rowSums(a[,(y == "van")])/sum(y == "van") > th)
+cor.test(rowSums(a[,(y == "saab")]), rowSums(a[,(y == "opel")]))
+cor.test(rowSums(a[,(y == "bus")]), rowSums(a[,(y == "saab")]))
