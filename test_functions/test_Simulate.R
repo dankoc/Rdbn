@@ -27,7 +27,7 @@ rowMeans(x[,y=="D"])
 
 ## Train a deep belief network.
 require(Rdbn)
-db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1)
+db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-3)
 db <- dbn.pretrain(db, data= x, n_epocs= 100, n_threads=8)
 
 ## Check whether the example converted to a useful set in pre-training.
@@ -64,6 +64,7 @@ which(rowSums(a[,(y == "A")])/sum(y == "A") > th)
 which(rowSums(a[,(y == "B")])/sum(y == "B") > th)
 which(rowSums(a[,(y == "C")])/sum(y == "C") > th)
 which(rowSums(a[,(y == "D")])/sum(y == "D") > th)
+rowSums(a)/NROW(y)*1000
 
 th <- 0.9
 which(rowSums(a.one[,(y == "A")])/sum(y == "A") > th)
