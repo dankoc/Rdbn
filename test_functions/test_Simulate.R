@@ -27,10 +27,18 @@ rowMeans(x[,y=="D"])
 
 ## Train a deep belief network.
 require(Rdbn)
-db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 5e-2)
-db <- dbn.pretrain(db, data= x, n_epocs= 10, n_threads=8)
+db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=10, cd_n=10, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 5e-2)
+db <- dbn.pretrain(db, data= x, n_epocs= 50, n_threads=8)
 
+## Check pre-training using a daydream.
 dbn.daydream(db, data=x[,1])
+
+ plot(dbn.daydream(db, data=x[,1], cd_n=1), type="l", ylim=c(0,1))
+ points(dbn.daydream(db, data=x[,1], cd_n=2), type="l", col="dark blue")
+ points(dbn.daydream(db, data=x[,1], cd_n=5), type="l", col="dark blue")
+ points(dbn.daydream(db, data=x[,1], cd_n=10), type="l", col="gray")
+ points(dbn.daydream(db, data=x[,1], cd_n=50), type="l", col="gray")
+ points(dbn.daydream(db, data=x[,1], cd_n=100), type="l", col="light gray")
 
 ## Check whether the example converted to a useful set in pre-training.
 a <- dbn.predict(db, data=x, raw_matrix=TRUE)
