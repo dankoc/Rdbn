@@ -45,8 +45,8 @@ To train a classifier on the Vehicle dataset in ML bench, use the following:
 
     ###
     ## Quick & Simple calls to train a classifier using deep belief networks.
-    db <- dbn(x= x[,trainIndx], y= y[trainIndx], n_layers= 3, layer_sizes= c(18,75,50), 
-      batch_size=100, momentum_decay= 0.9, learning_rate=0.5, weight_cost= 0.1, n_threads=8)
+    db <- dbn(x= x[,trainIndx], y= y[trainIndx], n_layers= 3, layer_sizes= c(18,100,150), 
+      batch_size=10, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 0.01, n_threads=8)
     pred_dbn <- dbn.predict(db, data=x[,testIndx], n_threads=8)
 
     print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW(y[testIndx])))
@@ -54,8 +54,8 @@ To train a classifier on the Vehicle dataset in ML bench, use the following:
     ###
     ## Alternatively, network training strategies can be applied independently.  
     ## This provides additional control over training parameters, and can result in better performance.
-    db <- dbn(n_layers= 3, layer_sizes= c(18,75,50), batch_size=100, cd_n=1, momentum_decay= 0.9, 
-      learning_rate=0.5, weight_cost= 0.1)
+    db <- dbn(n_layers= 3, layer_sizes= c(18,100,150), batch_size=10, cd_n=1, momentum_decay= 0.9, 
+      learning_rate=0.1, weight_cost= 0.01)
     db <- dbn.pretrain(db, data= x[,trainIndx], n_epocs= 50, n_threads=8)
 
     ## Refine using backpropagation with new learning parameters.
