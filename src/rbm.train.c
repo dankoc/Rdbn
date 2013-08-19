@@ -87,14 +87,11 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   double *restrict delta_output_bias =batch->delta_output_bias;
   double *restrict delta_input_bias =batch->delta_input_bias;
 
-//  for(int i=0;i<rbm->n_outputs;i++) // Sample states for each neuron in the reconstructed ... MUCH faster.  Still technically correct?! 
-//   init_output_recon[i]= rbm_sample_state(init_output_recon[i]);
-
   for(int i=0;i<rbm->n_outputs;i++) {
     delta_output_bias[i]+= init_output_recon[i]-output_recon[i];
     for(int j=0;j<rbm->n_inputs;j++,k++) {
       double delta_w_i_j= get_matrix_value_byIndex(delta_w, k)+
-			(rbm_sample_state(init_output_recon[i])*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
+			(init_output_recon[i]*input_example[j])-(output_recon[i]*input_recon[j]); // <ViHj_data>-<ViHj_recon>
       set_matrix_value_byIndex(delta_w, k, delta_w_i_j);
 
     }
@@ -115,11 +112,12 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
  */
 /*static inline*/ void do_batch_member(rbm_t *rbm,  double *input_example, delta_w_t *batch) {
    // Run Gibbs sampling for CDn steps.
-  double *init_output_recon= (double*)Calloc(rbm[0].n_outputs, double);
-  double *input_recon= (double*)Calloc(rbm[0].n_inputs, double);
+  double *init_output_recon= (double*)Calloc(rbm->n_outputs, double);
+  double *input_recon= (double*)Calloc(rbm->n_inputs, double);
   clamp_input(rbm, input_example, init_output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
-  double *output_recon= vector_copy(init_output_recon, rbm[0].n_outputs);  
-  for(int cd=0;cd<rbm[0].cd_n;cd++) {
+  double *output_recon= vector_copy(init_output_recon, rbm->n_outputs);  
+  for(int cd=0;cd<rbm->cd_n;cd++) {
+    sample_states(output_recon, rbm->n_outputs); // Sample the hidden states.
     clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
     clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
   }

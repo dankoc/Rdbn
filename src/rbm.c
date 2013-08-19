@@ -57,9 +57,11 @@ double *daydream(rbm_t *rbm, int cd_n, double *input_example) {
   double *input_recon= (double*)Calloc(rbm[0].n_inputs, double);
 
   for(int cd=0;cd<cd_n;cd++) {
+    sample_states(output_recon, rbm->n_outputs); // Sample the hidden states.
     clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
     clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
   }
+  
   return(input_recon);
 }
 
