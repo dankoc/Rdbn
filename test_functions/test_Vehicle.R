@@ -15,7 +15,7 @@ testIndx <- c(1:NCOL(x))[!(c(1:NCOL(x)) %in% trainIndx)]
 ###
 ## Quick & Simple calls to train a classifier using deep belief networks.
 set.seed(34) ## Different starting points can result in different performance.
-db <- dbn(x= x[,trainIndx], y= y[trainIndx], n_layers= 3, layer_sizes= c(18,75,50), batch_size=100, momentum_decay= 0.9, learning_rate=0.5, weight_cost= 0.1, n_threads=8)
+db <- dbn(x= x[,trainIndx], y= y[trainIndx], n_layers= 3, layer_sizes= c(18,100,150), batch_size=10, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 0.01, n_threads=8)
 pred_dbn <- dbn.predict(db, data=x[,testIndx], n_threads=1)
 
 print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW(y[testIndx])))
@@ -24,7 +24,7 @@ print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW
 ## Alternatively, network training strategies can be applied independently.  
 ## This provides additional control over training parameters, and can result in better performance.
 set.seed(34)
-db <- dbn(n_layers= 3, layer_sizes= c(18,75,50), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.5, weight_cost= 0.1)
+db <- dbn(n_layers= 3, layer_sizes= c(18,100,150), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 0.01)
 db <- dbn.pretrain(db, data= x[,trainIndx], n_epocs=50, n_threads=8)
 
 ## refine model with new learning parameters.
@@ -40,14 +40,3 @@ pred_svm <- predict(asvm, t(x[,testIndx]))
 
 print(paste("% correct (svm): ", sum(pred_svm == as.character(y[testIndx]))/NROW(y[testIndx])))
 
-
-########################################################################################
-## Which neurons are predictive of each class?... This is how its supposed to be!
-a <- dbn.predict(db_refine, data=x, raw_matrix=TRUE)
-th <- 0.5
-which(rowSums(a[,(y == "bus")])/sum(y == "bus") > th)
-which(rowSums(a[,(y == "opel")])/sum(y == "opel") > th)
-which(rowSums(a[,(y == "saab")])/sum(y == "saab") > th)
-which(rowSums(a[,(y == "van")])/sum(y == "van") > th)
-cor.test(rowSums(a[,(y == "saab")]), rowSums(a[,(y == "opel")]))
-cor.test(rowSums(a[,(y == "bus")]), rowSums(a[,(y == "saab")]))

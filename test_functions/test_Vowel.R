@@ -11,7 +11,7 @@ for(i in c(1:(NROW(x)))) {
 # hist(x[1,]) ## Looks about right.
 
 ## Train a deep belief network.
-db <- dbn(n_layers= 2, layer_sizes= c(9,20), batch_size=11, cd_n=1, momentum_decay= 0.8, learning_rate=0.1, weight_cost=0.1)
+db <- dbn(n_layers= 2, layer_sizes= c(9,20), batch_size=11, cd_n=1, momentum_decay= 0.8, learning_rate=0.1, weight_cost=0.01)
 #db <- dbn.pretrain(db, data= x, n_epocs= 50, n_threads=8)
 
 ## Update learning parameters.
