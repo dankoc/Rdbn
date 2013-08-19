@@ -48,9 +48,9 @@ typedef struct {
 #define rbm_sample_state(prob) ((prob*10000)>(xorshift()%10000)?1:0)
 #define logistic_function(value) (1/ (1+exp(-value)))
 
-R_INLINE void sample_states(double *probs, int n) {
+static R_INLINE void sample_states(double *probs, int n) {
   for(int i=0;i<n;i++)
-    prob[i]= rbm_sample_state(prob[i]);
+    probs[i]= rbm_sample_state(probs[i]);
 }
 
 double *daydream(rbm_t *rbm, int cd_n, double *input_example);
