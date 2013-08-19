@@ -2,7 +2,6 @@
 #define restricted_boltzmann_machine_H
 #include "matrix_functions.h"
 #include "random.h"
-#include <cblas.h>
 
 typedef struct {
   // Basic description of a restricted Boltzman machine.
