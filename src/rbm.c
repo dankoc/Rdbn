@@ -20,30 +20,23 @@
  *
  ************************************************************************************/
 void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
-  // For now, copy the biases into the output vector.  A bit of a hack, but if will allow a test before more extensive re-writes.
-  for(int i=0;i<rbm->n_outputs;i++)
-    resulting_output[i]= rbm->bias_outputs[i];
-  
-  cblas_dgemv (CblasColMajor, CblasTrans, 
-               rbm->n_inputs, rbm->n_outputs, 1.0, rbm->io_weights->matrix, rbm->n_inputs,
-               input, 1, 
-               1.0, resulting_output, 1);
-
-  for(int i=0;i<rbm->n_outputs;i++)
-    resulting_output[i]= logistic_function(resulting_output[i]);
+  for(int i=0;i<rbm[0].n_outputs;i++) {// Get prob. of input node by summing over output states.
+    resulting_output[i]= rbm[0].bias_outputs[i];
+    for(int j=0;j<rbm[0].n_inputs;j++) {
+      resulting_output[i]+= input[j]*get_matrix_value(rbm[0].io_weights, i, j);
+    }
+        resulting_output[i]= logistic_function(resulting_output[i]);
+  }
 }
 
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
-  for(int i=0;i<rbm->n_inputs;i++)
-    resulting_input[i]= rbm->bias_inputs[i];
-
-  cblas_dgemv (CblasColMajor, CblasNoTrans,
-               rbm->n_inputs, rbm->n_outputs, 1.0, rbm->io_weights->matrix, rbm->n_inputs,
-               output, 1,
-               1.0, resulting_input, 1);
-
-  for(int i=0;i<rbm->n_inputs;i++)
-    resulting_input[i]= logistic_function(resulting_input[i]);
+  for(int i=0;i<rbm[0].n_inputs;i++) {// Get prob. of input node by summing over output states.
+    resulting_input[i]= rbm[0].bias_inputs[i];
+    for(int j=0;j<rbm[0].n_outputs;j++) {
+      resulting_input[i]+= output[j]*get_matrix_value(rbm[0].io_weights, j, i);
+        }
+        resulting_input[i]= logistic_function(resulting_input[i]);
+  }
 }
 
 
