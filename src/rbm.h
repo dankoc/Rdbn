@@ -47,6 +47,10 @@ typedef struct {
 #define rbm_sample_state(prob) ((prob*10000)>(xorshift()%10000)?1:0)
 #define logistic_function(value) (1/ (1+exp(-value)))
 
+static R_INLINE void sample_states(double *probs, int n) {
+  for(int i=0;i<n;i++)
+    probs[i]= rbm_sample_state(probs[i]);
+}
 
 void clamp_input(rbm_t *rbm, double *input, double *resulting_output);
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input);
