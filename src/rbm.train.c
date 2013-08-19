@@ -145,6 +145,7 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
   clamp_input(rbm, input_example, init_output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
   double *output_recon= vector_copy(init_output_recon, rbm[0].n_outputs);  
   for(int cd=0;cd<rbm[0].cd_n;cd++) {
+    sample_states(output_recon, rbm->n_outputs); // Sample the hidden states.
     clamp_output(rbm, output_recon, input_recon); // Get the input_recon(struction), using the output from the previous step.
     clamp_input(rbm, input_recon, output_recon); // Get the output_recon(struction), using the input from the previous step.
   }
