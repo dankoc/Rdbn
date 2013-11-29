@@ -27,7 +27,7 @@ rowMeans(x[,y=="D"])
 
 ## Train a deep belief network.
 require(Rdbn)
-db <- dbn(n_layers= 4, layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 5e-2)
+db <- dbn(layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 5e-2)
 db <- dbn.pretrain(db, data= x, n_epocs= 50, n_threads=8)
 
 ## Check pre-training using a daydream.

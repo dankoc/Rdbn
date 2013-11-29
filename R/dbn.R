@@ -9,7 +9,7 @@
 #` @export
 setClass("dbn",#"restricted_boltzman_machine", 
   representation(
-    n_layers="integer",       ## Number of network layers, including input and output.
+    n_layers="integer",       ## Number of layers of neurons, including input and output.  Number of RBMS == (n_layers-1).
     layer_sizes="integer",    ## Integer vector, representing the number of nodes in layers 1 (input/ visible) .. n (output/ hidden).
     network="list",           ## A list comprised of RBMs.  Indexed from the input to output layer.
 	
@@ -22,8 +22,7 @@ setClass("dbn",#"restricted_boltzman_machine",
 )
 
 # constructor.
-dbn <- function(n_layers, 
-                layer_sizes, 
+dbn <- function(layer_sizes, 
                 batch_size=10, 
                 learning_rate=0.1, 
                 cd_n=1, 
@@ -38,6 +37,7 @@ dbn <- function(n_layers,
                 n_threads=1) 
 {
   rbm_network <- list()
+  n_layers <- as.integer(length(layer_sizes))
   
   rbm_network[[1]] <- rbm(n_inputs= layer_sizes[1], n_outputs= layer_sizes[1+1], 
       batch_size=batch_size, learning_rate=learning_rate, cd_n=cd_n, momentum_decay= momentum_decay, weight_cost=weight_cost)
@@ -125,7 +125,7 @@ setGeneric("dbn.refine",
   
 setMethod("dbn.refine", c(dbn="dbn"), 
   function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_threads=1) { #n_approx=500,
-    if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs) 
+    if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs)
       data <- t(data)
     stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
 
@@ -147,7 +147,7 @@ setMethod("dbn.refine", c(dbn="dbn"),
     ## a few additional constraints ... See notebook 4-10-13)
 	
     ## Right now, just using random.
-    dbn@network[[dbn@n_layers]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
+    dbn@network[[dbn@n_layers+1]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
 	                                         n_outputs= n_outputs, 
 	                                         batch_size=dbn@batch_size, 
 #	                                         io_weights= mm,
