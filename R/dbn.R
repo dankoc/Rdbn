@@ -112,6 +112,26 @@ setMethod("dbn.daydream", c(dbn="dbn"),
     .Call("daydream_dbn_R", dbn, as.numeric(data), as.integer(cd_n), as.integer(n_threads), package="Rdbn") 
 })
 
+
+#` Clamps output layer and runs the network downward to get the receptive rields.
+#` @param dbn The layered network of RBMs.
+#` @param data A data vector representing [a] output case(s).
+#` @param n_threads Number of concurrent threads to run.
+#` @export
+setGeneric("dbn.recptivefields", 
+  def=function(dbn, data, n_threads=1) {
+	stopifnot(class(dbn) == "dbn")
+	standardGeneric("dbn.daydream")
+})
+  
+setMethod("dbn.recptivefields", c(dbn="dbn"), 
+  function(dbn, data, n_threads=1) {
+    if(NCOL(data)== dbn@network[[dbn@n_layers-1]]@n_outputs & NROW(data)!= dbn@network[[dbn@n_layers-1]]@n_outputs) 
+      data <- t(data)
+  	stopifnot(NROW(data) == dbn@network[[dbn@n_layers-1]]@n_outputs)
+    .Call("recptivefields_dbn_R", dbn, as.numeric(data), as.integer(n_threads), package="Rdbn") 
+})
+
 #` Refines a discriminitive model from the DBN by adding a top layer and training weights using backpropagation.
 #` @param dbn The layered network of RBMs.
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.

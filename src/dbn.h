@@ -3,7 +3,7 @@
 #include "rbm.h"
 
 typedef struct {
-  int n_layers;      // Number of layers in the data ...
+  int n_layers;      // Number of layers of neurons in the data ...
   int *layer_sizes;  // Number of nodes in the upper 'output' layer.
 
   int n_rbms;        // For convenience ... it's ALWAYS= n_layers-1 ... or it's wrong.
@@ -28,6 +28,7 @@ SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_label
 SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r);
 SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r);
 SEXP daydream_dbn_R(SEXP dbn_r, SEXP input_r, SEXP R_cd_n, SEXP n_threads_r);
+SEXP recptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP n_threads_r);
 
 delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn);
 dbn_t *dbn_r_to_c(SEXP dbn_r);
