@@ -14,7 +14,6 @@ setClass("dbn",#"restricted_boltzman_machine",
     network="list",           ## A list comprised of RBMs.  Indexed from the input to output layer.
 	
     class_levels="character", ## Levels of a factor passed as training data.
-#    neuron_order="integer",   ## Maps neurons in the last layer to class_levels. ## Assume it's in the proper order.
 
     learning_rate="numeric",  ## Learning rate for the deep belief network; used during backpropagation.
     batch_size="integer"      ## Size of the mini-batch to use during backpropagation.
@@ -113,7 +112,7 @@ setMethod("dbn.daydream", c(dbn="dbn"),
     .Call("daydream_dbn_R", dbn, as.numeric(data), as.integer(cd_n), as.integer(n_threads), package="Rdbn") 
 })
 
-#` Method to train a boltzman machine (stored in rbm).
+#` Refines a discriminitive model from the DBN by adding a top layer and training weights using backpropagation.
 #` @param dbn The layered network of RBMs.
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
@@ -136,21 +135,10 @@ setMethod("dbn.refine", c(dbn="dbn"),
     dbn@class_levels<- levels(labels)
     n_outputs= NROW(dbn@class_levels)
 
-	## One option: initialize weights to something reasonable ... i.e. (P(neuron_is_on|example_output_is_on)-0.5)/(#_neurons_in_previous_layer)
-	## See notebook 4-10-12 ...
-#    lablist<- lapply(levels(labels), function(x) {rowMeans(dbn.predict(dbn, data[,which(labels==x)[c(1:n_approx)]], n_threads=n_threads))})
-#    mm<- matrix(unlist(lablist), nrow=n_outputs)
-#    mm<- (mm-0.5)/dbn@layer_sizes[dbn@n_layers]
-
-    ## Alternative idea: It may be possible to take a final layer pre-trained using the generative approach (i.e. contrastive divergence)
-    ## and choose which 'feature' each output neuron represents through dynamic programming (i.e. a little like Viterbi, but subject to 
-    ## a few additional constraints ... See notebook 4-10-13)
-	
-    ## Right now, just using random.
-    dbn@network[[dbn@n_layers+1]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
+    ## Initalize a new top layer. NOTE: n_rmbs = n_layers-1
+    dbn@network[[dbn@n_layers]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
 	                                         n_outputs= n_outputs, 
 	                                         batch_size=dbn@batch_size, 
-#	                                         io_weights= mm,
 	                                         learning_rate=dbn@learning_rate*rate_mult)
 	
 	## Increment these variables.
