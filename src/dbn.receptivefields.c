@@ -27,6 +27,7 @@
 
 static inline double *dbn_recptivefields(dbn_t *dbn, double *output) {
   double *layer_output= vector_copy(output, dbn->n_outputs);
+  double *current_input;
 
   for(int i=(dbn->n_rbms-1);i>=0;i--) { // Get inputs for each RBM, walking down the network.
     current_input= get_layer_inputs(dbn, i, layer_output, 1);
@@ -48,7 +49,6 @@ SEXP recptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP n_threads_r) {
   int n_threads= INTEGER(n_threads_r)[0];
   double *output= REAL(output_r);
   int n_examples= 1;//Rf_nrows(input_r)/dbn[0].n_inputs;
-  int cd_n= INTEGER(R_cd_n)[0];
  
   SEXP input_r;
   protect(input_r= allocMatrix(REALSXP, dbn->n_inputs, n_examples));
