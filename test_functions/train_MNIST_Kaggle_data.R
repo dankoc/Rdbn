@@ -58,8 +58,8 @@ levelplot(transformData(data[,which(label==9)[5]]))  ## Reversed about the horiz
 levelplot(transformData(dbn.daydream(db, data[,which(label==5)[1]], cd_n = 1)))
 
 
-
-levelplot(transformData(dbn.receptivefields(db_refine, 5, 5)))
+a= transformData(dbn.receptivefields(db_refine, neuron=5, layer=2))
+levelplot(a)
 
 
 for(i in 1:10) {

@@ -126,17 +126,18 @@ setGeneric("dbn.receptivefields",
   
 setMethod("dbn.receptivefields", c(dbn="dbn"), 
   function(dbn, neuron, layer, data=NA, n_threads=1) {
-    stopifnot(layer <= dbn@n_layers & layer > 0)
+    stopifnot(layer <= dbn@n_layers & layer > 1)
+	rbm<- layer-1 ## For enhanced clarity... layer refers to the output layer.  The top-level RBM is layer-1.
 
     if(is.na(data)) { ## Create a data vector.
 	  stopifnot(neuron <= dbn@layer_sizes[layer] & neuron > 0) ## Stop if the neuron specified is larger than the number of neurons in the layer.
-	  data <- rep(0, dbn@network[[layer]]@n_outputs)
+	  data <- rep(0, dbn@layer_sizes[layer])
 	  data[neuron] <- 1
 	}
 #	else { ## If the data vector comes specified, check the bounds/ size.
-     if(NCOL(data)== dbn@network[[layer]]@n_outputs & NROW(data)!= dbn@network[[layer]]@n_outputs) 
+     if(NCOL(data)== dbn@network[[rbm]]@n_outputs & NROW(data)!= dbn@network[[rbm]]@n_outputs) 
        data <- t(data)
-   	 stopifnot(NROW(data) == dbn@network[[layer]]@n_outputs)
+   	 stopifnot(NROW(data) == dbn@network[[rbm]]@n_outputs)
 #	}
 	
     .Call("receptivefields_dbn_R", dbn, as.numeric(data), as.integer(layer), as.integer(n_threads), package="Rdbn")

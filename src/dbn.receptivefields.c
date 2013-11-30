@@ -26,10 +26,13 @@
  */
 
 static inline double *dbn_receptivefields(dbn_t *dbn, double *output, int layer) {
-  double *layer_output= vector_copy(output, dbn->n_outputs);
+  int rbm_indx = layer -1-1; // For clarity ... likely optimized out.  
+							 // First RBM is 1 below layer.  An extra -1 for 0-based indices in C.
+  
+  double *layer_output= vector_copy(output, dbn->rbm[rbm_indx].n_outputs);
   double *current_input;
 
-  for(int i=(layer-1);i>=0;i--) { // Get inputs for each RBM, walking down the network.
+  for(int i=(rbm_indx);i>=0;i--) { 
     current_input= get_layer_inputs(dbn, i, layer_output, 1);
     Free(layer_output);  // Careful of memory leaks when switching around these pointers!!
     layer_output= current_input;
