@@ -29,7 +29,7 @@ static inline double *dbn_receptivefields(dbn_t *dbn, double *output, int layer)
   int rbm_indx = layer -1-1; // For clarity ... likely optimized out.  
 							 // First RBM is 1 below layer.  An extra -1 for 0-based indices in C.
   
-  double *layer_output= vector_copy(output, dbn->rbm[rbm_indx].n_outputs);
+  double *layer_output= vector_copy(output, dbn->rbms[rbm_indx].n_outputs);
   double *current_input;
 
   for(int i=(rbm_indx);i>=0;i--) { 
