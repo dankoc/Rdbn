@@ -58,13 +58,13 @@ levelplot(transformData(data[,which(label==9)[5]]))  ## Reversed about the horiz
 for(i in 1:10) {
  zero <- rep(0,10)
  zero[i] <- 1
- levelplot(transformData(dbn.recptivefields(db_refine, zero)))
+ levelplot(transformData(dbn.receptivefields(db_refine, zero, 5)))
 }
 
 for(i in 1:2000) {
  zero <- rep(0,2000)
  zero[i] <- 1
- levelplot(transformData(dbn.recptivefields(db, zero)))
+ levelplot(transformData(dbn.receptivefields(db, zero)))
 }
 
 db2 <- db 

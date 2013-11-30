@@ -119,17 +119,26 @@ setMethod("dbn.daydream", c(dbn="dbn"),
 #` @param n_threads Number of concurrent threads to run.
 #` @export
 setGeneric("dbn.receptivefields", 
-  def=function(dbn, data, layer, n_threads=1) {
+  def=function(dbn, neuron, layer, data=NA, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.receptivefields")
 })
   
 setMethod("dbn.receptivefields", c(dbn="dbn"), 
-  function(dbn, data, layer, n_threads=1) {
-    stopifnot(layer < dbn@n_layers & layer > 0)
-    if(NCOL(data)== dbn@network[[layer]]@n_outputs & NROW(data)!= dbn@network[[layer]]@n_outputs) 
-      data <- t(data)
-  	stopifnot(NROW(data) == dbn@network[[layer]]@n_outputs)
+  function(dbn, neuron, layer, data=NA, n_threads=1) {
+    stopifnot(layer <= dbn@n_layers & layer > 0)
+
+    if(is.na(data)) { ## Create a data vector.
+	  stopifnot(neuron <= dbn@layer_sizes[layer] & neuron > 0) ## Stop if the neuron specified is larger than the number of neurons in the layer.
+	  data <- rep(0, dbn@layer_sizes[layer])
+	  data[neuron] <- 1
+	}
+	else { ## If the data vector comes specified, check the bounds/ size.
+     if(NCOL(data)== dbn@network[[layer]]@n_outputs & NROW(data)!= dbn@network[[layer]]@n_outputs) 
+       data <- t(data)
+   	 stopifnot(NROW(data) == dbn@network[[layer]]@n_outputs)
+	}
+	
     .Call("receptivefields_dbn_R", dbn, as.numeric(data), as.integer(layer), as.integer(n_threads), package="Rdbn")
 })
 
