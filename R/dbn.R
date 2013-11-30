@@ -119,17 +119,18 @@ setMethod("dbn.daydream", c(dbn="dbn"),
 #` @param n_threads Number of concurrent threads to run.
 #` @export
 setGeneric("dbn.receptivefields", 
-  def=function(dbn, data, n_threads=1) {
+  def=function(dbn, data, layer, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.receptivefields")
 })
   
 setMethod("dbn.receptivefields", c(dbn="dbn"), 
-  function(dbn, data, n_threads=1) {
-    if(NCOL(data)== dbn@network[[dbn@n_layers-1]]@n_outputs & NROW(data)!= dbn@network[[dbn@n_layers-1]]@n_outputs) 
+  function(dbn, data, layer, n_threads=1) {
+    stopifnot(layer < dbn@n_layers & layer > 0)
+    if(NCOL(data)== dbn@network[[layer]]@n_outputs & NROW(data)!= dbn@network[[layer]]@n_outputs) 
       data <- t(data)
-  	stopifnot(NROW(data) == dbn@network[[dbn@n_layers-1]]@n_outputs)
-    .Call("receptivefields_dbn_R", dbn, as.numeric(data), as.integer(n_threads), package="Rdbn") 
+  	stopifnot(NROW(data) == dbn@network[[layer]]@n_outputs)
+    .Call("receptivefields_dbn_R", dbn, as.numeric(data), as.integer(layer), as.integer(n_threads), package="Rdbn")
 })
 
 #` Refines a discriminitive model from the DBN by adding a top layer and training weights using backpropagation.

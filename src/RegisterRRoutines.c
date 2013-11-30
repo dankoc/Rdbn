@@ -25,7 +25,7 @@ void R_init_Rdbn(DllInfo *info) {
        {"predict_dbn_R", (DL_FUNC)&predict_dbn_R, 4},
        {"convert_to_max_R", (DL_FUNC)&convert_to_max_R, 3},
        {"daydream_dbn_R", (DL_FUNC)&daydream_dbn_R, 5},
-       {"receptivefields_dbn_R", (DL_FUNC)&recptivefields_dbn_R, 4},
+       {"receptivefields_dbn_R", (DL_FUNC)&recptivefields_dbn_R, 5},
        {NULL, NULL, 0}
      };
 
