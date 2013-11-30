@@ -20,20 +20,20 @@
  *
  ************************************************************************************/
 void clamp_input(rbm_t *rbm, double *input, double *resulting_output) {
-  for(int i=0;i<rbm[0].n_outputs;i++) {// Get prob. of input node by summing over output states.
-    resulting_output[i]= rbm[0].bias_outputs[i];
-    for(int j=0;j<rbm[0].n_inputs;j++) {
-      resulting_output[i]+= input[j]*get_matrix_value(rbm[0].io_weights, i, j);
+  for(int i=0;i<rbm->n_outputs;i++) {// Get prob. of input node by summing over output states.
+    resulting_output[i]= rbm->bias_outputs[i];
+    for(int j=0;j<rbm->n_inputs;j++) {
+      resulting_output[i]+= input[j]*get_matrix_value(rbm->io_weights, i, j);
     }
         resulting_output[i]= logistic_function(resulting_output[i]);
   }
 }
 
 void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
-  for(int i=0;i<rbm[0].n_inputs;i++) {// Get prob. of input node by summing over output states.
-    resulting_input[i]= rbm[0].bias_inputs[i];
-    for(int j=0;j<rbm[0].n_outputs;j++) {
-      resulting_input[i]+= output[j]*get_matrix_value(rbm[0].io_weights, j, i);
+  for(int i=0;i<rbm->n_inputs;i++) {// Get prob. of input node by summing over output states.
+    resulting_input[i]= rbm->bias_inputs[i];
+    for(int j=0;j<rbm->n_outputs;j++) {
+      resulting_input[i]+= output[j]*get_matrix_value(rbm->io_weights, j, i);
         }
         resulting_input[i]= logistic_function(resulting_input[i]);
   }
@@ -45,9 +45,9 @@ void clamp_output(rbm_t *rbm, double *output, double *resulting_input)  {
  *
  */
 double *daydream(rbm_t *rbm, int cd_n, double *input_example) {
-  double *output_recon= (double*)Calloc(rbm[0].n_outputs, double);
+  double *output_recon= (double*)Calloc(rbm->n_outputs, double);
   clamp_input(rbm, input_example, output_recon); // Compute p(hj=1 | v)= logistic_sigmoid(b_j+\sum(v_i * w_ij))
-  double *input_recon= (double*)Calloc(rbm[0].n_inputs, double);
+  double *input_recon= (double*)Calloc(rbm->n_inputs, double);
 
   for(int cd=0;cd<cd_n;cd++) {
     sample_states(output_recon, rbm->n_outputs); // Sample the hidden states.

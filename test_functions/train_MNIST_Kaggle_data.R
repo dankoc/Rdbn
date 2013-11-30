@@ -55,10 +55,15 @@ require(lattice)
 transformData <- function(dataEntry) { (matrix(dataEntry, ncol= 28)) }
 levelplot(transformData(data[,which(label==9)[5]]))  ## Reversed about the horizontal axis b/c lattice starts drawing in lower-left.  Fix eventually...
 
+levelplot(transformData(dbn.daydream(db, data[,which(label==5)[1]], cd_n = 1)))
+
+
+
+levelplot(transformData(dbn.receptivefields(db_refine, 5, 5)))
+
+
 for(i in 1:10) {
- zero <- rep(0,10)
- zero[i] <- 1
- levelplot(transformData(dbn.receptivefields(db_refine, zero, 5)))
+ levelplot(transformData(dbn.receptivefields(db_refine, zero, i)))
 }
 
 for(i in 1:2000) {
@@ -69,6 +74,21 @@ for(i in 1:2000) {
 
 db2 <- db 
 db2@n_layers <- 3
+
+## Simple visualization of weights.
+net <- db@network[[2]]@io_weights
+net[net > 3] <- 3
+net[net < -3] <- -3
+levelplot(net)
+
+cor.test(db@network[[1]]@io_weights[1,],db@network[[1]]@io_weights[2,])
+cor.test(db@network[[1]]@io_weights[,1],db@network[[1]]@io_weights[,2])
+
+cor.test(db@network[[2]]@io_weights[1,],db@network[[2]]@io_weights[2,])
+cor.test(db@network[[2]]@io_weights[,1],db@network[[2]]@io_weights[,2])
+
+cor.test(db@network[[3]]@io_weights[1,],db@network[[3]]@io_weights[2,])
+cor.test(db@network[[3]]@io_weights[,1],db@network[[3]]@io_weights[,2])
 
 ###############################################################################
 ## Still a long ways from the Hinton Science at ~85% accuracy.
