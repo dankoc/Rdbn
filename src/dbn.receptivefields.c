@@ -25,7 +25,7 @@
  * For a given output, computes the input layer.
  */
 
-static inline double *dbn_recptivefields(dbn_t *dbn, double *output) {
+static inline double *dbn_receptivefields(dbn_t *dbn, double *output) {
   double *layer_output= vector_copy(output, dbn->n_outputs);
   double *current_input;
 
@@ -43,7 +43,7 @@ static inline double *dbn_recptivefields(dbn_t *dbn, double *output) {
 /*
  *  Sets the input, and returns the output ...
  */ 
-SEXP recptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP n_threads_r) {
+SEXP receptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP n_threads_r) {
   dbn_t *dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
   int n_threads= INTEGER(n_threads_r)[0];
@@ -54,7 +54,7 @@ SEXP recptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP n_threads_r) {
   protect(input_r= allocMatrix(REALSXP, dbn->n_inputs, n_examples));
   double *input= REAL(input_r);
   
-  double *input_recon= dbn_recptivefields(dbn, output);
+  double *input_recon= dbn_receptivefields(dbn, output);
   
   for(int i=0;i<dbn->n_inputs;i++)
     input[i]= input_recon[i];

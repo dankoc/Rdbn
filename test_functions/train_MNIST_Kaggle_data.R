@@ -47,6 +47,29 @@ load("refined.RData")
 pred_dbn <- dbn.predict(db_refine, data=data[,c(1:10000)], n_threads=8)
 print(paste("% correct (dbn): ", sum(pred_dbn == as.character(label[c(1:10000)]))/NROW(label[c(1:10000)])))
 
+q("no")
+
+## Draw some receptive fields.
+
+require(lattice)
+transformData <- function(dataEntry) { (matrix(dataEntry, ncol= 28)) }
+levelplot(transformData(data[,which(label==9)[5]]))  ## Reversed about the horizontal axis b/c lattice starts drawing in lower-left.  Fix eventually...
+
+for(i in 1:10) {
+ zero <- rep(0,10)
+ zero[i] <- 1
+ levelplot(transformData(dbn.recptivefields(db_refine, zero)))
+}
+
+for(i in 1:2000) {
+ zero <- rep(0,2000)
+ zero[i] <- 1
+ levelplot(transformData(dbn.recptivefields(db, zero)))
+}
+
+db2 <- db 
+db2@n_layers <- 3
+
 ###############################################################################
 ## Still a long ways from the Hinton Science at ~85% accuracy.
 ##
@@ -58,7 +81,7 @@ print(paste("% correct (dbn): ", sum(pred_dbn == as.character(label[c(1:10000)])
 ## Here's some quick analysis.
 
 ## Error rates highest at 5 and 4.
-summary(as.factor(label)[pred!=label])/summary(as.factor(label))
+summary(as.factor(label)[pred_dbn!=label])/summary(as.factor(label))
          # 0          1          2          3          4          5          6 
 # 0.05372701 0.05785653 0.15465645 0.17191450 0.20898821 0.28722003 0.07541697 
          # 7          8          9 

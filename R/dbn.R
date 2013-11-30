@@ -118,18 +118,18 @@ setMethod("dbn.daydream", c(dbn="dbn"),
 #` @param data A data vector representing [a] output case(s).
 #` @param n_threads Number of concurrent threads to run.
 #` @export
-setGeneric("dbn.recptivefields", 
+setGeneric("dbn.receptivefields", 
   def=function(dbn, data, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
-	standardGeneric("dbn.recptivefields")
+	standardGeneric("dbn.receptivefields")
 })
   
-setMethod("dbn.recptivefields", c(dbn="dbn"), 
+setMethod("dbn.receptivefields", c(dbn="dbn"), 
   function(dbn, data, n_threads=1) {
     if(NCOL(data)== dbn@network[[dbn@n_layers-1]]@n_outputs & NROW(data)!= dbn@network[[dbn@n_layers-1]]@n_outputs) 
       data <- t(data)
   	stopifnot(NROW(data) == dbn@network[[dbn@n_layers-1]]@n_outputs)
-    .Call("recptivefields_dbn_R", dbn, as.numeric(data), as.integer(n_threads), package="Rdbn") 
+    .Call("receptivefields_dbn_R", dbn, as.numeric(data), as.integer(n_threads), package="Rdbn") 
 })
 
 #` Refines a discriminitive model from the DBN by adding a top layer and training weights using backpropagation.
