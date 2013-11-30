@@ -121,7 +121,7 @@ setMethod("dbn.daydream", c(dbn="dbn"),
 setGeneric("dbn.recptivefields", 
   def=function(dbn, data, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
-	standardGeneric("dbn.daydream")
+	standardGeneric("dbn.recptivefields")
 })
   
 setMethod("dbn.recptivefields", c(dbn="dbn"), 
