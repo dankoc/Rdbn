@@ -90,6 +90,13 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
       double step= alpha*get_matrix_value(dw->delta_w, i, j); // delta_w_i_j
       double previous_w_i_j= get_matrix_value(rbm->io_weights, i, j);
 
+{ // NOTE: Moving this next block (below || above) the L2 penalty application (will || not) apply the penalty to the momentum term.
+      // Update velocities.  v_t = v_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.11, 2nd half).
+      // v_t' was applied before taking the step.
+      double previous_momentum_i_j= get_matrix_value(rbm->momentum, i, j);
+      set_matrix_value(rbm->momentum, i, j, previous_momentum_i_j+step);
+}
+
       // If using L2 penalty (a.k.a "weight decay"), apply that here.
       if(rbm->use_l2_penalty) // rbm->learning_rate * (delta_w/ batch_size - weightcost * w_i_j) [same as: http://www.cs.toronto.edu/~hinton/code/rbm.m]
         step-= rbm->weight_cost*previous_w_i_j*rbm->learning_rate; // Do I apply this to the momentum term as well, or just the correction?!
@@ -97,12 +104,6 @@ void apply_momentum_correction(rbm_t *rbm, delta_w_t *dw) {
       // Update weights.  \theta_t = \theta_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.10, 2nd half).
       // \theta_t' was applied before taking the step.
       set_matrix_value(rbm->io_weights, i, j, previous_w_i_j+step);  //  
-
-// NOTE: Moving this next block up above the L2 penalty will prevent the penalty from being applied on the momentum.
-      // Update velocities.  v_t = v_t' - \epsilon_{t-1} \gradient_f(\theta_{t-1} + \mu_{t-1}v_{t-1}) // (eq. 7.11, 2nd half).
-      // v_t' was applied before taking the step.
-      double previous_momentum_i_j= get_matrix_value(rbm->momentum, i, j);
-      set_matrix_value(rbm->momentum, i, j, previous_momentum_i_j+step);
 
       if(i==0 && rbm->update_input_bias) { // Only update once... and if everything says to update.
         rbm->bias_inputs[j]+= alpha*dw->delta_input_bias[j];
