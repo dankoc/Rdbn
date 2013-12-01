@@ -54,26 +54,10 @@ q("no")
 require(lattice)
 transformData <- function(dataEntry) { (matrix(dataEntry, ncol= 28)) }
 levelplot(transformData(data[,which(label==9)[5]]))  ## Reversed about the horizontal axis b/c lattice starts drawing in lower-left.  Fix eventually...
-
 levelplot(transformData(dbn.daydream(db, data[,which(label==5)[1]], cd_n = 1)))
 
+levelplot(transformData(dbn.receptivefields(db_refine, neuron=5, layer=2)))
 
-a= transformData(dbn.receptivefields(db_refine, neuron=5, layer=2))
-levelplot(a)
-
-
-for(i in 1:10) {
- levelplot(transformData(dbn.receptivefields(db_refine, zero, i)))
-}
-
-for(i in 1:2000) {
- zero <- rep(0,2000)
- zero[i] <- 1
- levelplot(transformData(dbn.receptivefields(db, zero)))
-}
-
-db2 <- db 
-db2@n_layers <- 3
 
 ## Simple visualization of weights.
 net <- db@network[[2]]@io_weights
