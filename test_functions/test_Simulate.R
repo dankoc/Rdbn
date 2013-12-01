@@ -16,7 +16,7 @@ x <- logistic_function(matrix(unlist(lapply(y, function(x){
 })), nrow= 16))
 
 ## RBM.
-rbm.obj <- rbm(n_inputs= 16, n_outputs= 4, batch_size=100, cd_n=1, momentum_decay=0.9, weight_cost= 5e-2)
+rbm.obj <- rbm(n_inputs= 16, n_outputs= 4, batch_size=100, cd_n=1, momentum_decay=0.9, weight_cost= 1e-4)
 rbm.train(rbm.obj, data= x, n_epocs= 100, n_threads=3)
 
 ## Sanity check to make sure that the simulation worked out well.
@@ -27,7 +27,7 @@ rowMeans(x[,y=="D"])
 
 ## Train a deep belief network.
 require(Rdbn)
-db <- dbn(layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 0)
+db <- dbn(layer_sizes= c(16,50,50,100), batch_size=10, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 1e-4)
 db <- dbn.pretrain(db, data= x, n_epocs= 50, n_threads=8)
 
 ## Check pre-training using clamp functions.
