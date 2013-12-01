@@ -20,6 +20,7 @@
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
 
 data <- t(train[,c(2:NCOL(train))])/255
+## NOW LOGISTIC TRANSFORM THE DATA.  WTF ARE YOU DOING?
 label <- train[,1]
 
 ## Balance training set -- Use 10 examples of each image during each mini-batch.  
