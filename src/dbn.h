@@ -28,7 +28,7 @@ SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_label
 SEXP predict_dbn_R(SEXP dbn_r, SEXP input_r, SEXP n_threads_r);
 SEXP convert_to_max_R(SEXP dbn_r, SEXP matrix_r);
 SEXP daydream_dbn_R(SEXP dbn_r, SEXP input_r, SEXP R_cd_n, SEXP n_threads_r);
-SEXP receptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP layer_r, SEXP n_threads_r);
+SEXP clamplayer_dbn_R(SEXP dbn_r, SEXP output_r, SEXP layer_r, SEXP n_threads_r);
 
 delta_w_t *alloc_dwt_from_dbn(dbn_t *dbn);
 dbn_t *dbn_r_to_c(SEXP dbn_r);

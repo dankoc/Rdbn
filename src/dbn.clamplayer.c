@@ -1,5 +1,5 @@
 /*
- * dbn.receptivefields.c -- For a given output configuration, computes the execpted input layer.
+ * dbn.clamplayer.c -- For a given output configuration, computes the execpted input layer.
  *
  */
 #include "pthread.support.h"
@@ -25,7 +25,7 @@
  * For a given output, computes the input layer.
  */
 
-static inline double *dbn_receptivefields(dbn_t *dbn, double *output, int layer) {
+static inline double *dbn_clamplayer(dbn_t *dbn, double *output, int layer) {
   int rbm_indx = layer -1-1; // For clarity ... likely optimized out.  
 							 // First RBM is 1 below layer.  An extra -1 for 0-based indices in C.
   
@@ -46,7 +46,7 @@ static inline double *dbn_receptivefields(dbn_t *dbn, double *output, int layer)
 /*
  *  Sets the input, and returns the output ...
  */ 
-SEXP receptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP layer_r, SEXP n_threads_r) {
+SEXP clamplayer_dbn_R(SEXP dbn_r, SEXP output_r, SEXP layer_r, SEXP n_threads_r) {
   dbn_t *dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   
   int n_threads= INTEGER(n_threads_r)[0];
@@ -59,7 +59,7 @@ SEXP receptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP layer_r, SEXP n_threa
   protect(input_r= allocMatrix(REALSXP, dbn->n_inputs, n_examples));
   double *input= REAL(input_r);
   
-  double *input_recon= dbn_receptivefields(dbn, output, layer);
+  double *input_recon= dbn_clamplayer(dbn, output, layer);
   
   for(int i=0;i<dbn->n_inputs;i++)
     input[i]= input_recon[i];
@@ -67,9 +67,9 @@ SEXP receptivefields_dbn_R(SEXP dbn_r, SEXP output_r, SEXP layer_r, SEXP n_threa
   Free(input_recon);
 /*  
   #ifdef _POSIX_THREADS 
-    run_batch_compute_receptivefields(dbn, input, n_examples, n_threads, output);
+    run_batch_compute_clamplayer(dbn, input, n_examples, n_threads, output);
   #else 
-    run_batch_receptivefields(dbn, input, n_examples, n_threads, output);
+    run_batch_clamplayer(dbn, input, n_examples, n_threads, output);
   #endif
 */
   unprotect(1);

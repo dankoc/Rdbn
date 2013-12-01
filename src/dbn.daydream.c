@@ -29,7 +29,7 @@
 static inline double *dbn_daydream(dbn_t *dbn, int cd_n, double *input) {
   double *current_input= vector_copy(input, dbn[0].n_inputs);
   double *layer_output;
-  for(int i=0;i<(dbn[0].n_rbms-1);i++) { // Get outputs for each RBM, walking up the network.
+  for(int i=0;i<(dbn->n_rbms-1);i++) { // Get outputs for each RBM, walking up the network.
     layer_output= get_layer_outputs(dbn, i, current_input, 1);
     Free(current_input);  // Careful of memory leaks when switching around these pointers!!
     current_input= layer_output;
@@ -39,7 +39,7 @@ static inline double *dbn_daydream(dbn_t *dbn, int cd_n, double *input) {
   Free(layer_output);
   
   layer_output= recon_input;
-  for(int i=(dbn[0].n_rbms-2);i>=0;i--) { // Get inputs for each RBM, walking down the network.
+  for(int i=(dbn->n_rbms-2);i>=0;i--) { // Get inputs for each RBM, walking down the network.
     current_input= get_layer_inputs(dbn, i, layer_output, 1);
     Free(layer_output);  // Careful of memory leaks when switching around these pointers!!
     layer_output= current_input;

@@ -41,12 +41,12 @@ for(i in 1:49) {
 ##
 par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))
 for(i in 1:49) {
-  image(transformData(dbn.receptivefields(db, neuron=i, layer=2)), axes=FALSE, col=col)
+  image(transformData(dbn.clamplayer(db, neuron=i, layer=2)), axes=FALSE, col=col)
 }
 
 par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))
 for(i in 1:49) {
-  image(transformData(dbn.receptivefields(db, neuron=i, layer=3)), axes=FALSE, col=col)
+  image(transformData(dbn.clamplayer(db, neuron=i, layer=3)), axes=FALSE, col=col)
 }
 
 ###################################################################
@@ -57,7 +57,7 @@ for(i in 1:49) {
 ##              a different number.
 par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))
 for(i in 1:49) {
-  image(transformData(dbn.daydream(db, data= data[,which(label==0)[i]], cd_n=10)), axes=FALSE, col=col)
+  image(transformData(dbn.daydream(db, data= data[,which(label==5)[i]], cd_n=500)), axes=FALSE, col=col)
 }
 
 ###################################################################

@@ -118,13 +118,13 @@ setMethod("dbn.daydream", c(dbn="dbn"),
 #` @param data A data vector representing [a] output case(s).
 #` @param n_threads Number of concurrent threads to run.
 #` @export
-setGeneric("dbn.receptivefields", 
+setGeneric("dbn.clamplayer", 
   def=function(dbn, neuron, layer, data=NA, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
-	standardGeneric("dbn.receptivefields")
+	standardGeneric("dbn.clamplayer")
 })
   
-setMethod("dbn.receptivefields", c(dbn="dbn"), 
+setMethod("dbn.clamplayer", c(dbn="dbn"), 
   function(dbn, neuron, layer, data=NA, n_threads=1) {
     stopifnot(layer <= dbn@n_layers & layer > 1)
 	rbm<- layer-1 ## For enhanced clarity... layer refers to the output layer.  The top-level RBM is layer-1.
@@ -140,7 +140,7 @@ setMethod("dbn.receptivefields", c(dbn="dbn"),
    	 stopifnot(NROW(data) == dbn@network[[rbm]]@n_outputs)
 #	}
 	
-    .Call("receptivefields_dbn_R", dbn, as.numeric(data), as.integer(layer), as.integer(n_threads), package="Rdbn")
+    .Call("clamplayer_dbn_R", dbn, as.numeric(data), as.integer(layer), as.integer(n_threads), package="Rdbn")
 })
 
 #` Refines a discriminitive model from the DBN by adding a top layer and training weights using backpropagation.
