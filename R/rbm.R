@@ -69,7 +69,7 @@ dbn_layer <- function(n_inputs,
   }
   
   if(is.na(weight_cost)) {
-    stopifnot(weight_cost>0)
+    stopifnot(weight_cost>=0)
     use_l2_penalty=FALSE
   }
   else {

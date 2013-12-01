@@ -270,6 +270,7 @@ setGeneric("dbn.set_weight_cost",
 setMethod("dbn.set_weight_cost", c(dbn="dbn"), 
   function(dbn, weight_cost) {
   	stopifnot(NROW(weight_cost) == 1 | NROW(weight_cost) == (dbn@n_layers-1)) ## Check assumptions on number of elements.
+	stopifnot(weight_cost >= 0)
 
     if(NROW(weight_cost)== 1) weight_cost <- rep(weight_cost, dbn@n_layers-1) ## Force to a vector.
     for(i in c(1:(dbn@n_layers-1))) { ## Set learning rate at each DBN!
