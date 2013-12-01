@@ -15,7 +15,7 @@ testIndx <- c(1:NCOL(x))[!(c(1:NCOL(x)) %in% trainIndx)]
 
 ###
 ## Train an RBM. 
-rb <- rbm(n_inputs= 18, n_outputs= 1500, batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.5, weight_cost= 0.1)
+rb <- rbm(n_inputs= 18, n_outputs= 1500, batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 1e-4)
 rb <- rbm.train(rb, data= x[,trainIndx], n_epocs= 5, n_threads=1)
 
 
