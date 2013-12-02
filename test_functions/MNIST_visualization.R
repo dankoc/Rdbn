@@ -1,12 +1,14 @@
+require(Rdbn)
 
 ## Read data from csv.
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
 
-data <- t(train[,c(2:NCOL(train))])/255
+data <- t(train[,c(2:NCOL(train))])
+data <- logistic_function((data-128)/10) # summary(logistic_function((c(0:256)-128)/10))
+
 label <- train[,1]
 
 ## Train a deep belief network.
-require(Rdbn)
 db <- dbn(layer_sizes= c(784,50,50), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-5)
 db <- dbn.pretrain(db, data= data, n_epocs= 100, n_threads=8)
 
@@ -57,7 +59,7 @@ for(i in 1:49) {
 ##              a different number.
 par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))
 for(i in 1:49) {
-  image(transformData(dbn.daydream(db, data= data[,which(label==5)[i]], cd_n=500)), axes=FALSE, col=col)
+  image(transformData(dbn.daydream(db, data= data[,which(label==8)[i]], cd_n=1)), axes=FALSE, col=col)
 }
 
 ###################################################################

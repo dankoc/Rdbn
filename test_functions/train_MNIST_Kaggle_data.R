@@ -19,8 +19,9 @@
 ## Read data from csv.
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
 
-data <- t(train[,c(2:NCOL(train))])/255
-## NOW LOGISTIC TRANSFORM THE DATA.  WTF ARE YOU DOING?
+data <- t(train[,c(2:NCOL(train))])
+data <- logistic_function((data-128)/10) # summary(logistic_function((c(0:256)-128)/10))
+
 label <- train[,1]
 
 ## Balance training set -- Use 10 examples of each image during each mini-batch.  
@@ -45,8 +46,8 @@ save.image("refined.RData")
 
 require(Rdbn)
 load("refined.RData")
-pred_dbn <- dbn.predict(db_refine, data=data[,c(1:10000)], n_threads=8)
-print(paste("% correct (dbn): ", sum(pred_dbn == as.character(label[c(1:10000)]))/NROW(label[c(1:10000)])))
+pred_dbn <- dbn.predict(db_refine, data=data, n_threads=8)
+print(paste("% correct (dbn): ", sum(pred_dbn == as.character(label))/NROW(label)))
 
 q("no")
 
@@ -57,7 +58,7 @@ transformData <- function(dataEntry) { (matrix(dataEntry, ncol= 28)) }
 levelplot(transformData(data[,which(label==9)[5]]))  ## Reversed about the horizontal axis b/c lattice starts drawing in lower-left.  Fix eventually...
 levelplot(transformData(dbn.daydream(db, data[,which(label==5)[1]], cd_n = 1)))
 
-levelplot(transformData(dbn.receptivefields(db_refine, neuron=5, layer=2)))
+levelplot(transformData(dbn.clamplayer(db_refine, neuron=5, layer=2)))
 
 
 ## Simple visualization of weights.
