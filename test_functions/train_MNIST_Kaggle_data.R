@@ -15,6 +15,7 @@
 ## community that has been extensively studied.  More detail about the dataset, including Machine 
 ## Learning algorithms that have been tried on it and their levels of success, can be found at 
 ## http://yann.lecun.com/exdb/mnist/index.html.
+require(Rdbn)
 
 ## Read data from csv.
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
@@ -28,7 +29,6 @@ label <- train[,1]
 #min_examples <- min(summary(as.factor(label)))
 
 ## Train a deep belief network.
-require(Rdbn)
 db <- dbn(layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1)#, weight_cost= 2e-5)
 db <- dbn.pretrain(db, data= data, n_epocs= 100, n_threads=8)
 
