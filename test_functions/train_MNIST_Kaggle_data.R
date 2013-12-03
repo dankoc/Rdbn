@@ -51,6 +51,21 @@ print(paste("% correct (dbn): ", sum(pred_dbn == as.character(label))/NROW(label
 
 q("no")
 
+## CURRENT PROBLEM: 
+## Backpropagation completely muchs with the receptive fields of neurons in the first layer. It's definately not supposed to.
+pdf("receptiveFields.pdf")
+ par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))  ## This one looks very useful.
+ for(i in 1:49) {
+   image(transformData(db@network[[1]]@io_weights[,i]), axes=FALSE, col=col)
+ }
+ par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))  ## This one looks very useful.
+ for(i in 1:49) {
+   image(transformData(db_refine@network[[1]]@io_weights[,i]), axes=FALSE, col=col)
+ }
+dev.off()
+
+
+
 ## Draw some receptive fields.
 
 require(lattice)
