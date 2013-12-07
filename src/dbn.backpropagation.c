@@ -56,25 +56,26 @@
   return(layer_output);
 }
 
-/*static inline*/ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error, delta_w_t *batch) {
+/*static inline*/ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error, delta_w_t *batch, int compute_only_top_layer) {
   int n_outputs_cl= dbn->rbms[layer].n_outputs; // # outputs in current layer
   int n_inputs_cl= dbn->rbms[layer].n_inputs;   // # inputs in current layer
 
   // Compute error for this layer.
   for(int i=0;i<n_inputs_cl;i++) {
-    if(layer>0) next_layer_neuron_error[i]= 0;
     for(int j=0;j<n_outputs_cl;j++) {
       // Compute error derivites for the weights ... (dE/w_{i,j}).
       double previous_ij= get_matrix_value(batch->delta_w, j, i);
       set_matrix_value(batch->delta_w, j, i, previous_ij+observed_output[layer][i]*neuron_error[j]); 
-
-      // Compute error derivites for the biases.  Conceptually similar to a connection with a neuron of constant output (==1).
-      // see: http://stackoverflow.com/questions/3775032/how-to-update-the-bias-in-neural-network-backpropagation.
-//      if(i==0) batch->delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
+    }
+  }
   
-      // Compute error for neurons in an internal 'hidden' layer [dE/dy_{i}].
-      // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
-      if(layer>0) // No need to compute in the last layer.
+  // If we are computing the error for the next layer, do that here.  NOTE: Separate from the previous loop to allow compiler to vectorize.
+  if(layer>0 && !compute_only_top_layer) {
+    for(int i=0;i<n_inputs_cl;i++) {
+      next_layer_neuron_error[i]= 0;
+      for(int j=0;j<n_outputs_cl;j++)
+        // Compute error for neurons in an internal 'hidden' layer [dE/dy_{i}].
+        // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
         next_layer_neuron_error[i]+= neuron_error[j]*get_matrix_value(dbn->rbms[layer].io_weights, j, i);
     }
   }
@@ -85,7 +86,7 @@
 }
  
 /* Returns the error derivitives for a particular example.  Equilavent to do_batch_member in rbm.c. */
-/*static inline*/ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w_t *batch) {
+/*static inline*/ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w_t *batch, int compute_only_top_layer) {
   double **observed_output= dbn_compute_store_layers(dbn, input); // Compute the output of the neural network.
   double *next_layer_neuron_error, *neuron_error; // Stores dE/dz.
   
@@ -106,13 +107,14 @@
   for(int layer=(dbn->n_rbms-1);layer>=0;layer--) {
     int n_inputs_cl= dbn->rbms[layer].n_inputs;   // # inputs in current layer
 
-    if(layer>0) {
+    if(layer>0 && !compute_only_top_layer) {
       next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
     }
-    compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer])); 
+    compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer]), compute_only_top_layer); 
 
     Free(neuron_error);
-    if(layer>0) neuron_error= next_layer_neuron_error;
+	if(compute_only_top_layer) break;  // JUST backpropagate the last layer (the others will be ignored).
+    if(layer>0 && !compute_only_top_layer) neuron_error= next_layer_neuron_error;
   }
   
   // Free temporary storage ...
@@ -124,7 +126,7 @@
 void *dbn_backprop_partial_minibatch(void *ptab) {
   dbn_pthread_arg_t *pta= (dbn_pthread_arg_t*)ptab;
   for(int i=0;i<pta->do_n_elements;i++) {
-    backpropagation(pta->dbn, pta->input, pta->expected_output, pta->batch);
+    backpropagation(pta->dbn, pta->input, pta->expected_output, pta->batch, pta->compute_only_top_layer);
 
     // Increment pointers.
     pta->input+= pta->dbn->n_inputs;
@@ -133,42 +135,48 @@ void *dbn_backprop_partial_minibatch(void *ptab) {
 }
 
 /* Runs the backpropagation algorithm over each element of a mini-batch. */
-void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_output, int n_threads) {
+void backpropagation_minibatch(dbn_t *dbn, double *input, double *expected_output, int update_top_layer_only, int n_threads) {
   dbn_pthread_arg_t pta;
   pta.dbn= dbn;
   pta.input= input;
   pta.expected_output= expected_output;
   pta.do_n_elements= dbn->batch_size;
   pta.batch= alloc_dwt_from_dbn(dbn);
+  pta.compute_only_top_layer= update_top_layer_only;
 
   // If using a momentum, take a step first.
-  for(int i=0;i<dbn->n_rbms;i++)
-    if(dbn->rbms[i].use_momentum) // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
+  for(int i=(dbn->n_rbms-1);i>=0;i--) {
+    if(dbn->rbms[i].use_momentum) 
       initial_momentum_step(&(dbn->rbms[i]));
+	if(update_top_layer_only) break;
+  }
 
   // Do the minibatch.
   dbn_backprop_partial_minibatch(&pta);
   
   // Update the weights.
-  for(int i=0;i<dbn->n_rbms;i++) {
-    if(dbn->rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
+  for(int i=(dbn->n_rbms-1);i>=0;i--) {
+    if(dbn->rbms[i].use_momentum) { 
       apply_momentum_correction(&(dbn->rbms[i]), &(pta.batch[i]));
     }
     else {
       apply_delta_w(&(dbn->rbms[i]), &(pta.batch[i]));
     }
+	if(update_top_layer_only) break;
   }
   free_delta_w_ptr(pta.batch, dbn->n_rbms);
 }
 
 /* Runs the backpropagation algorithm over each element of a mini-batch. */
 #ifdef _POSIX_THREADS 
-void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expected_output, int n_threads) {
+void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expected_output, int update_top_layer_only, int n_threads) {
 
   // If using a momentum, take a step first.
-  for(int i=0;i<dbn->n_rbms;i++)
+  for(int i=(dbn->n_rbms-1);i>=0;i--) {
     if(dbn->rbms[i].use_momentum) // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
       initial_momentum_step(&(dbn->rbms[i]));
+	if(update_top_layer_only) break;
+  }
 
   // If more threads than batch members, just assign each batch member to a spearate thread.
   n_threads= (dbn->batch_size<n_threads)?dbn->batch_size:n_threads;
@@ -203,8 +211,9 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
       batch= pta[i].batch;
     }
     else {
-      for(int j=0;j<dbn->n_rbms;j++) {
+      for(int i=(dbn->n_rbms-1);i>=0;i--) {
         sum_delta_w(&(batch[j]), &(pta[i].batch[j]));
+        if(update_top_layer_only) break;
       }
       free_delta_w_ptr(pta[i].batch, dbn->n_rbms);
     }
@@ -213,13 +222,14 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
 //  pthread_mutex_destroy(&rbm_mutex);
 
   // Update the weights.
-  for(int i=0;i<dbn->n_rbms;i++) {
+  for(int i=(dbn->n_rbms-1);i>=0;i--) {
     if(dbn->rbms[i].use_momentum) { // dbn[0] could result in a segfault, if it disagrees w/ rbm (b/c it won't be init.).
       apply_momentum_correction(&(dbn->rbms[i]), &(batch[i]));
     }
     else {
       apply_delta_w(&(dbn->rbms[i]), &(batch[i]));
     }
+	if(update_top_layer_only) break;
   }
   free_delta_w_ptr(batch, dbn->n_rbms);
 
@@ -235,24 +245,27 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
  *   output_example--> Output example used for training.  
  *   n_examples    --> Specifies the number of examples provided.
  *   n_epocs       --> Specifies the number of times the training program loops over the examples.
+ *   n_epocs_fixed --> Number of epocs to fix the top level weights.
  *
  * Assumptions: 
  *   --> n_examples is a multiple of dbn.batch_size ... additional examples are ignored.
  */
 
-void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n_examples, int n_epocs, int n_threads) {
+void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n_examples, int n_epocs, int n_epocs_fixed, int n_threads) {
   double *current_input, *current_output;
   int n_training_iterations= floor(n_examples/dbn->batch_size); 
   int left_over= n_examples%dbn->batch_size;
+  int update_top_layer_only;
   
   for(int i=0;i<n_epocs;i++) {
     current_input= input_example; // Reset training pointer.
     current_output= output_example;
+	update_top_layer_only= i<n_epocs_fixed;
     for(int j=0;j<n_training_iterations;j++) {
       #ifdef _POSIX_THREADS
-       backpropagation_minibatch_pthreads(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
+       backpropagation_minibatch_pthreads(dbn, current_input, current_output, update_top_layer_only, n_threads);  // Do a minibatch using the current position of the training pointer.
       #else 
-       backpropagation_minibatch(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
+       backpropagation_minibatch(dbn, current_input, current_output, update_top_layer_only, n_threads);  // Do a minibatch using the current position of the training pointer.
       #endif
       current_input +=dbn->batch_size*dbn->n_inputs; // Increment the input_example pointer batch_size # of columns.
       current_output+=dbn->batch_size*dbn->n_outputs; // Increment the input_example pointer batch_size # of columns.
@@ -261,9 +274,9 @@ void dbn_refine(dbn_t *dbn, double *input_example, double *output_example, int n
       int old_batch_size= dbn->batch_size;
       dbn->batch_size= left_over;
       #ifdef _POSIX_THREADS 
-       backpropagation_minibatch_pthreads(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
+       backpropagation_minibatch_pthreads(dbn, current_input, current_output, update_top_layer_only, n_threads);  // Do a minibatch using the current position of the training pointer.
       #else 
-       backpropagation_minibatch(dbn, current_input, current_output, n_threads);  // Do a minibatch using the current position of the training pointer.
+       backpropagation_minibatch(dbn, current_input, current_output, update_top_layer_only, n_threads);  // Do a minibatch using the current position of the training pointer.
       #endif
 	  dbn->batch_size= old_batch_size;
     }
@@ -282,7 +295,7 @@ double *labels_to_matrix(SEXP training_labels_r, int n_outputs) {
   int n_samples= Rf_nrows(training_labels_r);
   double *matrix= (double*)R_alloc(n_samples*n_outputs, sizeof(double));
   
-  // Make a matrix a 1 in the appropriate place in each column.
+  // Make a matrix with a 1 in the appropriate place in each column.
   for(int i=0;i<n_samples;i++) { // Columns.
     for(int j=0;j<n_outputs;j++) { // Rows.
 	  matrix[i*n_outputs+j]= ((j+1)==tlr[i])?1:0;
@@ -295,7 +308,7 @@ double *labels_to_matrix(SEXP training_labels_r, int n_outputs) {
 /*
  *  R interface to refining a deep belief network for discriminitive tasks using backpropagation ...
  */ 
-SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_threads_r) {
+SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_epocs_fix_gen_r, SEXP n_threads_r) {
   dbn_t *dbn= dbn_r_to_c(dbn_r); // Get values from R function.
   dbn->rbms->update_input_bias=0; // Prevent updating input biases during backprop.
 
@@ -305,8 +318,9 @@ SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_label
   double *output_examples= labels_to_matrix(training_labels_r, dbn->n_outputs);
 
   int n_epocs= INTEGER(n_epocs_r)[0];
+  int n_epocs_fixed= INTEGER(n_epocs_fix_gen_r)[0];
 
-  dbn_refine(dbn, input_examples, output_examples, n_examples, n_epocs, n_threads);
+  dbn_refine(dbn, input_examples, output_examples, n_examples, n_epocs, n_epocs_fixed, n_threads);
   
   return(dbn_r);
 }

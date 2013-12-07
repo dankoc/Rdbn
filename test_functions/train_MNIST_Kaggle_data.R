@@ -53,7 +53,11 @@ q("no")
 
 ## CURRENT PROBLEM: 
 ## Backpropagation completely muchs with the receptive fields of neurons in the first layer. It's definately not supposed to.
-pdf("receptiveFields.pdf")
+## Examples at 8:23 here: http://videolectures.net/jul09_hinton_deeplearn/
+transformData <- function(dataEntry) { (matrix(dataEntry, ncol= 28)) }
+col <- gray.colors(20, 1, 0)
+
+pdf("receptiveFields.nr.pdf")
  par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))  ## This one looks very useful.
  for(i in 1:49) {
    image(transformData(db@network[[1]]@io_weights[,i]), axes=FALSE, col=col)
@@ -64,6 +68,10 @@ pdf("receptiveFields.pdf")
  }
 dev.off()
 
+## Ranges are quit far off.  There's got to be a bug which makes the changes in weights veyr large.
+i <- 1
+summary(db@network[[1]]@io_weights[,i]) ## Range: -3.84 --> 4.19
+summary(db_refine@network[[1]]@io_weights[,i]) ## Range: -1,381,000 --> 519200
 
 
 ## Draw some receptive fields.

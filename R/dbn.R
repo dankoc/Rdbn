@@ -146,18 +146,20 @@ setMethod("dbn.clamplayer", c(dbn="dbn"),
 #` Refines a discriminitive model from the DBN by adding a top layer and training weights using backpropagation.
 #` @param dbn The layered network of RBMs.
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
+#` @param 
 #` @export
 setGeneric("dbn.refine", 
-  def=function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_threads=1) { #n_approx=500, 
+  def=function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1) { #n_approx=500, 
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.refine")
 })
   
 setMethod("dbn.refine", c(dbn="dbn"), 
-  function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_threads=1) { #n_approx=500,
+  function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1) { #n_approx=500,
     if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs)
       data <- t(data)
     stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
+	stopifnot(n_epocs_fix_gen <= n_epocs)
 
 #    print("Adding discriminitive layer.")
     ## Add an extra layer, as mentioned here: http://www.scholarpedia.org/article/Deep_belief_nets
@@ -177,7 +179,7 @@ setMethod("dbn.refine", c(dbn="dbn"),
 	dbn@n_layers <- as.integer(dbn@n_layers+1)
 	
 #    print("Fine tuning weights using backpropragation.")
-    .Call("backpropagation_dbn_R", dbn, as.numeric(data), as.integer(labels), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
+    .Call("backpropagation_dbn_R", dbn, as.numeric(data), as.integer(labels), as.integer(n_epocs), as.integer(n_epocs_fix_gen), as.integer(n_threads), package="Rdbn") 
 })
 
 

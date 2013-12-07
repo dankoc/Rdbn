@@ -8,6 +8,7 @@ typedef struct {
   double *expected_output;
   
   int do_n_elements;
+  int compute_only_top_layer;
   
   delta_w_t *batch;
 } dbn_pthread_arg_t;
