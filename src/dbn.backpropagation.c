@@ -56,7 +56,7 @@
   return(layer_output);
 }
 
-/*static inline*/ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, delta_w_t *batch) {
+void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, delta_w_t *batch) {
   int n_outputs_cl= dbn->rbms[layer].n_outputs; // # outputs in current layer
   int n_inputs_cl= dbn->rbms[layer].n_inputs;   // # inputs in current layer
 
@@ -74,7 +74,7 @@
   for(int j=0;j<n_outputs_cl;j++)  batch->delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
 }
 
-/*static inline*/ void compute_next_layer_neuron_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error) {
+void compute_next_layer_neuron_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error) {
   int n_outputs_cl= dbn->rbms[layer].n_outputs; // # outputs in current layer
   int n_inputs_cl= dbn->rbms[layer].n_inputs;   // # inputs in current layer
 
@@ -86,7 +86,7 @@
       // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
       next_layer_neuron_error[i]+= neuron_error[j]*get_matrix_value(dbn->rbms[layer].io_weights, j, i);
     }
-  // next_layer_neuron_error[i]*= x*(1-x)??
+    next_layer_neuron_error[i]*= observed_output[layer][i]*(1-observed_output[layer][i]);
   }
 }
  
