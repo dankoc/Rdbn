@@ -12,6 +12,11 @@ label <- train[,1]
 db <- dbn(layer_sizes= c(784,50,50), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-5)
 db <- dbn.pretrain(db, data= data, n_epocs= 100, n_threads=8)
 
+## If we like...
+db_refine <- dbn.refine(db, data=data, labels=label, n_epocs=10, rate_mult=5, n_threads=8)
+pred_dbn <- dbn.predict(db_refine, data=data, n_threads=8)
+print(paste("% correct (dbn): ", sum(pred_dbn == as.character(label))/NROW(label)))
+
 ###################################################################
 ##
 ## Draw some receptive fields.

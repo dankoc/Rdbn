@@ -57,7 +57,7 @@ q("no")
 transformData <- function(dataEntry) { (matrix(dataEntry, ncol= 28)) }
 col <- gray.colors(20, 1, 0)
 
-pdf("receptiveFields.nr.pdf")
+pdf("receptiveFields.pdf")
  par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))  ## This one looks very useful.
  for(i in 1:49) {
    image(transformData(db@network[[1]]@io_weights[,i]), axes=FALSE, col=col)

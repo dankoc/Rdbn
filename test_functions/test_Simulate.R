@@ -33,7 +33,7 @@ db <- dbn.pretrain(db, data= x, n_epocs= 50, n_threads=8)
 ## Check pre-training using clamp functions.
 transformData <- function(dataEntry) { (matrix(dataEntry, ncol= 4)) }
 require(lattice)
-levelplot(transformData(dbn.receptivefields(db, neuron=5, layer=2)))
+levelplot(transformData(dbn.clamplayer(db, neuron=5, layer=2)))
 
 
 ## Check pre-training using a daydream.

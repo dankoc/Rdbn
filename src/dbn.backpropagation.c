@@ -56,7 +56,7 @@
   return(layer_output);
 }
 
-/*static inline*/ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error, delta_w_t *batch, int compute_only_top_layer) {
+/*static inline*/ void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, delta_w_t *batch) {
   int n_outputs_cl= dbn->rbms[layer].n_outputs; // # outputs in current layer
   int n_inputs_cl= dbn->rbms[layer].n_inputs;   // # inputs in current layer
 
@@ -69,20 +69,22 @@
     }
   }
   
-  // If we are computing the error for the next layer, do that here.  NOTE: Separate from the previous loop to allow compiler to vectorize.
-  if(layer>0 && !compute_only_top_layer) {
-    for(int i=0;i<n_inputs_cl;i++) {
-      next_layer_neuron_error[i]= 0;
-      for(int j=0;j<n_outputs_cl;j++)
-        // Compute error for neurons in an internal 'hidden' layer [dE/dy_{i}].
-        // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
-        next_layer_neuron_error[i]+= neuron_error[j]*get_matrix_value(dbn->rbms[layer].io_weights, j, i);
-    }
-  }
-
   // Compute error derivites for the biases.  Conceptually similar to a connection with a neuron of constant output (==1).
   // see: http://stackoverflow.com/questions/3775032/how-to-update-the-bias-in-neural-network-backpropagation.
   for(int j=0;j<n_outputs_cl;j++)  batch->delta_output_bias[j]+= neuron_error[j]; //*observed_output (==DEFINED_AS== 1);
+}
+
+/*static inline*/ void compute_next_layer_neuron_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error) {
+  // If we are computing the error for the next layer, do that here.  NOTE: Separate from the previous loop to allow compiler to vectorize.
+  for(int i=0;i<n_inputs_cl;i++) {
+    next_layer_neuron_error[i]= 0;
+    for(int j=0;j<n_outputs_cl;j++) {
+      // Compute error for neurons in an internal 'hidden' layer [dE/dy_{i}].
+      // dE/dy_{i} = \sum_j w_{i,j}* dE/dz_{j}; where j= \set(outputs); i= \set(inputs).
+      next_layer_neuron_error[i]+= neuron_error[j]*get_matrix_value(dbn->rbms[layer].io_weights, j, i);
+    }
+  // next_layer_neuron_error[i]*= x*(1-x)??
+  }
 }
  
 /* Returns the error derivitives for a particular example.  Equilavent to do_batch_member in rbm.c. */
@@ -99,7 +101,7 @@
   
   for(int j=0;j<n_outputs_ll;j++) {// Foreach neuron in the output layer.
     double oo= observed_output[layer_index][j];
-    neuron_error[j]= oo*(1-oo)*(-1)*(oo-expected_output[j]); // Compute dE/dz_j
+    neuron_error[j]= oo*(1-oo)*(expected_output[j]-oo); // Compute dE/dz_j
   }
   
   // Makes a single pass over the entire deep belief network.
@@ -110,7 +112,10 @@
     if(layer>0 && !compute_only_top_layer) {
       next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
     }
-    compute_layer_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error, &(batch[layer]), compute_only_top_layer); 
+	
+    compute_layer_error(dbn, layer, observed_output, neuron_error, &(batch[layer])); 
+    if(layer>0 && !compute_only_top_layer)
+      compute_next_layer_neuron_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error); 
 
     Free(neuron_error);
 	if(compute_only_top_layer) break;  // JUST backpropagate the last layer (the others will be ignored).
