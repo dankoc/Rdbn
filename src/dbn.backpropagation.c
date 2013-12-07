@@ -75,6 +75,9 @@
 }
 
 /*static inline*/ void compute_next_layer_neuron_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, double *next_layer_neuron_error) {
+  int n_outputs_cl= dbn->rbms[layer].n_outputs; // # outputs in current layer
+  int n_inputs_cl= dbn->rbms[layer].n_inputs;   // # inputs in current layer
+
   // If we are computing the error for the next layer, do that here.  NOTE: Separate from the previous loop to allow compiler to vectorize.
   for(int i=0;i<n_inputs_cl;i++) {
     next_layer_neuron_error[i]= 0;
