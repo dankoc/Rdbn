@@ -25,7 +25,7 @@
  *
  * Previously defined in rbm.c.  Here needed just for backprop.
  */
-/*static inline*/ void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
+void sum_delta_w(delta_w_t *batch, delta_w_t *dw) {
   matrix_sum(batch->delta_w, dw->delta_w);
   vector_sum(batch->delta_output_bias, dw->delta_output_bias, batch->delta_w->ncols);
   if(batch->input_bias_allocated && dw->input_bias_allocated)
@@ -47,7 +47,7 @@
  */
 
  
-/*static inline*/ double **dbn_compute_store_layers(dbn_t *dbn, double *input) {
+double **dbn_compute_store_layers(dbn_t *dbn, double *input) {
   double **layer_output= (double**)Calloc(dbn->n_layers,double*);
   layer_output[0]= vector_copy(input, dbn->n_inputs);
   for(int i=0;i<dbn->n_rbms;i++) {
@@ -56,7 +56,7 @@
   return(layer_output);
 }
 
-void compute_layer_error(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, delta_w_t *batch) {
+void compute_weight_errors(dbn_t *dbn, int layer, double **observed_output, double *neuron_error, delta_w_t *batch) {
   int n_outputs_cl= dbn->rbms[layer].n_outputs; // # outputs in current layer
   int n_inputs_cl= dbn->rbms[layer].n_inputs;   // # inputs in current layer
 
@@ -91,7 +91,7 @@ void compute_next_layer_neuron_error(dbn_t *dbn, int layer, double **observed_ou
 }
  
 /* Returns the error derivitives for a particular example.  Equilavent to do_batch_member in rbm.c. */
-/*static inline*/ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w_t *batch, int compute_only_top_layer) {
+void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w_t *batch, int compute_only_top_layer) {
   double **observed_output= dbn_compute_store_layers(dbn, input); // Compute the output of the neural network.
   double *next_layer_neuron_error, *neuron_error; // Stores dE/dz.
   
@@ -116,7 +116,7 @@ void compute_next_layer_neuron_error(dbn_t *dbn, int layer, double **observed_ou
       next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
     }
 	
-    compute_layer_error(dbn, layer, observed_output, neuron_error, &(batch[layer])); 
+    compute_weight_errors(dbn, layer, observed_output, neuron_error, &(batch[layer])); 
     if(layer>0 && !compute_only_top_layer)
       compute_next_layer_neuron_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error); 
 

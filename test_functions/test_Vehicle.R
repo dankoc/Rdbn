@@ -29,7 +29,7 @@ db <- dbn.pretrain(db, data= x[,trainIndx], n_epocs=50, n_threads=8)
 
 ## refine model with new learning parameters.
 db <- dbn.set_learning_rate(db, 0.03)
-db_refine <- dbn.refine(db, data= x[,trainIndx], labels= y[trainIndx], n_epocs=50, rate_mult=5, n_threads=8)
+db_refine <- dbn.refine(db, data= x[,trainIndx], labels= y[trainIndx], n_epocs=300, rate_mult=5, n_threads=1)
 pred_dbn <- dbn.predict(db_refine, data=x[,testIndx], n_threads=8)
 
 print(paste("% correct (dbn): ", sum(pred_dbn == as.character(y[testIndx]))/NROW(y[testIndx])))
