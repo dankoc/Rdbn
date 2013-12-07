@@ -211,7 +211,7 @@ void backpropagation_minibatch_pthreads(dbn_t *dbn, double *input, double *expec
       batch= pta[i].batch;
     }
     else {
-      for(int i=(dbn->n_rbms-1);i>=0;i--) {
+      for(int j=(dbn->n_rbms-1);j>=0;j--) {
         sum_delta_w(&(batch[j]), &(pta[i].batch[j]));
         if(update_top_layer_only) break;
       }
