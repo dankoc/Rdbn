@@ -30,7 +30,7 @@ label <- train[,1]
 
 ## Train a deep belief network.
 db <- dbn(layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-5)
-db <- dbn.pretrain(db, data= data, n_epocs= 100, n_threads=8)
+db <- dbn.pretrain(db, data= data, n_epocs= 50, n_threads=8)
 
 save.image("pretrain.RData")
 
@@ -40,7 +40,7 @@ db <- dbn.set_learning_rate(db, 0.03)
 db <- dbn.set_weight_cost(db, 5e-5)
 
 ## refine model with new learning parameters.
-db_refine <- dbn.refine(db, data=data, labels=label, n_epocs=100, rate_mult=5, n_threads=8)
+db_refine <- dbn.refine(db, data=data, labels=label, n_epocs=200, rate_mult=5, n_threads=8)
 
 save.image("refined.RData")
 
