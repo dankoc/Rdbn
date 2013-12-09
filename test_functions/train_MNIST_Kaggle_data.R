@@ -65,3 +65,18 @@ dev.off()
 
 ## Error rates as a function of the correct label.
 summary(as.factor(label)[pred_dbn!=label])/summary(as.factor(label))
+
+##
+## Try visualizing reconstuctions of specific digits.  Must be something wrong with clamp() functions ... 
+par(mfrow=c(2,5), mar = c(0.2, 0.2, 0.2, 0.2))
+for(i in 0:9) { ## Data.
+  image(transformData(data[,which(label==i)[4]]), axes=FALSE, col=col)
+}
+
+for(i in 1:10) { ## Reconstructions.
+  image(transformData(dbn.clamplayer(db_refine, neuron=i, layer=5)), axes=FALSE, col=col)
+}
+
+
+
+
