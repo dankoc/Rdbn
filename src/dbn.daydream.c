@@ -26,7 +26,7 @@
  * For a given input, computes the output layer.
  */
 
-static inline double *dbn_daydream(dbn_t *dbn, int cd_n, double *input) {
+double *dbn_daydream(dbn_t *dbn, int cd_n, double *input) {
   double *current_input= vector_copy(input, dbn[0].n_inputs);
   double *layer_output;
   for(int i=0;i<(dbn->n_rbms-1);i++) { // Get outputs for each RBM, walking up the network.

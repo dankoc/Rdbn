@@ -22,6 +22,8 @@ typedef struct {
 
 double *get_layer_outputs(dbn_t *dbn, int layer, double *input, int n_inputs);
 double *get_layer_inputs(dbn_t *dbn, int layer, double *output, int n_outputs);
+double *dbn_daydream(dbn_t *dbn, int cd_n, double *input);
+double *dbn_clamplayer(dbn_t *dbn, double *output, int layer);
 
 SEXP train_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP n_epocs_r, SEXP n_threads_r);
 SEXP backpropagation_dbn_R(SEXP dbn_r, SEXP training_data_r, SEXP training_labels_r, SEXP n_epocs_r, SEXP n_epocs_fix_gen_r, SEXP n_threads_r);

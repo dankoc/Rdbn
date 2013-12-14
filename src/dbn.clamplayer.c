@@ -25,7 +25,7 @@
  * For a given output, computes the input layer.
  */
 
-static inline double *dbn_clamplayer(dbn_t *dbn, double *output, int layer) {
+double *dbn_clamplayer(dbn_t *dbn, double *output, int layer) {
   int rbm_indx = layer -1-1; // For clarity ... likely optimized out.  
 							 // First RBM is 1 below layer.  An extra -1 for 0-based indices in C.
   
