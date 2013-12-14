@@ -32,7 +32,7 @@ static inline double *dbn_clamplayer(dbn_t *dbn, double *output, int layer) {
   // Daydream for a few iterations to imporve the output sample.
   double *current_input= get_layer_inputs(dbn, rbm_indx, output, 1);
   double *input_recon= dbn_daydream(dbn, 10, current_input);
-  double *layer_output= get_layer_outputs(dbn, rbm_indx, input_recon);
+  double *layer_output= get_layer_outputs(dbn, rbm_indx, input_recon, 1);
   Free(current_input); Free(input_recon);
     
   // Walk down the network.
