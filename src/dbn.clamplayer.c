@@ -26,14 +26,17 @@
  */
 
 double *dbn_clamplayer(dbn_t *dbn, double *output, int layer) {
-  int rbm_indx = layer -1-1; // For clarity ... likely optimized out.  
+  int rbm_indx = layer -1/*-1*/; // For clarity ... likely optimized out.  
 							 // First RBM is 1 below layer.  An extra -1 for 0-based indices in C.
+
+  double *layer_output= vector_copy(output, dbn->rbms[rbm_indx].n_outputs);
+  double *current_input;
   
   // Daydream for a few iterations to imporve the output sample.
-  double *current_input= get_layer_inputs(dbn, rbm_indx, output, 1);
+/*  double *current_input= get_layer_inputs(dbn, rbm_indx, output, 1);
   double *input_recon= daydream(&(dbn->rbms[rbm_indx]), 10, current_input);
   double *layer_output= get_layer_outputs(dbn, rbm_indx, input_recon, 1);
-  Free(current_input); Free(input_recon);
+  Free(current_input); Free(input_recon);*/
     
   // Walk down the network.
   for(int i=(rbm_indx);i>=0;i--) { 

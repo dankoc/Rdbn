@@ -27,7 +27,7 @@
  */
 
 double *dbn_daydream(dbn_t *dbn, int cd_n, double *input) {
-  double *current_input= vector_copy(input, dbn[0].n_inputs);
+  double *current_input= vector_copy(input, dbn->n_inputs);
   double *layer_output;
   for(int i=0;i<(dbn->n_rbms-1);i++) { // Get outputs for each RBM, walking up the network.
     layer_output= get_layer_outputs(dbn, i, current_input, 1);
