@@ -127,7 +127,7 @@ setGeneric("dbn.clamplayer",
 setMethod("dbn.clamplayer", c(dbn="dbn"), 
   function(dbn, neuron, layer, data=NA, n_threads=1) {
     stopifnot(layer <= dbn@n_layers & layer > 1)
-	rbm<- layer-1 ## For enhanced clarity... layer refers to the output layer.  The top-level RBM is layer-1.
+	rbm<- layer-1 ## For enhanced clarity... layer refers to the output layer.  The top-level RBM is n_layers-1.
 
     if(is.na(data)) { ## Create a data vector.
 	  stopifnot(neuron <= dbn@layer_sizes[layer] & neuron > 0) ## Stop if the neuron specified is larger than the number of neurons in the layer.

@@ -43,7 +43,7 @@ for(i in 1:49) {
 
 ###################################################################
 ##
-## The output of this receptive field function in ssomewhat less useful, as requiring all 0's imples constraints on the input weights
+## The output of this clamplayer function in ssomewhat less useful, as requiring all 0's imples constraints on the input weights
 ## that is why everything appears so heavily correlated in this visualization.
 ##
 par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))
@@ -51,9 +51,9 @@ for(i in 1:49) {
   image(transformData(dbn.clamplayer(db, neuron=i, layer=2)), axes=FALSE, col=col)
 }
 
-par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))
-for(i in 1:49) {
-  image(transformData(dbn.clamplayer(db, neuron=i, layer=3)), axes=FALSE, col=col)
+par(mfrow=c(2,5), mar = c(0.2, 0.2, 0.2, 0.2))
+for(i in 1:10) {
+  image(transformData(dbn.clamplayer(db_refine, neuron=i, layer=5)), axes=FALSE, col=col)
 }
 
 ###################################################################
@@ -65,7 +65,14 @@ for(i in 1:49) {
 par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))
 for(i in 1:49) {
   image(transformData(dbn.daydream(db, data= data[,which(label==8)[i]], cd_n=1)), axes=FALSE, col=col)
-}
+} ## WORKS!
+
+par(mfrow=c(7,7), mar = c(0.2, 0.2, 0.2, 0.2))
+for(i in 1:49) {
+  image(transformData(dbn.daydream(db_refine, data= data[,which(label==8)[i]], cd_n=1)), axes=FALSE, col=col)
+} ## DOSEN't!!
+## Should this work?!  I suppose that's not obvious.  Weights are trained to maxamize recognition of output layer, not to reconstruct.
+## If not, there's no way to clamp the output layer.  Implement wake-sleep?!
 
 ###################################################################
 ##
