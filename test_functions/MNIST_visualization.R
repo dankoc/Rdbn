@@ -53,7 +53,7 @@ for(i in 1:49) {
 
 par(mfrow=c(2,5), mar = c(0.2, 0.2, 0.2, 0.2))
 for(i in 1:10) {
-  image(transformData(dbn.clamplayer(db_refine, neuron=i, layer=5)), axes=FALSE, col=col)
+  image(transformData(dbn.clamplayer(db_refine, neuron=i, layer=db_refine@n_layers)), axes=FALSE, col=col)
 }
 
 ###################################################################
@@ -73,6 +73,64 @@ for(i in 1:49) {
 } ## DOSEN't!!
 ## Should this work?!  I suppose that's not obvious.  Weights are trained to maxamize recognition of output layer, not to reconstruct.
 ## If not, there's no way to clamp the output layer.  Implement wake-sleep?!
+## TO TEST: Take an input, and work up.  See if (in %*% io_weights %*% t(io_weights) == in)
+
+sanityCheck <- function(x, l=3) {
+  logistic_function((logistic_function((x %*% t(db_refine@network[[l]]@io_weights)) +db_refine@network[[l-1]]@bias_outputs) %*% db_refine@network[[l]]@io_weights) + db_refine@network[[l]]@bias_outputs)
+}
+
+sanityCheck_db <- function(x, l=2) {
+  logistic_function((logistic_function((x %*% t(db@network[[l]]@io_weights)) +db@network[[l-1]]@bias_outputs) %*% db@network[[l]]@io_weights) + db@network[[l]]@bias_outputs)
+}
+
+
+
+#Sanity check in R
+clampOutput <- function(x) {
+  logistic_function((
+	logistic_function((
+		logistic_function(
+			(x %*% t(db_refine@network[[3]]@io_weights)) +db_refine@network[[2]]@bias_outputs)
+				%*% t(db_refine@network[[2]]@io_weights)) +db_refine@network[[1]]@bias_outputs)
+					%*% t(db_refine@network[[1]]@io_weights)+ db_refine@network[[1]]@bias_inputs))
+}
+
+clampInput <- function(y) {
+  logistic_function((
+	logistic_function(
+		logistic_function((y+db_refine@network[[1]]@bias_inputs) %*% db_refine@network[[1]]@io_weights) +db_refine@network[[1]]@bias_outputs) %*% 
+		db_refine@network[[2]]@io_weights + db_refine@network[[2]]@bias_outputs)%*% db_refine@network[[3]]@io_weights)
+}
+logistic_function(((logistic_function((logistic_function((y+db_refine@network[[1]]@bias_inputs) %*%  db_refine@network[[1]]@io_weights) +db_refine@network[[1]]@bias_outputs) %*% db_refine@network[[2]]@io_weights) +db_refine@network[[2]]@bias_outputs)  %*%  db_refine@network[[3]]@io_weights) +db_refine@network[[3]]@bias_outputs)
+
+par(mfrow=c(4,5), mar = c(0.2, 0.2, 0.2, 0.2))
+for(i in 1:10) {
+ x= rep(0,10)
+ x[i] <- 1
+ image(transformData(clampOutput(x)), axes=FALSE, col=col)
+ image(transformData(dbn.clamplayer(db_refine, neuron=i, layer=db_refine@n_layers)), axes=FALSE, col=col)
+}
+
+par(mfrow=c(2,5), mar = c(0.2, 0.2, 0.2, 0.2))
+for(i in 1:10) {
+ x= rep(0,10)
+ x[i] <- 1
+ plot(x, type="l", col="grey")
+ points(t(sanityCheck(x)), type="l")
+ print(cor(x, t(sanityCheck(x))))
+}
+
+
+par(mfrow=c(2,5), mar = c(0.2, 0.2, 0.2, 0.2))
+for(i in 1:50) {
+ x= rep(0,50)
+ x[i] <- 1
+ plot(x, type="l", col="grey")
+ points(t(sanityCheck(x, l=2)), type="l")
+ print(cor(x, t(sanityCheck(x, l=2))))
+}
+
+clampInput(data[,1])
 
 ###################################################################
 ##
