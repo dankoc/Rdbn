@@ -261,7 +261,7 @@ setGeneric("rbm.clamp_output",
 	standardGeneric("rbm.clamp_output")
 })
 
-setMethod("rbm.clamp_input", c(rbm="rbm"), 
+setMethod("rbm.clamp_output", c(rbm="rbm"), 
   function(rbm, data) {
     if(NCOL(data)== rbm@n_inputs & NROW(data)!= rbm@n_inputs)
        data <- t(data)
