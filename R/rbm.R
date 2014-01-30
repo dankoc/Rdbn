@@ -290,8 +290,8 @@ setMethod("rbm.daydream", c(rbm="rbm"),
    	stopifnot(NROW(data) == rbm@n_inputs)
 
     for(i in 1:cd_n) {
-      data <- clampInput(rbm, data, n)
-	  data <- clampOutput(rbm, data, n)
+      data <- clampInput(rbm, data, n= NCOL(data))
+	  data <- clampOutput(rbm, data, n= NCOL(data))
 	}
 	
 	return(data)

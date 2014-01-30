@@ -18,6 +18,6 @@
 
  out <- rbm.clamp_input(rr, training_data)
  rbm.clamp_output(rr, out)
- sum(clamp_output(rr, out)-training_data)
+ sum(rbm.clamp_output(rr, out)-training_data)
 
- rbm.daydream(rr, training_data)
+ rbm.daydream(rr, training_data, cd_n=1)
