@@ -221,7 +221,7 @@ setMethod("rbm.train", c(rbm="rbm"),
   	stopifnot(NROW(data) == rbm@n_inputs)
 	
 	## Reassign input biases to training example requencies?!  As suggested in: http://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-	rbm@bias_inputs <- as.numeric(rowSums(data)/NCOL(data))
+#	rbm@bias_inputs <- as.numeric(rowSums(data)/NCOL(data))
 	
     .Call("train_rbm_R", rbm, as.numeric(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })

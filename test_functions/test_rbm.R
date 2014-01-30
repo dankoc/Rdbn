@@ -20,4 +20,6 @@
  rbm.clamp_output(rr, out)
  sum(rbm.clamp_output(rr, out)-training_data)
 
- rbm.daydream(rr, training_data, cd_n=1)
+ rbm.daydream(rr, training_data, cd_n=10)
+ 
+ 
