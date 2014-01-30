@@ -226,11 +226,66 @@ setMethod("rbm.train", c(rbm="rbm"),
     .Call("train_rbm_R", rbm, as.numeric(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
 })
 
-################################################################################
-#' Returns the output of the logistic function on a data vector.
-#'
-#' @param vect_val Description of \code{vect_val}.  A numeric value, vector, or matrix to transform.
-logistic_function <- function(vect_val) {
-    return(1/(1+exp(-vect_val)))
+clampInput <- function(rbm, y, n=1) {
+	matrix(unlist(lapply(1:n, function(i) {
+	logistic_function((y[,i] %*% rbm@io_weights)+rbm@bias_outputs)
+	})), nrow=rbm@n_outputs)
 }
+
+#Sanity check in R
+clampOutput <- function(rbm, x, n=1) {
+	matrix(unlist(lapply(1:n, function(i) {
+	logistic_function((x[,i] %*% t(rbm@io_weights)) + rbm@bias_inputs) 
+	})), ncol=rbm@n_inputs)
+}
+
+## Clamp Input
+setGeneric("rbm.clamp_input", 
+  def=function(rbm, data) {
+	stopifnot(class(rbm) == "rbm")
+	standardGeneric("rbm.clamp_input")
+})
+setMethod("rbm.clamp_input", c(rbm="rbm"), 
+  function(rbm, data) {
+    if(NCOL(data)== rbm@n_outputs & NROW(data)!= rbm@n_outputs)
+       data <- t(data)
+   	 stopifnot(NROW(data) == rbm@n_outputs)
+
+    clampInput(rbm, data, n= NCOL(data)) ## Alternatively, this could go to C.
+})
+
+## Clamp Output
+setGeneric("rbm.clamp_output", 
+  def=function(rbm, data) {
+	stopifnot(class(rbm) == "rbm")
+	standardGeneric("rbm.clamp_output")
+})
+
+setMethod("rbm.clamp_input", c(rbm="rbm"), 
+  function(rbm, data) {
+    if(NCOL(data)== rbm@n_inputs & NROW(data)!= rbm@n_inputs)
+       data <- t(data)
+   	 stopifnot(NROW(data) == rbm@n_inputs)
+
+    clampOutput(rbm, data, n= NCOL(data))
+})
+
+
+## Daydream
+setGeneric("rbm.daydream", 
+  def=function(rbm, data, cd_n) {
+	stopifnot(class(rbm) == "rbm")
+	standardGeneric("rbm.daydream")
+})
+setMethod("rbm.daydream", c(rbm="rbm"), 
+  function(rbm, data, cd_n) {
+    ## ERROR CHECKING.
+	for(i in 1:cd_n) {
+      data <- clampInput(rbm, data, n)
+	  data <- clampOutput(rbm, data, n)
+	}
+	
+	return(data)
+})
+
 

@@ -101,6 +101,7 @@ clampInput <- function(y) {
 		logistic_function((y+db_refine@network[[1]]@bias_inputs) %*% db_refine@network[[1]]@io_weights) +db_refine@network[[1]]@bias_outputs) %*% 
 		db_refine@network[[2]]@io_weights + db_refine@network[[2]]@bias_outputs)%*% db_refine@network[[3]]@io_weights)
 }
+
 logistic_function(((logistic_function((logistic_function((y+db_refine@network[[1]]@bias_inputs) %*%  db_refine@network[[1]]@io_weights) +db_refine@network[[1]]@bias_outputs) %*% db_refine@network[[2]]@io_weights) +db_refine@network[[2]]@bias_outputs)  %*%  db_refine@network[[3]]@io_weights) +db_refine@network[[3]]@bias_outputs)
 
 par(mfrow=c(4,5), mar = c(0.2, 0.2, 0.2, 0.2))
