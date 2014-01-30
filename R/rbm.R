@@ -247,9 +247,11 @@ setGeneric("rbm.clamp_input",
 })
 setMethod("rbm.clamp_input", c(rbm="rbm"), 
   function(rbm, data) {
-    if(NCOL(data)== rbm@n_inputs & NROW(data)!= rbm@n_inputs)
+    if(NROW(data) == 1)
+       data <- as.matrix(data)
+   if(NCOL(data)== rbm@n_inputs & NROW(data)!= rbm@n_inputs)
        data <- t(data)
-   	 stopifnot(NROW(data) == rbm@n_inputs)
+   	stopifnot(NROW(data) == rbm@n_inputs)
 
     clampInput(rbm, data, n= NCOL(data)) ## Alternatively, this could go to C.
 })
@@ -263,9 +265,11 @@ setGeneric("rbm.clamp_output",
 
 setMethod("rbm.clamp_output", c(rbm="rbm"), 
   function(rbm, data) {
+    if(NROW(data) == 1)
+       data <- as.matrix(data)
     if(NCOL(data)== rbm@n_outputs & NROW(data)!= rbm@n_outputs)
        data <- t(data)
-   	 stopifnot(NROW(data) == rbm@n_outputs)
+   	stopifnot(NROW(data) == rbm@n_outputs)
 
     clampOutput(rbm, data, n= NCOL(data))
 })
@@ -279,8 +283,13 @@ setGeneric("rbm.daydream",
 })
 setMethod("rbm.daydream", c(rbm="rbm"), 
   function(rbm, data, cd_n) {
-    ## ERROR CHECKING.
-	for(i in 1:cd_n) {
+    if(NROW(data) == 1)
+       data <- as.matrix(data)
+    if(NCOL(data)== rbm@n_inputs & NROW(data)!= rbm@n_inputs)
+       data <- t(data)
+   	stopifnot(NROW(data) == rbm@n_inputs)
+
+    for(i in 1:cd_n) {
       data <- clampInput(rbm, data, n)
 	  data <- clampOutput(rbm, data, n)
 	}

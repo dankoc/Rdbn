@@ -16,6 +16,8 @@
  rr <- rbm(n_inputs= 6, n_outputs= 2, batch_size=100, cd_n=1, momentum_decay=0.9, weight_cost= 5e-5) #NA
  rr <- rbm.train(rr, data= data_matrix, n_epocs= 10000, n_threads=1)
 
- rbm.clamp_input(rr, training_data)
- rbm.clamp_output(rr, out, n=6)
- sum(clampOutput(rr, out, n=6)-training_data)
+ out <- rbm.clamp_input(rr, training_data)
+ rbm.clamp_output(rr, out)
+ sum(clamp_output(rr, out)-training_data)
+
+ rbm.daydream(rr, training_data)
