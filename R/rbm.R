@@ -291,10 +291,37 @@ setMethod("rbm.daydream", c(rbm="rbm"),
 
     for(i in 1:cd_n) {
       data <- clampInput(rbm, data, n= NCOL(data))
-	  data <- clampOutput(rbm, data, n= NCOL(data))
+	  data <- t(clampOutput(rbm, data, n= NCOL(data)))
 	}
+	
+	return(t(data))
+})
+
+## Impute misisng or tainted values using the network.
+setGeneric("rbm.impute", 
+  def=function(rbm, data, column_indx, cd_n ) {
+	stopifnot(class(rbm) == "rbm")
+	standardGeneric("rbm.impute")
+})
+setMethod("rbm.impute", c(rbm="rbm"), 
+  function(rbm, data, column_indx, cd_n=1) {
+    if(NROW(data) == 1)
+       data <- as.matrix(data)
+    if(NCOL(data)== rbm@n_inputs & NROW(data)!= rbm@n_inputs)
+       data <- t(data)
+   	stopifnot(NROW(data) == rbm@n_inputs)
+
+	## Initial computation of output vector.
+	data <- matrix(unlist(lapply(1:NCOL(data), function(i) {
+	logistic_function((data[-column_indx,i] %*% rbm@io_weights[-column_indx,])+rbm@bias_outputs)
+	})), nrow=rbm@n_outputs)
+	
+	## Get imputed input vector.
+    data <- clampOutput(rbm, data, n= NCOL(data))
 	
 	return(data)
 })
+
+
 
 
