@@ -2,14 +2,15 @@ require(Rdbn)
 
 ## Read data from csv.
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
+indx <- 1:5000 #1:NROW(train)
 
-data <- t(train[,c(2:NCOL(train))])
+data <- t(train[indx,c(2:NCOL(train))]) #t(train[,c(2:NCOL(train))])
 data <- logistic_function((data-128)/10) # summary(logistic_function((c(0:256)-128)/10))
 
-label <- train[,1]
+label <- train[indx,1]
 
 ## Train a deep belief network.
-db <- dbn(layer_sizes= c(784,50,50), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-5)
+db <- dbn(layer_sizes= c(784,50,50), batch_size=100, cd_n=1, momentum_decay= 0.8, learning_rate=0.1, weight_cost= 2e-5)
 db <- dbn.pretrain(db, data= data, n_epocs= 100, n_threads=8)
 
 ## If we like...

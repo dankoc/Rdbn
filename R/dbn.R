@@ -14,6 +14,7 @@ setClass("dbn",#"restricted_boltzman_machine",
     network="list",           ## A list comprised of RBMs.  Indexed from the input to output layer.
 	
     class_levels="character", ## Levels of a factor passed as training data.
+	has_discriminative_layer="logical",## Has a discriminitive layer been added?  If so, keep training on the same layer.
 
     learning_rate="numeric",  ## Learning rate for the deep belief network; used during backpropagation.
     batch_size="integer"      ## Size of the mini-batch to use during backpropagation.
@@ -52,6 +53,7 @@ dbn <- function(layer_sizes,
     layer_sizes=as.integer(layer_sizes), 
     network= rbm_network, 
     class_levels=character(0),
+    has_discriminative_layer=as.logical(FALSE),
     learning_rate= as.numeric(learning_rate), 
     batch_size=as.integer(batch_size))
 
@@ -148,6 +150,7 @@ setMethod("dbn.clamplayer", c(dbn="dbn"),
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @param 
 #` @export
+#`
 setGeneric("dbn.refine", 
   def=function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1) { #n_approx=500, 
 	stopifnot(class(dbn) == "dbn")
@@ -165,18 +168,25 @@ setMethod("dbn.refine", c(dbn="dbn"),
     ## Add an extra layer, as mentioned here: http://www.scholarpedia.org/article/Deep_belief_nets
     ## Hinton says: "Discriminative fine-tuning can be performed by adding a final layer of variables that represent the desired outputs and backpropagating error derivatives"
     labels <- as.factor(labels)
-    dbn@class_levels<- levels(labels)
-    n_outputs= NROW(dbn@class_levels)
-
-    ## Initalize a new top layer. NOTE: n_rmbs = n_layers-1
-    dbn@network[[dbn@n_layers]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
-	                                         n_outputs= n_outputs, 
-	                                         batch_size=dbn@batch_size, 
-	                                         learning_rate=dbn@learning_rate*rate_mult)
 	
-	## Increment these variables.
-    dbn@layer_sizes <- as.integer(c(dbn@layer_sizes, n_outputs))
-	dbn@n_layers <- as.integer(dbn@n_layers+1)
+    if(!dbn@has_discriminative_layer) {
+      dbn@class_levels<- levels(labels)
+      n_outputs= NROW(dbn@class_levels)
+
+      ## Initalize a new top layer. NOTE: n_rmbs = n_layers-1
+      dbn@network[[dbn@n_layers]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
+                                             n_outputs= n_outputs, 
+                                             batch_size=dbn@batch_size, 
+                                             learning_rate=dbn@learning_rate*rate_mult)
+    
+      ## Increment these variables.
+      dbn@layer_sizes <- as.integer(c(dbn@layer_sizes, n_outputs))
+      dbn@n_layers <- as.integer(dbn@n_layers+1)
+      dbn@has_discriminative_layer = as.logical(TRUE)
+    } else {
+      ## Check that the class levels are the same.
+      stopifnot(sum(dbn@class_levels == levels(labels)) == NROW(dbn@class_levels)) 
+    }
 	
 #    print("Fine tuning weights using backpropragation.")
     .Call("backpropagation_dbn_R", dbn, as.numeric(data), as.integer(labels), as.integer(n_epocs), as.integer(n_epocs_fix_gen), as.integer(n_threads), package="Rdbn") 
