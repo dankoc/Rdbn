@@ -20,7 +20,7 @@ require(Rdbn)
 ## Read data from csv.
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
 
-data <- t(train[,c(2:NCOL(train))])/max(data)
+data <- t(train[,c(2:NCOL(train))])/max(train)
 label <- train[,1]
 
 ## Train a deep belief network.
