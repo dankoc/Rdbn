@@ -1,22 +1,57 @@
 require(Rdbn)
 
+load_mnist <- function() {
+load_image_file <- function(filename) {
+ret = list()
+f = file(filename,'rb')
+readBin(f,'integer',n=1,size=4,endian='big')
+ret$n = readBin(f,'integer',n=1,size=4,endian='big')
+nrow = readBin(f,'integer',n=1,size=4,endian='big')
+ncol = readBin(f,'integer',n=1,size=4,endian='big')
+x = readBin(f,'integer',n=ret$n*nrow*ncol,size=1,signed=F)
+ret$x = matrix(x, ncol=nrow*ncol, byrow=T)
+close(f)
+ret
+}
+load_label_file <- function(filename) {
+f = file(filename,'rb')
+readBin(f,'integer',n=1,size=4,endian='big')
+n = readBin(f,'integer',n=1,size=4,endian='big')
+y = readBin(f,'integer',n=n,size=1,signed=F)
+close(f)
+y
+}
+train <<- load_image_file('mnist/train-images-idx3-ubyte')
+test <<- load_image_file('mnist/t10k-images-idx3-ubyte')
+train$y <<- load_label_file('mnist/train-labels-idx1-ubyte')
+test$y <<- load_label_file('mnist/t10k-labels-idx1-ubyte')
+}
+ 
 ## Read data from csv.
-train <- read.table("train.csv.gz", header=TRUE, sep=",")
-indx <- 1:5000 #1:NROW(train)
+load_mnist()  #train <- read.table("train.csv.gz", header=TRUE, sep=",")
+indx <- 1:train$n
 
-data <- t(train[indx,c(2:NCOL(train))]) #t(train[,c(2:NCOL(train))])
-data <- logistic_function((data-128)/10) # summary(logistic_function((c(0:256)-128)/10))
+data <- t(train$x[indx,]) #c(2:NCOL(train))]) #t(train[,c(2:NCOL(train))])
+data <- data/max(data) #logistic_function((data-128)) # summary(logistic_function((c(0:256)-128)/10))
 
-label <- train[indx,1]
+label <- train$y[indx] #train[indx,1]
 
 ## Train a deep belief network.
-db <- dbn(layer_sizes= c(784,50,50), batch_size=100, cd_n=1, momentum_decay= 0.8, learning_rate=0.1, weight_cost= 2e-5)
+db <- dbn(layer_sizes= c(784,200,200), batch_size=100, cd_n=1, momentum_decay= 0.8, learning_rate=0.1, weight_cost= 2e-5)
 db <- dbn.pretrain(db, data= data, n_epocs= 100, n_threads=8)
 
 ## If we like...
 db_refine <- dbn.refine(db, data=data, labels=label, n_epocs=100, rate_mult=5, n_threads=1)
+
+#db_refine <- dbn.refine(db_refine, data=data, labels=label, n_epocs=500, n_threads=1)
+
 pred_dbn <- dbn.predict(db_refine, data=data, n_threads=8)
-print(paste("% correct (dbn): ", sum(pred_dbn == as.character(label))/NROW(label)))
+print(paste("% correct train (dbn): ", sum(pred_dbn == as.character(label))/NROW(label)))
+
+
+pred_dbn <- dbn.predict(db_refine, data=t(test$x)/max(test$x), n_threads=8)
+print(paste("% correct test (dbn): ", sum(pred_dbn == as.character(test$y))/NROW(test$y)))
+
 
 ###################################################################
 ##

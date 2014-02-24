@@ -20,19 +20,12 @@ require(Rdbn)
 ## Read data from csv.
 train <- read.table("train.csv.gz", header=TRUE, sep=",")
 
-data <- t(train[,c(2:NCOL(train))])
-data <- logistic_function((data-128)/10) # summary(logistic_function((c(0:256)-128)/10))
-
+data <- t(train[,c(2:NCOL(train))])/max(data)
 label <- train[,1]
-
-## Balance training set -- Use 10 examples of each image during each mini-batch.  
-#min_examples <- min(summary(as.factor(label)))
 
 ## Train a deep belief network.
 db <- dbn(layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-5)
 db <- dbn.pretrain(db, data= data, n_epocs= 50, n_threads=8)
-
-save.image("pretrain.RData")
 
 ## Update learning parameters.
 db <- dbn.set_momentum_decay(db, 0.8)
