@@ -1,6 +1,6 @@
 CC=gcc
 LIBS:=-pthread
-CFLAGS:=-O3 -c -g ${LIBS}
+CFLAGS:=-O2 -c -g ${LIBS}
 SOURCES= rbm.c rbm.train.c dbn.c dbn.backpropagation.c dbn.compute.c dbn.daydream.c dbn.clamplayer.c matrix_functions.c random.c RegisterRRoutines.c
 OBJECTS=$(SOURCES:.c=.o)
 

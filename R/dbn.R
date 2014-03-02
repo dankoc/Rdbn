@@ -33,7 +33,7 @@ dbn <- function(layer_sizes,
                 x= NULL,				
                 y= NULL,				
                 n_epocs=50,
-                rate_mult=5,
+                rate_mult=1,
                 n_threads=1) 
 {
   rbm_network <- list()
@@ -152,14 +152,14 @@ setMethod("dbn.clamplayer", c(dbn="dbn"),
 #` @export
 #`
 setGeneric("dbn.refine", 
-  def=function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1, 
+  def=function(dbn, data, labels, n_epocs= 1000, rate_mult=2, n_epocs_fix_gen= 5, n_threads=1, 
 					cd_n= dbn@network[[1]]@cd_n, weight_cost= dbn@network[[1]]@weight_cost, momentum_decay= dbn@network[[1]]@momentum_decay) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.refine")
 })
   
 setMethod("dbn.refine", c(dbn="dbn"), 
-  function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1, 
+  function(dbn, data, labels, n_epocs= 1000, rate_mult=2, n_epocs_fix_gen= 5, n_threads=1, 
 					cd_n= dbn@network[[1]]@cd_n, weight_cost= dbn@network[[1]]@weight_cost, momentum_decay= dbn@network[[1]]@momentum_decay) {
 
     if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs)
