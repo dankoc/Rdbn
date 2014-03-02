@@ -152,13 +152,16 @@ setMethod("dbn.clamplayer", c(dbn="dbn"),
 #` @export
 #`
 setGeneric("dbn.refine", 
-  def=function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1) { #n_approx=500, 
+  def=function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1, 
+					cd_n= dbn@network[[1]]@cd_n, weight_cost= dbn@network[[1]]@weight_cost, momentum_decay= dbn@network[[1]]@momentum_decay) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.refine")
 })
   
 setMethod("dbn.refine", c(dbn="dbn"), 
-  function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1) { #n_approx=500,
+  function(dbn, data, labels, n_epocs= 1000, rate_mult=5, n_epocs_fix_gen= 5, n_threads=1, 
+					cd_n= dbn@network[[1]]@cd_n, weight_cost= dbn@network[[1]]@weight_cost, momentum_decay= dbn@network[[1]]@momentum_decay) {
+
     if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs)
       data <- t(data)
     stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
@@ -177,7 +180,10 @@ setMethod("dbn.refine", c(dbn="dbn"),
       dbn@network[[dbn@n_layers]] <- dbn_layer(n_inputs= dbn@layer_sizes[dbn@n_layers], 
                                              n_outputs= n_outputs, 
                                              batch_size=dbn@batch_size, 
-                                             learning_rate=dbn@learning_rate*rate_mult)
+                                             learning_rate=dbn@learning_rate*rate_mult, 
+                                             momentum_decay= momentum_decay,
+                                             weight_cost= weight_cost,
+                                             cd_n= cd_n)
     
       ## Increment these variables.
       dbn@layer_sizes <- as.integer(c(dbn@layer_sizes, n_outputs))
