@@ -62,7 +62,7 @@ label <- train$y[indx] #train[indx,1]
 ##########################################################3
 
 ## Train a deep belief network.
-db <- dbn(layer_sizes= c(784,500,500,2000), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= NA) #2e-5)
+db <- dbn(layer_sizes= c(784,300,300,500), batch_size=100, cd_n=1, momentum_decay= 0.9, learning_rate=0.1, weight_cost= 2e-5) #c(784,500,500,2000)
 db <- dbn.pretrain(db, data= data, n_epocs= 50, n_threads=8)
 
 ## Update learning parameters.

@@ -76,17 +76,17 @@ dbn <- function(layer_sizes,
 #` @param data A data matrix wherein each column represents an observation. NCOL(data)= n_inputs.
 #` @export
 setGeneric("dbn.pretrain", 
-  def=function(dbn, data, n_epocs= 1000, n_threads=1) {
+  def=function(dbn, data, n_epocs= 100, n_threads=1) {
 	stopifnot(class(dbn) == "dbn")
 	standardGeneric("dbn.pretrain")
 })
   
 setMethod("dbn.pretrain", c(dbn="dbn"), 
-  function(dbn, data, n_epocs= 1000, n_threads=1) {
-    if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs) 
+  function(dbn, data, n_epocs= 100, n_threads=1) {
+    if(NCOL(data)== dbn@network[[1]]@n_inputs & NROW(data)!= dbn@network[[1]]@n_inputs)
       data <- t(data)
   	stopifnot(NROW(data) == dbn@network[[1]]@n_inputs)
-    .Call("train_dbn_R", dbn, as.numeric(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn") 
+    .Call("train_dbn_R", dbn, as.numeric(data), as.integer(n_epocs), as.integer(n_threads), package="Rdbn")
 })
 
 
