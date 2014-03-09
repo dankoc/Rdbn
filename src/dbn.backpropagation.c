@@ -112,18 +112,21 @@ void backpropagation(dbn_t *dbn, double *input, double *expected_output, delta_w
   for(int layer=(dbn->n_rbms-1);layer>=0;layer--) {
     int n_inputs_cl= dbn->rbms[layer].n_inputs;   // # inputs in current layer
 
-    if(layer>0 && !compute_only_top_layer) {
-      next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
-    }
-	
     compute_weight_errors(dbn, layer, observed_output, neuron_error, &(batch[layer])); 
-    if(layer>0 && !compute_only_top_layer)
-      compute_next_layer_neuron_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error); 
 
-    Free(neuron_error);
-	if(compute_only_top_layer) break;  // JUST backpropagate the last layer (the others will be ignored).
-    if(layer>0 && !compute_only_top_layer) neuron_error= next_layer_neuron_error;
-  }
+	if(compute_only_top_layer) { // JUST backpropagate the last layer (the others will be ignored).
+      Free(neuron_error);
+      break;
+	} else if(layer>0 /*&& !compute_only_top_layer*/) { // Compute error in the next layer.
+      next_layer_neuron_error= (double*)Calloc(n_inputs_cl,double);
+      compute_next_layer_neuron_error(dbn, layer, observed_output, neuron_error, next_layer_neuron_error); 
+      Free(neuron_error);
+      neuron_error= next_layer_neuron_error;
+	} else {
+      Free(neuron_error);
+	}
+	
+   }
   
   // Free temporary storage ...
   for(int i=0;i<dbn->n_layers;i++)
