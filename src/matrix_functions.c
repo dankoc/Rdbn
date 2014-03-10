@@ -10,7 +10,7 @@
  
 matrix_t *alloc_matrix(int ncols, int nrows) {
   matrix_t *m= (matrix_t*)Calloc(1, matrix_t);
-  m->matrix= (double*)Calloc(ncols*nrows, double);
+  m->matrix= (double*)Calloc((long)ncols*(long)nrows, double);
   m->ncols= ncols;
   m->nrows= nrows;
   return(m);
@@ -19,7 +19,7 @@ matrix_t *alloc_matrix(int ncols, int nrows) {
 /* Use this version for R_alloc function ... R's memory handler will free upon return to R envrioment. */
 matrix_t *R_alloc_matrix(int ncols, int nrows) {
   matrix_t *m= (matrix_t*)R_alloc(1, sizeof(matrix_t));
-  m->matrix= (double*)R_alloc(ncols*nrows, sizeof(double));
+  m->matrix= (double*)R_alloc((long)ncols*(long)nrows, sizeof(double));
   m->ncols= ncols;
   m->nrows= nrows;
   return(m);
