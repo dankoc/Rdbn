@@ -35,7 +35,7 @@ To train a classifier on the Vehicle dataset in ML bench, use the following:
     x <- t(Vehicle[,c(1:18)])
     y <- Vehicle[,19]
     for(i in c(1:(NCOL(Vehicle)-1))) {
-      x[i,] <- logistic_function(scale(Vehicle[,i])*2) ## 2 is an arbitrarily chosen value... 
+      x[i,] <- (Vehicle[,i]-min(Vehicle[,i]))/(max(Vehicle[,i])-min(Vehicle[,i]))
     }
 
     ###
