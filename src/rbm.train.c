@@ -198,14 +198,14 @@ void *rbm_partial_minibatch(void *ptab) {
 #ifdef _POSIX_THREADS 
 void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
   // If using momentum Take a step BEFORE computing the local gradient.
-  if(rbm[0].use_momentum) { 
+  if(rbm->use_momentum) { 
     initial_momentum_step(rbm);
   }
   
   // If more threads than batch members, just assign each batch member to a spearate thread.
-  n_threads= (rbm[0].batch_size<n_threads)?rbm[0].batch_size:n_threads;
-  int n_per_batch= floor(rbm[0].batch_size/n_threads);
-  int remainder= (rbm[0].batch_size%n_threads);
+  n_threads= (rbm->batch_size<n_threads)?rbm->batch_size:n_threads;
+  int n_per_batch= floor(rbm->batch_size/n_threads);
+  int remainder= (rbm->batch_size%n_threads);
   	  
   delta_w_t *batch= alloc_dwt_from_rbm(rbm);
   rbm_pthread_arg_t *pta= (rbm_pthread_arg_t*)Calloc(n_threads, rbm_pthread_arg_t);
@@ -230,7 +230,7 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
   pthread_mutex_destroy(&rbm_mutex);
    
   // Take a step in teh direction of the gradient.
-  if(rbm[0].use_momentum) { // Correct and update momentum term.
+  if(rbm->use_momentum) { // Correct and update momentum term.
     apply_momentum_correction(rbm, batch); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
@@ -244,19 +244,19 @@ void do_minibatch_pthreads(rbm_t *rbm, double *input_example, int n_threads) { /
  
 void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use velocity?!; Use sparsity target?!  // Change name to 
   // If using momentum Take a step BEFORE computing the local gradient.
-  if(rbm[0].use_momentum) { 
+  if(rbm->use_momentum) { 
     initial_momentum_step(rbm);
   }
 
   rbm_pthread_arg_t pta;
   pta.rbm= rbm;
   pta.input= input_example;
-  pta.do_n_elements= rbm[0].batch_size;
+  pta.do_n_elements= rbm->batch_size;
   pta.batch= alloc_dwt_from_rbm(rbm);
   rbm_partial_minibatch(&pta);
   
   // Take a step in teh direction of the gradient.
-  if(rbm[0].use_momentum) { // Correct and update momentum term.
+  if(rbm->use_momentum) { // Correct and update momentum term.
     apply_momentum_correction(rbm, pta.batch); 
   }
   else { // Update weights. \delta w_{ij} = \epislon * (<v_i h_j>_data - <v_i h_j>recon 
@@ -281,8 +281,8 @@ void do_minibatch(rbm_t *rbm, double *input_example, int n_threads) { // Use vel
  */
 void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, int n_threads) {
   double *current_position;
-  int n_training_iterations= floor(n_examples/rbm[0].batch_size); 
-  int left_over_iterations= n_examples%rbm[0].batch_size; 
+  int n_training_iterations= floor(n_examples/rbm->batch_size); 
+  int left_over_iterations= n_examples%rbm->batch_size; 
 
   for(int i=0;i<n_epocs;i++) {
     //if(i%(100)) Rprintf(".");
@@ -293,11 +293,11 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
 	  #else 
        do_minibatch(rbm, current_position, n_threads);
 	  #endif
-      current_position+= rbm[0].batch_size*rbm[0].n_inputs; // Increment the input_example pointer batch_size # of columns.
+      current_position+= rbm->batch_size*rbm->n_inputs; // Increment the input_example pointer batch_size # of columns.
 	}
 	if(left_over_iterations>0) {
-      int prev_batch_size = rbm[0].batch_size;
-      rbm[0].batch_size= left_over_iterations;
+      int prev_batch_size = rbm->batch_size;
+      rbm->batch_size= left_over_iterations;
 
       #ifdef _POSIX_THREADS 
        do_minibatch_pthreads(rbm, current_position, n_threads);  // Do a minibatch using the current position of the training pointer.
@@ -305,7 +305,7 @@ void rbm_train(rbm_t *rbm, double *input_example, int n_examples, int n_epocs, i
        do_minibatch(rbm, current_position, n_threads);
 	  #endif
 
-      rbm[0].batch_size= prev_batch_size;
+      rbm->batch_size= prev_batch_size;
     }
   }
 

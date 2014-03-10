@@ -293,7 +293,7 @@ setMethod("rbm.daydream", c(rbm="rbm"),
       data <- clampInput(rbm, data, n= NCOL(data))
 	  data <- t(clampOutput(rbm, data, n= NCOL(data)))
 	}
-	
+
 	return(t(data))
 })
 

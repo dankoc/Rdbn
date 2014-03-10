@@ -6,7 +6,7 @@ require(Rdbn)
 x <- t(Vehicle[,c(1:18)])
 y <- Vehicle[,19]
 for(i in c(1:(NCOL(Vehicle)-1))) {
-  x[i,] <- logistic_function(scale(Vehicle[,i])*2) ## 2 is an arbitrarily chosen value... 
+  x[i,] <- (Vehicle[,i]-min(Vehicle[,i]))/(max(Vehicle[,i])-min(Vehicle[,i]))
 }
 
 trainIndx <- sample(c(1:NCOL(x)), NCOL(x)*0.8, replace=FALSE)
