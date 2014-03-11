@@ -4,13 +4,13 @@
 
 typedef struct {
   int n_layers;      // Number of layers of neurons in the data ...
-  long *layer_sizes;  // Number of nodes in the upper 'output' layer.
+  long long *layer_sizes;  // Number of nodes in the upper 'output' layer.
 
   int n_rbms;        // For convenience ... it's ALWAYS= n_layers-1 ... or it's wrong.
   rbm_t *rbms;       // Pointer to a layer of restricted boltzman machines.
   
-  long n_outputs;     // Number of output nodes in the network. For convenience.
-  long n_inputs;      // Number of input nodes in the network.  Again, for convenience.
+  long long n_outputs;     // Number of output nodes in the network. For convenience.
+  long long n_inputs;      // Number of input nodes in the network.  Again, for convenience.
   
   // Learning functions ... for use with refining network weights by backpropagation.
   int batch_size;         // Specifies the batch size for training during backprop.

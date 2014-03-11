@@ -14,8 +14,8 @@ typedef struct {
 #define get_matrix_value_byIndex(M, INDEX) ((M)->matrix[INDEX]) //  MUCH fast in many cases.
 #define set_matrix_value_byIndex(M, INDEX, VALUE) (M)->matrix[INDEX] = VALUE
 
-matrix_t *alloc_matrix(int ncols, int nrows);
-matrix_t *R_alloc_matrix(int ncols, int nrows);
+matrix_t *alloc_matrix(long long ncols, long long nrows);
+matrix_t *R_alloc_matrix(long long ncols, long long nrows);
 void init_matrix(matrix_t *m, double init_value);
 void init_matrix_rnorm(matrix_t *m, double mean, double varience);
 void free_matrix(matrix_t *m);
