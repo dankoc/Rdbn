@@ -134,7 +134,7 @@ dbn_t *dbn_r_to_c(SEXP dbn_r) {
   dbn->batch_size= INTEGER(GET_SLOT(dbn_r, Rf_install("batch_size")))[0];
   dbn->n_layers= INTEGER(GET_SLOT(dbn_r,Rf_install("n_layers")))[0];
   dbn->n_rbms= dbn->n_layers-1;
-  dbn->layer_sizes= INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
+  dbn->layer_sizes= (long*)INTEGER(GET_SLOT(dbn_r, Rf_install("layer_sizes")));
 
   dbn->n_rbms= dbn->n_layers-1;
   dbn->rbms= (rbm_t*)R_alloc(dbn->n_rbms, sizeof(rbm_t));
