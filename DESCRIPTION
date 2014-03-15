@@ -9,6 +9,6 @@ LinkingTo:
 Suggests:
 Description: This package is an analysis pipeline for the analysis of GRO-seq data.
 License: GPL version 3 or newer
-Collate: logit.R rbm.R dbn.R zzz.R
+Collate: logit.R shuffle.R rbm.R dbn.R zzz.R
 biocViews: Sequencing, Analysis
 LazyLoad: yes
