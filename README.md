@@ -93,6 +93,7 @@ Useful References
 * Hinton's Coursea course on neural networks: https://class.coursera.org/neuralnets-2012-001/lecture/index
 * The basics: http://neuralnetworksanddeeplearning.com/
 * Several additional references listed in specific sections of the source code.
+* http://lamda.nju.edu.cn/weixs/project/CNNTricks/CNNTricks.html
 
 License
 =======
